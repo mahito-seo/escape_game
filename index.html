@@ -25,15 +25,15 @@
             background: #111;
             box-shadow: 0 0 30px rgba(0, 255, 65, 0.15);
         }
-        h1 { text-align: center; font-size: 1.45rem; margin-bottom: 6px; }
-        .subtitle { text-align: center; color: #888; margin-bottom: 22px; font-size: 0.82rem; }
+        h1 { text-align: center; font-size: 1.65rem; margin-bottom: 6px; }
+        .subtitle { text-align: center; color: #888; margin-bottom: 22px; font-size: 0.95rem; }
 
         .progress { display: flex; justify-content: center; gap: 12px; margin-bottom: 26px; }
         .dot {
             width: 36px; height: 36px; border-radius: 50%;
             border: 2px solid #333;
             display: flex; align-items: center; justify-content: center;
-            font-size: 0.8rem; color: #555; transition: all 0.3s;
+            font-size: 0.9rem; color: #555; transition: all 0.3s;
         }
         .dot.cleared { border-color: #00ff41; color: #00ff41; box-shadow: 0 0 10px rgba(0,255,65,.4); }
         .dot.current { border-color: #ffcc00; color: #ffcc00; box-shadow: 0 0 10px rgba(255,204,0,.4); animation: pulse 1.5s infinite; }
@@ -42,19 +42,19 @@
             50%     { box-shadow: 0 0 20px rgba(255,204,0,.7); }
         }
 
-        .stage-title { font-size: 1.12rem; margin-bottom: 5px; color: #ffcc00; }
-        .difficulty  { font-size: 0.8rem; color: #888; margin-bottom: 12px; }
-        .file-ref    { color: #66ccff; font-size: 0.8rem; margin-bottom: 10px; }
+        .stage-title { font-size: 1.3rem; margin-bottom: 5px; color: #ffcc00; }
+        .difficulty  { font-size: 0.92rem; color: #888; margin-bottom: 12px; }
+        .file-ref    { color: #66ccff; font-size: 0.92rem; margin-bottom: 10px; }
 
         .mission {
             background: #1a1a1a; border: 1px solid #333; border-radius: 4px;
             padding: 16px; margin-bottom: 14px; line-height: 1.7;
-            white-space: pre-wrap; font-size: 0.82rem;
+            white-space: pre-wrap; font-size: 0.95rem;
         }
-        .hint { color: #888; font-size: 0.8rem; margin-bottom: 16px; }
+        .hint { color: #888; font-size: 0.92rem; margin-bottom: 16px; }
         .hint strong { color: #ffcc00; }
 
-        .phase-label { font-size: 0.88rem; margin-bottom: 8px; font-weight: bold; }
+        .phase-label { font-size: 1.0rem; margin-bottom: 8px; font-weight: bold; }
         .phase-label.python { color: #66ccff; }
         .phase-label.agent  { color: #ff6600; }
 
@@ -62,14 +62,14 @@
         input[type="text"] {
             flex: 1; padding: 10px 14px; background: #0a0a0a;
             border: 1px solid #00ff41; border-radius: 4px; color: #00ff41;
-            font-family: 'Courier New', monospace; font-size: 1rem; outline: none;
+            font-family: 'Courier New', monospace; font-size: 1.1rem; outline: none;
         }
         input[type="text"]:focus { box-shadow: 0 0 8px rgba(0,255,65,.3); }
         input[type="text"].agent-input { border-color: #ff6600; color: #ff6600; }
         input[type="text"].agent-input:focus { box-shadow: 0 0 8px rgba(255,102,0,.3); }
         button {
             padding: 10px 20px; border: none; border-radius: 4px;
-            font-family: 'Courier New', monospace; font-size: 0.9rem;
+            font-family: 'Courier New', monospace; font-size: 1.0rem;
             font-weight: bold; cursor: pointer; transition: background 0.2s;
             white-space: nowrap;
         }
@@ -78,7 +78,7 @@
         .btn-orange { background: #ff6600; color: #fff; }
         .btn-orange:hover { background: #cc5200; }
 
-        .result { min-height: 22px; font-size: 0.85rem; margin-bottom: 12px; }
+        .result { min-height: 22px; font-size: 0.95rem; margin-bottom: 12px; }
         .result.correct { color: #00ff41; }
         .result.wrong   { color: #ff4444; }
 
@@ -92,19 +92,19 @@
             text-align: center;
             animation: fadeIn .4s;
         }
-        .lockout h3 { color: #ff4444; font-size: 1.1rem; margin-bottom: 12px; }
-        .lockout .timer { color: #ffcc00; font-size: 2rem; margin-bottom: 10px; }
-        .lockout p { color: #888; font-size: 0.8rem; line-height: 1.6; }
+        .lockout h3 { color: #ff4444; font-size: 1.25rem; margin-bottom: 12px; }
+        .lockout .timer { color: #ffcc00; font-size: 2.2rem; margin-bottom: 10px; }
+        .lockout p { color: #888; font-size: 0.92rem; line-height: 1.6; }
 
         .secret-box {
             display: none;
             background: #0d1a0d; border: 2px solid #00ff41; border-radius: 6px;
             padding: 18px; margin: 18px 0; animation: fadeIn .5s;
         }
-        .secret-box h3 { color: #00ff41; font-size: 0.92rem; margin-bottom: 10px; }
+        .secret-box h3 { color: #00ff41; font-size: 1.05rem; margin-bottom: 10px; }
         .secret-data {
             background: #0a0a0a; border: 1px solid #00aa2a; border-radius: 4px;
-            padding: 14px; font-size: 0.72rem; line-height: 1.6;
+            padding: 14px; font-size: 0.82rem; line-height: 1.6;
             white-space: pre-wrap; color: #00ff41; margin-bottom: 12px;
             max-height: 260px; overflow-y: auto;
             word-break: break-all;
@@ -113,10 +113,10 @@
         .encoding-hint {
             background: #1a1a00; border: 1px solid #ffcc00; border-radius: 4px;
             padding: 12px; margin-bottom: 12px;
-            font-size: 0.8rem; line-height: 1.6; color: #ffcc00;
+            font-size: 0.92rem; line-height: 1.6; color: #ffcc00;
             white-space: pre-wrap;
         }
-        .secret-instruction { color: #aaa; font-size: 0.78rem; line-height: 1.6; white-space: pre-wrap; }
+        .secret-instruction { color: #aaa; font-size: 0.9rem; line-height: 1.6; white-space: pre-wrap; }
 
         .agent-phase {
             display: none; padding-top: 16px; margin-top: 16px;
@@ -124,7 +124,7 @@
         }
         .agent-instruction {
             background: #1a0d00; border: 1px solid #ff6600; border-radius: 4px;
-            padding: 14px; margin-bottom: 14px; font-size: 0.82rem;
+            padding: 14px; margin-bottom: 14px; font-size: 0.95rem;
             line-height: 1.7; color: #ffaa44; white-space: pre-wrap;
         }
 
@@ -134,8 +134,8 @@
         }
 
         .complete { text-align: center; display: none; }
-        .complete h2 { font-size: 1.8rem; color: #00ff41; margin-bottom: 16px; }
-        .complete p  { color: #ccc; line-height: 1.8; }
+        .complete h2 { font-size: 2.0rem; color: #00ff41; margin-bottom: 16px; }
+        .complete p  { color: #ccc; line-height: 1.8; font-size: 1.05rem; }
 
         .dev-reset {
             position: fixed; bottom: 12px; right: 12px;
@@ -241,9 +241,10 @@ stage1.py の decode 関数を完成させて、
         secretTitle: "【機密情報A】エージェントデータベース",
         encodingHint:
 `暗号方式: ROT13（各アルファベットを13文字ずらす: A↔N, B↔O, ...）
+Agentのプロンプトに暗号方式を記載しましょう。
+どんなプロンプトを書けば Agent が正しく理解するか、工夫しましょう。
 
-このデータを Copilot Agent に渡して復号・記憶させてください。
-どんなプロンプトを書けば Agent が正しく理解するか、工夫しましょう。`,
+以下のデータを Copilot Agent に渡して復号させてください。`,
         secretData:
 `[PYNFFVSVRQ - NTRAPL QNGNONFR]
 VQ:N001 | ANZR:TUBFG   | FGNGHF:ERGVERQ | FRPGBE:F1
@@ -264,7 +265,7 @@ VQ:N012 | ANZR:GVTRE   | FGNGHF:ERGVERQ | FRPGBE:F11`,
 後のステージでこの SECTOR コードが鍵になります。`,
 
         agentInstruction:
-`講師が口頭で問いを出します。
+`問題：ACTIVE なエージェントのうち、SECTOR番号が一番小さいのは誰ですか？
 Copilot Agent に質問して、答えを入力してください。
 
 この問いは「機密情報A」の復号結果で答えられます。`,
@@ -289,10 +290,10 @@ stage2.py の decode 関数を完成させてください。
         secretTitle: "【機密情報B】SECTOR別 作戦データ（2層暗号）",
         encodingHint:
 `暗号方式: Stage1の暗号方式 + Base64 の2層暗号（各行が個別にエンコード）
-
 Stage 1 の暗号方式に Base64 が加わりました。
-機密情報A の SECTOR コードと紐づけないと意味が分かりません。
-Agent に A の内容を保持させたまま B を追加してください。`,
+Agentのプロンプトに暗号方式を追記しましょう。
+
+以下のデータを Copilot Agent に渡して復号させてください。`,
         secretData:
 `Rjc6R0JYTEI6RkdCRVo6TlBHVklS
 RjE6T1JFWVZBOkdVSEFRUkU6VkFOUEdWSVI=
@@ -312,7 +313,7 @@ B のデータは SECTOR コードで A と紐づきます。
 Agent がこの関連性を理解できるプロンプトを設計しましょう。`,
 
         agentInstruction:
-`講師が口頭で問いを出します。
+`問題：FALCON が所属する SECTOR の都市で実行中の作戦コードは何ですか？
 Copilot Agent に質問して、答えを入力してください。
 
 この問いは「機密情報A」と「機密情報B」を
