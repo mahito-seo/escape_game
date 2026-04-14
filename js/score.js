@@ -17,7 +17,7 @@ function calcScore(forceS){
 }
 
 function gameComplete(){
-  gameState='complete';document.exitPointerLock();playSound('clear');stopBGM();
+  gameState='complete';document.exitPointerLock();stopBGM();
   const isExtra=currentCipherStage>=6;
   const sc=calcScore(isExtra); // Extra clear = forced S rank
   const min=~~(sc.elapsed/60),sec=sc.elapsed%60;
@@ -25,7 +25,8 @@ function gameComplete(){
     `<span style="font-size:14px;color:#888;">Lv.${player.level} | ${player.kills}体撃破 | 🔥${totalStreak}連続正解</span>`;
 
   if(isExtra){
-    // TRUE ENDING - S rank guaranteed
+    // TRUE ENDING - S rank guaranteed + BIG fanfare
+    playSound('truefanfare');
     document.getElementById('overlay-title').innerHTML=`🔥 TRUE ESCAPE 🔥`;
     document.getElementById('overlay-title').style.color='#ff8800';
     document.getElementById('overlay-sub').innerHTML=
@@ -37,7 +38,8 @@ function gameComplete(){
     document.getElementById('overlay-btn').style.display='inline-block';
     document.getElementById('overlay-btn').onclick=restartGame;
   }else{
-    // NORMAL ENDING - looks like a final screen
+    // NORMAL ENDING - fanfare + looks like a final screen
+    playSound('fanfare');
     document.getElementById('overlay-title').innerHTML=`🔓 ESCAPE SUCCESS 🔓`;
     document.getElementById('overlay-title').style.color='#00ff41';
     document.getElementById('overlay-sub').innerHTML=
