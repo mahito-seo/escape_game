@@ -141,9 +141,13 @@ function battleContinue(){
   if(battleEnemy&&battleEnemy.dying){doVictory();return;}
   battleQIdx++;
   if(battleQIdx>=battleQList.length){
-    // All questions done. Victory only if enemy HP <= 0
     if(battleEnemy&&battleEnemy.hp<=0){doVictory();}
-    else{battleEnd();}
+    else if(floor>=5){
+      // Floor 5+: enemy doesn't flee, load more questions
+      battleQList=pickQuestions(floor);battleQIdx=0;
+      showMessage('敵はまだ倒れない！ 追加問題！','#ff8844');
+      loadQ();
+    }else{battleEnd();}
   }else loadQ();
 }
 function doVictory(){
