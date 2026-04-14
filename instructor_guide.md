@@ -192,3 +192,79 @@ HAS THE LARGEST PRIORITY VALUE.
 - Stage 4 は「連絡コード(URGENT)」ではなく「チャンネル(BRAVO-3)」を聞いています。引っかけポイントです
 - Stage 5 は「最大の優先度**値**」（数字が一番大きい = 5）です。「最も優先度が高い = 1」と混同しないよう注意
 - つまずく学生への最大のヒント: **「SECTOR コードがデータ同士をつなぐ鍵だよ」**
+
+---
+
+## EXTRA STAGE — 不死鳥の暗号（エクストラステージ）
+
+> Stage 5 クリア後に「🔥 EXTRA STAGE へ挑む 🔥」ボタンが表示されます。
+> 時間に余裕があるチーム向けの上級チャレンジです。
+
+### Python課題（stage_extra.py）
+
+| 項目 | 内容 |
+|------|------|
+| 暗号方式 | **カスタム暗号（5ステップ）** |
+| 暗号化手順 | 元の単語→ASCII変換→位置ベース鍵加算(i*7+3)→hex変換→Base64→逆順 |
+| 暗号データ | `=UDOmZDZ2QWNwYjM1MTN` |
+| パスフレーズ | **`PHOENIX`** |
+
+#### 復号の詳細手順（講師確認用）
+
+```
+Step 1: 逆順に戻す
+  =UDOmZDZ2QWNwYjM1MTN → NTM1MjYwNWQ2ZDZmODU=
+
+Step 2: Base64デコード
+  NTM1MjYwNWQ2ZDZmODU= → 5352605d6d6f85
+
+Step 3: hex を2文字ずつ分割して整数に
+  53, 52, 60, 5d, 6d, 6f, 85 → [83, 82, 96, 93, 109, 111, 133]
+
+Step 4: 位置ベース鍵を減算（鍵 = index * 7 + 3）
+  83-(0*7+3)=80, 82-(1*7+3)=72, 96-(2*7+3)=79,
+  93-(3*7+3)=69, 109-(4*7+3)=78, 111-(5*7+3)=73, 133-(6*7+3)=88
+  → [80, 72, 79, 69, 78, 73, 88]
+
+Step 5: ASCII文字に変換
+  80=P, 72=H, 79=O, 69=E, 78=N, 73=I, 88=X → PHOENIX
+```
+
+### Agent課題
+
+| 項目 | 内容 |
+|------|------|
+| 機密情報Fの暗号 | ROT13（シンプルだが指令の解釈が難しい） |
+| 機密情報F（復号後） | "The agent with the ACTIVE mission of LOWEST priority (smallest number) is the one who can order the final evacuation. Find their CHANNEL and report it." |
+| **問い** | **「最終指令を復号し、A〜Fの全データを使って答えを導け」** |
+| 必要な情報 | A〜F（全て） |
+| 正解 | **ALPHA-7** |
+
+#### 推論チェーン（講師確認用）
+
+```
+1. (F復号) 指令: LOWEST priority（最小の数値）を持つACTIVE作戦のエージェントのCHANNEL
+2. (C) 最小優先度 = FROST (Priority 1)
+3. (B) FROST → S12
+4. (A) S12 → WOLF
+5. (C) FROST → Priority 1
+6. (D) Priority 1-2 → CHANNEL: ALPHA-7
+→ 答え: ALPHA-7
+```
+
+> **注意**: Stage 5 が「LARGEST priority value」だったのに対し、Extra Stage は「LOWEST priority」。
+> 混同しやすいので注意が必要です。
+
+### ダンジョン特徴
+
+- テーマ：「不死鳥の炉」（赤黒い溶岩風、赤い松明）
+- 敵のバトル問題は **hard のみ**
+- 敵の数も多め
+
+---
+
+## 運営上の注意（追記）
+
+- **Extra Stage は時間に余裕があるチームのみ** に案内してください
+- Extra Stage のPython課題は「コードを自分で書く」レベルです。Copilot Agent に暗号化手順を伝えて復号コードを生成させるのが正攻法です
+- Stage 5 と Extra Stage で「最大/最小」が逆になっている点が引っかけポイントです
