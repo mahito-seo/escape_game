@@ -2,9 +2,12 @@
 function killEnemy(e){
   scene.remove(e.mesh);player.xp+=e.xp;player.gold+=e.gold;player.kills++;
   spawnParticles(e.x,e.z,'#ffaa00',25);checkLevelUp();updateHUD();
-  // Always drop: 50% HP, 30% MP, 20% gold
+  // Always drop: 35% HP, 45% MP(=XP via MP regen), 20% gold
   const roll=Math.random();
-  spawnItemAt(e.x,e.z,roll<.5?'hp':roll<.8?'mp':'gold');
+  spawnItemAt(e.x,e.z,roll<.35?'hp':roll<.8?'mp':'gold');
+  // Bonus XP drop (always)
+  player.xp+=~~(e.xp*.3);
+  showMessage(`+${~~(e.xp*.3)} Bonus XP`,'#aaffaa');
   e.hp=-1;
 }
 

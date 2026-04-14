@@ -27,7 +27,7 @@ function loop(ts){
   player.pitch=Math.max(-Math.PI/3,Math.min(Math.PI/3,player.pitch-mouse.dy*.002));
   mouse.dx=0;mouse.dy=0;
 
-  const spd=player.speed*(1+(player.level-1)*.05);
+  const spd=player.speed*(1+(player.level-1)*.12); // bigger speed boost per level
   let mx=0,mz=0;
   if(keys['KeyW']||keys['ArrowUp']){mx+=Math.sin(player.yaw+Math.PI)*spd;mz+=Math.cos(player.yaw+Math.PI)*spd;}
   if(keys['KeyS']||keys['ArrowDown']){mx-=Math.sin(player.yaw+Math.PI)*spd;mz-=Math.cos(player.yaw+Math.PI)*spd;}
@@ -61,20 +61,42 @@ function loop(ts){
 
   const t=ts/1000;
   for(const it of items)if(!it.collected&&it.mesh){it.mesh.position.y=.4+Math.sin(t*2+it.x)*.15;it.mesh.rotation.y+=dt;}
-  updateHUD();drawMinimap();
+  updateHUD();
+  // Minimap only visible during reveal
+  if(minimapRevealEnd>0){
+    document.getElementById('minimap').style.display='block';
+    drawMinimap();
+    const rem=Math.max(0,Math.ceil((minimapRevealEnd-Date.now())/1000));
+    document.getElementById('minimap-countdown').textContent=rem+'s';
+    if(Date.now()>=minimapRevealEnd){minimapRevealEnd=0;document.getElementById('minimap').style.display='none';}
+  }
   pCtx.clearRect(0,0,W,H);drawParticles();
   renderer.render(scene,camera);
 }
 
+let minimapRevealEnd=0;
+const MINIMAP_COST=15; // MP cost to reveal map
+const MINIMAP_DURATION=5000; // 5 seconds
+function revealMinimap(){
+  if(player.mp<MINIMAP_COST){showMessage('MPが不足！','#ff8888');return;}
+  player.mp-=MINIMAP_COST;
+  minimapRevealEnd=Date.now()+MINIMAP_DURATION;
+  document.getElementById('minimap').style.display='block';
+  showMessage('🗺️ マップ表示！(5秒間)','#66ccff');playSound('pickup');
+  updateHUD();
+}
+
 let prevStateBeforePause=null;
+let pauseStartedAt=0;
+let totalPausedMs=0; // accumulated pause+swap time to subtract from score
 function togglePause(){
   if(gameState==='paused'){
-    // Resume
+    totalPausedMs+=Date.now()-pauseStartedAt;
     gameState=prevStateBeforePause||'playing';
     document.getElementById('pause-screen').classList.remove('show');
     if(gameState==='playing')canvas.requestPointerLock();
   }else if(gameState==='playing'){
-    // Pause
+    pauseStartedAt=Date.now();
     prevStateBeforePause=gameState;
     gameState='paused';
     document.exitPointerLock();
@@ -86,7 +108,7 @@ document.addEventListener('keydown',e=>{
   if(e.code==='Escape'){
     if(gameState==='playing'||gameState==='paused'){togglePause();e.preventDefault();return;}
   }
-  if(gameState==='playing'){if(e.code==='Digit2')useSkill(0);if(e.code==='Digit3')useSkill(1);if(e.code==='Digit4')useSkill(2);}
+  if(gameState==='playing'){if(e.code==='Digit2')useSkill(0);if(e.code==='Digit3')useSkill(1);if(e.code==='Digit4')useSkill(2);if(e.code==='Digit5')revealMinimap();}
   if(gameState!=='battle'&&gameState!=='cipher')e.preventDefault();
 });
 document.addEventListener('keyup',e=>keys[e.code]=false);

@@ -43,8 +43,9 @@
   .skill-key { font-size:9px; color:#888; letter-spacing:1px; position:absolute; bottom:2px; right:4px; }
   .skill-cooldown { position:absolute; inset:0; background:rgba(0,0,0,.7); display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:bold; color:#ccc; border-radius:2px; }
 
-  #minimap { position:absolute; top:16px; right:16px; width:120px; height:120px; background:rgba(0,0,0,.8); border:1px solid #00aa41; border-radius:4px; overflow:hidden; }
+  #minimap { position:absolute; top:16px; right:16px; width:120px; height:120px; background:rgba(0,0,0,.8); border:1px solid #00aa41; border-radius:4px; overflow:hidden; display:none; }
   #minimap-canvas { width:100%; height:100%; }
+  #minimap-countdown { position:absolute; bottom:2px; right:4px; font-size:10px; color:#00ff41; letter-spacing:1px; pointer-events:none; }
   #messages { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); display:flex; flex-direction:column; align-items:center; gap:8px; pointer-events:none; }
   .msg { font-size:20px; font-weight:600; text-align:center; animation:msgFade 2s ease forwards; text-shadow:0 0 20px currentColor; }
   @keyframes msgFade { 0%{opacity:0;transform:translateY(10px) scale(.9)} 20%{opacity:1;transform:translateY(0) scale(1)} 70%{opacity:1} 100%{opacity:0;transform:translateY(-10px)} }
@@ -288,12 +289,13 @@
     <div class="skill-slot" onclick="useSkill(1)"><div class="skill-icon">⚡</div><div class="skill-key">3</div></div>
     <div class="skill-slot" onclick="useSkill(2)"><div class="skill-icon">💊</div><div class="skill-key">4</div></div>
   </div>
-  <div id="minimap"><canvas id="minimap-canvas" width="120" height="120"></canvas></div>
+  <div id="minimap"><canvas id="minimap-canvas" width="120" height="120"></canvas><div id="minimap-countdown"></div></div>
   <div id="messages"></div>
   <div id="controls-hint">
     <div class="ctrl"><div class="ctrl-key">W前 S後 A右 D左</div><div class="ctrl-desc">MOVE</div></div>
     <div class="ctrl"><div class="ctrl-key">敵に近づく</div><div class="ctrl-desc">BATTLE</div></div>
     <div class="ctrl"><div class="ctrl-key">2-4</div><div class="ctrl-desc">SKILLS</div></div>
+    <div class="ctrl"><div class="ctrl-key">5</div><div class="ctrl-desc">MAP</div></div>
   </div>
   <div id="xp-bar-container"><div id="xp-fill" style="width:0%"></div></div>
 </div>

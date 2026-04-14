@@ -1,6 +1,6 @@
 // Score Calculation, Game Completion, Extra Stage
 function calcScore(){
-  const elapsed=~~((Date.now()-startTime)/1000);
+  const elapsed=~~((Date.now()-startTime-totalPausedMs)/1000);
   // Time score: max 400pts. Very lenient: under 30min=400, 45min=300, 60min=200, 90min=100, 90min+=50
   const timeScore=elapsed<1800?400:elapsed<2700?Math.max(0,400-((elapsed-1800)/900)*100):elapsed<3600?Math.max(0,300-((elapsed-2700)/900)*100):elapsed<5400?Math.max(0,200-((elapsed-3600)/1800)*100):50;
   // XP score: max 350pts based on level and kills

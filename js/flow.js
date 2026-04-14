@@ -38,9 +38,10 @@ function stopMobTimer(){
   document.getElementById('mob-timer').classList.remove('active');
 }
 function tickMob(){
+  // Don't count down during pause or swap
+  if(gameState==='paused'||gameState==='swap')return;
   mobTimeLeft--;
   if(mobTimeLeft<=0){
-    // Rotation!
     mobCurrentIdx=(mobCurrentIdx+1)%MOB_PLAYERS.length;
     mobTimeLeft=MOB_ROTATE_SEC;
     showMobBanner();
@@ -56,10 +57,11 @@ function updateMobDisplay(){
   document.getElementById('mob-next').textContent=`次: ${MOB_PLAYERS[(mobCurrentIdx+1)%MOB_PLAYERS.length]}`;
 }
 let prevStateBeforeSwap=null;
+let swapStartedAt=0;
 function showMobBanner(){
-  // Fully pause game and show swap screen
   prevStateBeforeSwap=gameState;
   gameState='swap';
+  swapStartedAt=Date.now();
   document.exitPointerLock();
   playSound('swap');
   // Show swap overlay using pause screen
@@ -70,7 +72,7 @@ function showMobBanner(){
   btn.textContent='✅ 交代完了';
   btn.onclick=()=>{
     ps.classList.remove('show');
-    // Restore original pause behavior
+    totalPausedMs+=Date.now()-swapStartedAt; // don't count swap time
     ps.querySelector('h1').textContent='⏸ PAUSE';
     ps.querySelector('p').textContent='ESCキーで再開';
     btn.textContent='▶ 再開';

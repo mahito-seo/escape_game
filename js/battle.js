@@ -6,9 +6,10 @@ const BATTLE_QCOUNT=3, BATTLE_TIME=30;
 function pickQuestions(fl){
   let pool;
   if(fl<=1) pool=QUESTIONS.filter(q=>q.diff==='easy');
-  else if(fl<=3) pool=QUESTIONS.filter(q=>q.diff!=='hard');
-  else if(fl>=6) pool=QUESTIONS.filter(q=>q.diff==='hard'); // Extra stage: hard only
-  else pool=[...QUESTIONS];
+  else if(fl<=2) pool=QUESTIONS.filter(q=>q.diff!=='hard');
+  else if(fl<=3) pool=[...QUESTIONS]; // mix of all
+  else if(fl<=5) pool=QUESTIONS.filter(q=>q.diff!=='easy'); // normal+hard
+  else pool=QUESTIONS.filter(q=>q.diff==='hard'); // Extra stage: hard only
   return[...pool].sort(()=>Math.random()-.5).slice(0,BATTLE_QCOUNT);
 }
 
