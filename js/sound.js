@@ -1,4 +1,4 @@
-// Sound System (Web Audio API) - SFX + BGM
+// Sound System - SFX (Web Audio API) + BGM (MP3 files)
 let audioCtx=null;
 function ensureAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();}
 
@@ -25,123 +25,46 @@ function playSound(name){
 }
 
 // ═══════════════════════════════════
-//  BGM SYSTEM (procedural per-floor)
+//  BGM SYSTEM (MP3 files in audio/)
 // ═══════════════════════════════════
-// Each floor has a unique looping BGM built from oscillators
-// BGM definitions: array of { freq, type, vol, detune } per voice
-const BGM_TRACKS = [
-  // Floor 1: Ancient Ruins - slow, haunting minor drone
-  { bpm:40, voices:[
-    {type:'sine',notes:[147,147,139,147,131,131,139,131],vol:.04},  // D3 drone, dips to C#/C
-    {type:'sine',notes:[220,220,208,220,196,196,208,196],vol:.025}, // A3 fifth, minor shifts
-    {type:'triangle',notes:[73,73,73,73,66,66,73,66],vol:.035},     // deep sub bass
-  ]},
-  // Floor 2: Ice Cave - cold, high, sparse with long pauses
-  { bpm:35, voices:[
-    {type:'sine',notes:[659,622,659,587,659,622,587,554],vol:.02},  // E5 descending, cold
-    {type:'sine',notes:[330,311,330,294,330,311,294,277],vol:.025},  // octave below
-    {type:'triangle',notes:[165,165,156,165,147,147,156,147],vol:.03}, // low anchor
-  ]},
-  // Floor 3: Lava Corridor - ominous rumble, tritone tension
-  { bpm:50, voices:[
-    {type:'sine',notes:[82,82,87,82,78,78,82,78],vol:.04},          // low E2 rumble
-    {type:'triangle',notes:[116,116,123,116,110,110,116,110],vol:.03}, // tritone Bb2
-    {type:'sine',notes:[165,156,165,147,165,156,147,139],vol:.02},   // creeping melody
-  ]},
-  // Floor 4: Dark Forest - dissonant, whispery, unsettling
-  { bpm:30, voices:[
-    {type:'sine',notes:[185,175,185,165,175,165,156,165],vol:.03},   // F#3 wandering
-    {type:'sine',notes:[277,262,277,247,262,247,233,247],vol:.02},   // minor third above
-    {type:'triangle',notes:[93,87,93,82,87,82,78,82],vol:.035},      // sub octave
-  ]},
-  // Floor 5: Abyss Temple - deep, grand, slow organ-like
-  { bpm:28, voices:[
-    {type:'sine',notes:[110,104,110,98,104,98,93,98],vol:.04},      // A2 descending
-    {type:'sine',notes:[165,156,165,147,156,147,139,147],vol:.03},   // fifth above
-    {type:'triangle',notes:[55,52,55,49,52,49,46,49],vol:.04},       // sub bass
-    {type:'sine',notes:[330,311,330,294,311,294,277,294],vol:.015},   // high whisper
-  ]},
-  // Floor 6 (Extra): Phoenix Furnace - aggressive, pulsing, fiery
-  { bpm:65, voices:[
-    {type:'triangle',notes:[110,110,131,110,104,104,131,104],vol:.04},// pulsing bass E2
-    {type:'sine',notes:[220,220,262,220,208,208,262,208],vol:.025},   // octave drive
-    {type:'sine',notes:[330,349,392,349,330,311,370,311],vol:.018},   // wild melody
-  ]},
-];
-
-let bgmOscillators=[];
-let bgmGainNode=null;
-let bgmInterval=null;
-let bgmNoteIdx=0;
+// Place MP3 files as: audio/bgm1.mp3 ~ audio/bgm6.mp3
+// If a file doesn't exist, that floor plays in silence.
+const BGM_FILES=['audio/bgm1.mp3','audio/bgm2.mp3','audio/bgm3.mp3','audio/bgm4.mp3','audio/bgm5.mp3','audio/bgm6.mp3'];
+let bgmAudio=null;
 let bgmPlaying=false;
 let bgmCurrentFloor=-1;
 
 function startBGM(floorNum){
-  ensureAudio();
-  // Don't restart if same floor
   if(bgmPlaying && bgmCurrentFloor===floorNum) return;
   stopBGM();
-
-  const trackIdx=(floorNum-1)%BGM_TRACKS.length;
-  const track=BGM_TRACKS[trackIdx];
   bgmCurrentFloor=floorNum;
-  bgmNoteIdx=0;
-
-  // Master gain for BGM
-  bgmGainNode=audioCtx.createGain();
-  bgmGainNode.gain.setValueAtTime(1,audioCtx.currentTime);
-  bgmGainNode.connect(audioCtx.destination);
-
-  // Create persistent oscillators for each voice
-  bgmOscillators=track.voices.map(v=>{
-    const o=audioCtx.createOscillator();
-    const g=audioCtx.createGain();
-    o.type=v.type;
-    o.frequency.value=v.notes[0];
-    g.gain.value=v.vol;
-    o.connect(g);
-    g.connect(bgmGainNode);
-    o.start();
-    return {osc:o,gain:g,notes:v.notes,vol:v.vol};
+  const src=BGM_FILES[(floorNum-1)%BGM_FILES.length];
+  const audio=new Audio(src);
+  audio.loop=true;
+  audio.volume=0.3;
+  audio.play().then(()=>{
+    bgmAudio=audio;
+    bgmPlaying=true;
+  }).catch(()=>{
+    // File not found or autoplay blocked - silent mode
+    bgmAudio=null;
+    bgmPlaying=false;
   });
-
-  // Step through notes on beat
-  const beatMs=60000/track.bpm;
-  bgmInterval=setInterval(()=>{
-    if(gameState==='paused'||gameState==='swap'||gameState==='dead') return;
-    bgmNoteIdx=(bgmNoteIdx+1)%track.voices[0].notes.length;
-    const t=audioCtx.currentTime;
-    bgmOscillators.forEach(v=>{
-      const targetFreq=v.notes[bgmNoteIdx%v.notes.length];
-      // Slow glide to next note (creepy portamento)
-      v.osc.frequency.setTargetAtTime(targetFreq,t,.5);
-      // Gentle volume swell
-      v.gain.gain.setTargetAtTime(v.vol*1.15,t,.1);
-      v.gain.gain.setTargetAtTime(v.vol,t+.2,.4);
-    });
-  },beatMs);
-
-  bgmPlaying=true;
 }
 
 function stopBGM(){
-  if(bgmInterval){clearInterval(bgmInterval);bgmInterval=null;}
-  bgmOscillators.forEach(v=>{
-    try{v.osc.stop();v.osc.disconnect();}catch(e){}
-    try{v.gain.disconnect();}catch(e){}
-  });
-  bgmOscillators=[];
-  if(bgmGainNode){try{bgmGainNode.disconnect();}catch(e){} bgmGainNode=null;}
+  if(bgmAudio){
+    bgmAudio.pause();
+    bgmAudio.currentTime=0;
+    bgmAudio=null;
+  }
   bgmPlaying=false;
   bgmCurrentFloor=-1;
 }
 
 function setBGMVolume(vol){
-  if(bgmGainNode){
-    bgmGainNode.gain.setTargetAtTime(vol,audioCtx.currentTime,.1);
-  }
+  if(bgmAudio) bgmAudio.volume=vol;
 }
 
-// Mute BGM during battle/cipher, restore after
-function muteBGM(){setBGMVolume(.15);} // quiet, not silent
-function unmuteBGM(){setBGMVolume(1);}
+function muteBGM(){setBGMVolume(0.08);}
+function unmuteBGM(){setBGMVolume(0.3);}

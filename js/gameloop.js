@@ -108,8 +108,8 @@ document.addEventListener('keydown',e=>{
   if(e.code==='Escape'){
     if(gameState==='playing'||gameState==='paused'){togglePause();e.preventDefault();return;}
   }
-  // DEBUG: Cmd+Shift+N = skip floor (TODO: remove later)
-  if((e.metaKey||e.ctrlKey)&&e.shiftKey&&e.code==='KeyN'&&gameState==='playing'){
+  // DEBUG: Ctrl+Shift+L = skip floor (TODO: remove later)
+  if((e.metaKey||e.ctrlKey)&&e.shiftKey&&e.code==='KeyL'&&gameState==='playing'){
     e.preventDefault();
     currentCipherStage++;
     if(currentCipherStage>=CIPHER_STAGES.length){gameComplete();return;}
