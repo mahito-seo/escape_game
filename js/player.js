@@ -75,7 +75,7 @@ function checkItems(){
     if(it.collected)continue;
     const dx=it.x-player.x,dz=it.z-player.z;
     if(Math.sqrt(dx*dx+dz*dz)<1.2){
-      it.collected=true;scene.remove(it.mesh,it.light);
+      it.collected=true;scene.remove(it.mesh);if(it.light)scene.remove(it.light);
       if(it.type==='hp'){const a=~~(player.maxHp*.25);player.hp=Math.min(player.maxHp,player.hp+a);showMessage(`❤️ HP +${a}`,'#ff6666');}
       else if(it.type==='mp'){const a=~~(player.maxMp*.4);player.mp=Math.min(player.maxMp,player.mp+a);showMessage(`💧 MP +${a}`,'#6666ff');}
       else if(it.type==='xp'){const a=10+~~(Math.random()*15*floor);player.xp+=a;showMessage(`⭐ XP +${a}`,'#44ff44');checkLevelUp();}

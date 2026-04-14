@@ -18,11 +18,8 @@ function updateCDs(dt){
 }
 
 function updateTorches(t){for(const tc of torches){
-  tc.light.intensity=tc.base+Math.sin(t*3+tc.base)*.4;
-  tc.flame.scale.set(1+Math.sin(t*7)*.2,1+Math.cos(t*5)*.3,1+Math.sin(t*6)*.2);
-  tc.flame.rotation.z=Math.sin(t*4)*.15;
-  if(tc.flame2){tc.flame2.scale.y=1+Math.cos(t*6)*.35;}
-  if(tc.ember){tc.ember.material.opacity=.3+Math.sin(t*4+tc.base)*.15;}
+  if(tc.light)tc.light.intensity=tc.base+Math.sin(t*3+tc.base)*.4;
+  tc.flame.scale.y=1+Math.cos(t*5)*.3;
 }}
 
 let lastTime=0;

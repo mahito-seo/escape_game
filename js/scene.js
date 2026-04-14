@@ -14,7 +14,7 @@ function buildScene(){
   const fi=new THREE.InstancedMesh(fgeo,floorMat,MAP_W*MAP_H);
   const ci=new THREE.InstancedMesh(fgeo,ceilMat,MAP_W*MAP_H);
   const wi=new THREE.InstancedMesh(wgeo,wallMat,MAP_W*MAP_H);
-  fi.receiveShadow=true;wi.castShadow=wi.receiveShadow=true;
+  // shadows disabled for perf
   let fc=0,cc=0,wc=0;
   for(let y=0;y<MAP_H;y++)for(let x=0;x<MAP_W;x++){
     const wx=x*TILE,wz=y*TILE;
@@ -41,7 +41,7 @@ function buildScene(){
   for(let i=0;i<4;i++){
     const a=i*Math.PI/2;
     const p=new THREE.Mesh(new THREE.BoxGeometry(.18,2.2,.18),pillarMat);
-    p.position.set(Math.cos(a)*1.0,1.1,Math.sin(a)*1.0);p.castShadow=true;portalGroup.add(p);
+    p.position.set(Math.cos(a)*1.0,1.1,Math.sin(a)*1.0);portalGroup.add(p);
     // Pillar top orb
     const orb=new THREE.Mesh(new THREE.SphereGeometry(.12,8,8),
       new THREE.MeshStandardMaterial({color:cipherSolved?0x44ff44:0x442222,emissive:cipherSolved?0x22ff22:0x220000,emissiveIntensity:cipherSolved?3:0.5,transparent:true,opacity:.8}));
@@ -112,7 +112,7 @@ function buildScene(){
     const eyeM=new THREE.MeshStandardMaterial({color:t.eye,emissive:t.eyeEm,emissiveIntensity:3});
     // ── Head (box, slightly wider) ──
     const head=new THREE.Mesh(new THREE.BoxGeometry(S*.7,S*.7,S*.7),headM);
-    head.position.y=S*1.05; head.castShadow=true; g.add(head);
+    head.position.y=S*1.05;g.add(head);
     // Eyes (flat boxes on face)
     const eyeGeo=new THREE.BoxGeometry(S*.12,S*.08,S*.04);
     const e1=new THREE.Mesh(eyeGeo,eyeM); e1.position.set(-S*.15,S*1.08,S*.36); g.add(e1);
@@ -123,15 +123,15 @@ function buildScene(){
     mouth.position.set(0,S*.88,S*.36); g.add(mouth);
     // ── Torso (box) ──
     const torso=new THREE.Mesh(new THREE.BoxGeometry(S*.7,S*.8,S*.4),bodyM);
-    torso.position.y=S*.3; torso.castShadow=true; g.add(torso);
+    torso.position.y=S*.3;g.add(torso);
     // ── Arms (boxes, pivot at shoulder) ──
     const armGeo=new THREE.BoxGeometry(S*.22,S*.75,S*.22);
-    const arm1=new THREE.Mesh(armGeo,skinM.clone()); arm1.position.set(-S*.46,S*.25,0); arm1.castShadow=true; g.add(arm1);
-    const arm2=new THREE.Mesh(armGeo,skinM.clone()); arm2.position.set(S*.46,S*.25,0); arm2.castShadow=true; g.add(arm2);
+    const arm1=new THREE.Mesh(armGeo,skinM.clone()); arm1.position.set(-S*.46,S*.25,0);g.add(arm1);
+    const arm2=new THREE.Mesh(armGeo,skinM.clone()); arm2.position.set(S*.46,S*.25,0);g.add(arm2);
     // ── Legs (boxes) ──
     const legGeo=new THREE.BoxGeometry(S*.25,S*.75,S*.25);
-    const l1=new THREE.Mesh(legGeo,legM); l1.position.set(-S*.18,-S*.5,0); l1.castShadow=true; g.add(l1);
-    const l2=new THREE.Mesh(legGeo,legM); l2.position.set(S*.18,-S*.5,0); l2.castShadow=true; g.add(l2);
+    const l1=new THREE.Mesh(legGeo,legM); l1.position.set(-S*.18,-S*.5,0);g.add(l1);
+    const l2=new THREE.Mesh(legGeo,legM); l2.position.set(S*.18,-S*.5,0);g.add(l2);
     // ── Type-specific features ──
     if(t.build==='skeleton'){
       // Thinner body, visible "ribs" as lines on torso
@@ -199,7 +199,7 @@ function buildScene(){
         g.add(tc);
       }
       // Red glow
-      const aura=new THREE.PointLight(0xff2200,1.5,4); aura.position.set(0,S*.5,0); g.add(aura);
+      // (no PointLight for perf - emissive glow only)
       // Bigger eyes
       e1.scale.set(1.4,1.6,1); e2.scale.set(1.4,1.6,1);
     }
@@ -235,29 +235,16 @@ function buildScene(){
 
 function placeTorch(x,z){
   const theme=FLOOR_THEMES[(floor-1)%FLOOR_THEMES.length];
-  const tc=new THREE.Color(theme.torch);
-  const tg=new THREE.Group();
-  const woodM=new THREE.MeshStandardMaterial({color:0x4a2a08,roughness:.9});
-  const bracket=new THREE.Mesh(new THREE.BoxGeometry(.06,.06,.3),woodM);
-  bracket.position.set(0,.5,0);tg.add(bracket);
-  const stick=new THREE.Mesh(new THREE.BoxGeometry(.08,.5,.08),woodM);
-  stick.position.set(0,.55,.12);tg.add(stick);
-  const cupM=new THREE.MeshStandardMaterial({color:0x2a2a2a,roughness:.6,metalness:.5});
-  const cup=new THREE.Mesh(new THREE.CylinderGeometry(.1,.06,.12,6),cupM);
-  cup.position.set(0,.82,.12);tg.add(cup);
-  const flameM1=new THREE.MeshStandardMaterial({color:theme.torch,emissive:theme.torch,emissiveIntensity:3,transparent:true,opacity:.9});
-  const f1=new THREE.Mesh(new THREE.ConeGeometry(.08,.2,5),flameM1);
-  f1.position.set(0,.98,.12);tg.add(f1);
-  const innerCol=new THREE.Color(theme.torch).lerp(new THREE.Color(0xffffff),.4);
-  const flameM2=new THREE.MeshStandardMaterial({color:innerCol,emissive:theme.torch,emissiveIntensity:4,transparent:true,opacity:.7});
-  const f2=new THREE.Mesh(new THREE.ConeGeometry(.04,.14,4),flameM2);
-  f2.position.set(0,1.0,.12);tg.add(f2);
-  const emberM=new THREE.MeshStandardMaterial({color:theme.torch,emissive:theme.torch,emissiveIntensity:2,transparent:true,opacity:.4});
-  const ember=new THREE.Mesh(new THREE.SphereGeometry(.06,4,4),emberM);
-  ember.position.set(0,.88,.12);tg.add(ember);
-  tg.position.set(x,0,z);scene.add(tg);
-  const l=new THREE.PointLight(theme.torch,theme.torchI+Math.random()*.5,10);l.position.set(x,1.1,z);scene.add(l);
-  torches.push({light:l,flame:f1,flame2:f2,ember,base:l.intensity});
+  // Simple torch: stick + flame (minimal meshes)
+  const stick=new THREE.Mesh(new THREE.BoxGeometry(.08,.5,.08),new THREE.MeshStandardMaterial({color:0x4a2a08,roughness:.9}));
+  stick.position.set(x,.25,z);scene.add(stick);
+  const flameM=new THREE.MeshStandardMaterial({color:theme.torch,emissive:theme.torch,emissiveIntensity:4,transparent:true,opacity:.85});
+  const f1=new THREE.Mesh(new THREE.ConeGeometry(.08,.2,4),flameM);
+  f1.position.set(x,.6,z);scene.add(f1);
+  // Only 1 PointLight per 3 torches for perf
+  let l=null;
+  if(torches.length%3===0){l=new THREE.PointLight(theme.torch,theme.torchI,8);l.position.set(x,.8,z);scene.add(l);}
+  torches.push({light:l,flame:f1,base:theme.torchI});
 }
 
 function spawnItemInRoom(rm){
@@ -267,8 +254,7 @@ function spawnItemInRoom(rm){
 function spawnItemAt(ix,iz,type){
   const c={hp:{col:0xff4444,em:0xff0000,s:.22},mp:{col:0x4444ff,em:0x0000ff,s:.22},xp:{col:0x44ff44,em:0x00aa00,s:.22}}[type];
   const m=new THREE.Mesh(new THREE.OctahedronGeometry(c.s,0),new THREE.MeshStandardMaterial({color:c.col,emissive:c.em,emissiveIntensity:1.5,metalness:.4,roughness:.3}));
-  m.position.set(ix,.4,iz);m.castShadow=true;scene.add(m);
-  const l=new THREE.PointLight(c.col,.8,3);l.position.set(ix,.6,iz);scene.add(l);
-  items.push({mesh:m,light:l,x:ix,z:iz,type,collected:false});
+  m.position.set(ix,.4,iz);scene.add(m);
+  items.push({mesh:m,x:ix,z:iz,type,collected:false});
 }
 
