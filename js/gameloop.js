@@ -108,6 +108,18 @@ document.addEventListener('keydown',e=>{
   if(e.code==='Escape'){
     if(gameState==='playing'||gameState==='paused'){togglePause();e.preventDefault();return;}
   }
+  // DEBUG: Cmd+Shift+N = skip floor (TODO: remove later)
+  if((e.metaKey||e.ctrlKey)&&e.shiftKey&&e.code==='KeyN'&&gameState==='playing'){
+    e.preventDefault();
+    currentCipherStage++;
+    if(currentCipherStage>=CIPHER_STAGES.length){gameComplete();return;}
+    floor++;cipherSolved=false;escapeCount=0;
+    dungeon=genDungeon();buildScene();
+    player.hp=player.maxHp;player.mp=player.maxMp;
+    updateHUD();showMessage(`⏩ DEBUG: Floor ${floor} へスキップ`,'#ff00ff');
+    startBGM(floor);saveProgress();
+    return;
+  }
   if(gameState==='playing'){if(e.code==='Digit2')useSkill(0);if(e.code==='Digit3')useSkill(1);if(e.code==='Digit4')useSkill(2);if(e.code==='Digit5')revealMinimap();}
   if(gameState!=='battle'&&gameState!=='cipher')e.preventDefault();
 });
