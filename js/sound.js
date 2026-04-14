@@ -29,26 +29,32 @@ function playSound(name){
 // ═══════════════════════════════════
 // Place MP3 files as: audio/bgm1.mp3 ~ audio/bgm6.mp3
 // If a file doesn't exist, that floor plays in silence.
-const BGM_FILES=['audio/bgm1.mp3','audio/bgm2.mp3','audio/bgm3.mp3','audio/bgm4.mp3','audio/bgm5.mp3','audio/bgm6.mp3'];
+// Try .ogg first then .mp3 (browser support varies)
+const BGM_BASES=['audio/bgm1','audio/bgm2','audio/bgm3','audio/bgm4','audio/bgm5','audio/bgm6'];
 let bgmAudio=null;
 let bgmPlaying=false;
 let bgmCurrentFloor=-1;
+
+function tryPlayAudio(base,exts,vol,loop){
+  return new Promise((resolve)=>{
+    function tryNext(i){
+      if(i>=exts.length){resolve(null);return;}
+      const a=new Audio(base+exts[i]);
+      a.loop=loop;a.volume=vol;
+      a.play().then(()=>resolve(a)).catch(()=>tryNext(i+1));
+    }
+    tryNext(0);
+  });
+}
 
 function startBGM(floorNum){
   if(bgmPlaying && bgmCurrentFloor===floorNum) return;
   stopBGM();
   bgmCurrentFloor=floorNum;
-  const src=BGM_FILES[(floorNum-1)%BGM_FILES.length];
-  const audio=new Audio(src);
-  audio.loop=true;
-  audio.volume=0.3;
-  audio.play().then(()=>{
-    bgmAudio=audio;
-    bgmPlaying=true;
-  }).catch(()=>{
-    // File not found or autoplay blocked - silent mode
-    bgmAudio=null;
-    bgmPlaying=false;
+  const base=BGM_BASES[(floorNum-1)%BGM_BASES.length];
+  tryPlayAudio(base,['.ogg','.mp3'],0.3,true).then(a=>{
+    if(a){bgmAudio=a;bgmPlaying=true;}
+    else{bgmAudio=null;bgmPlaying=false;}
   });
 }
 
