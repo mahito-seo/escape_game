@@ -226,7 +226,7 @@ function buildScene(){
       const{body,leg1,leg2,arm1,arm2}=buildEnemyMesh(t);
       body.position.set(ex,t.sz*1.1,ez);scene.add(body);
       const sc=1+(floor-1)*.25; // HP scales 25% per floor
-      const spdSc=1+(floor-1)*.08; // speed scales 8% per floor
+      const spdSc=1+(floor-1)*.03; // speed scales 3% per floor (gentle)
       enemies.push({mesh:body,x:ex,z:ez,name:t.name,avatar:t.avatar,hp:~~(t.hp*sc),maxHp:~~(t.hp*sc),atk:~~(t.atk*(1+(floor-1)*.15)),speed:t.spd*spdSc,xp:~~(t.xp*(1+(floor-1)*.1)),xpBonus:t.xpBonus,size:t.sz,state:'idle',attackTimer:0,leg1,leg2,arm1,arm2,legPhase:0,alertTimer:0,inBattle:false,dying:false});
     }
     if(Math.random()<.4)spawnItemInRoom(rm);

@@ -50,7 +50,7 @@ function updateEnemies(dt){
     if(dist<18){e.state='chase';e.alertTimer=1;}
     if(e.alertTimer>0)e.alertTimer-=dt;if(e.alertTimer<=0&&dist>18)e.state='idle';
     if(e.state==='chase'&&!e.inBattle){
-      const spd=e.speed*(1+(floor-1)*.05);
+      const spd=e.speed; // already scaled at spawn
       const nx=e.x+(dx/dist)*spd,nz=e.z+(dz/dist)*spd;
       if(!isWall(nx,e.z))e.x=nx;if(!isWall(e.x,nz))e.z=nz;
       e.legPhase=(e.legPhase||0)+dt*8;
@@ -101,7 +101,8 @@ function checkStair(){
   if(Math.sqrt(dx*dx+dz*dz)<1.5){
     if(!cipherSolved){showMessage('暗号を解読してから来い！','#ff8844');return;}
     currentCipherStage++;
-    if(currentCipherStage>=CIPHER_STAGES.length){gameComplete();return;}
+    // Stage 5 clear (index 5) = normal ending, Stage 6 clear (index 6+) = extra ending
+    if(currentCipherStage>=5){gameComplete();return;}
     floor++;cipherSolved=false;escapeCount=0;
     playSound('portal');
     const nextTheme=FLOOR_THEMES[(floor-1)%FLOOR_THEMES.length];
