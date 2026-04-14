@@ -40,6 +40,8 @@ let approachTarget=null; // enemy or 'terminal'
 function updateEnemies(dt){
   battleCooldown=Math.max(0,battleCooldown-dt);
   approachTarget=null;
+  // Freeze enemies during cipher solving
+  if(cipherActive)return;
   const TRIGGER_DIST=1.6;
   for(const e of enemies){
     if(e.hp<=0)continue;
@@ -67,7 +69,16 @@ function checkTerminal(){
   if(cipherSolved||cipherActive||battleActive)return;
   const dx=terminalX-player.x,dz=terminalZ-player.z,dist=Math.sqrt(dx*dx+dz*dz);
   if(dist<3.5&&!approachTarget)approachTarget='terminal';
-  if(dist<2.0)openCipherModal();
+  if(dist<2.0){
+    // Require player level >= floor to use terminal
+    const reqLevel=floor;
+    if(player.level<reqLevel){
+      showMessage(`⚠ レベルが足りない！ Lv.${reqLevel} 以上が必要（現在 Lv.${player.level}）`,'#ff4444');
+      battleCooldown=3; // prevent spamming
+      return;
+    }
+    openCipherModal();
+  }
 }
 
 function checkItems(){
