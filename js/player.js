@@ -78,7 +78,7 @@ function checkItems(){
       it.collected=true;scene.remove(it.mesh,it.light);
       if(it.type==='hp'){const a=~~(player.maxHp*.25);player.hp=Math.min(player.maxHp,player.hp+a);showMessage(`❤️ HP +${a}`,'#ff6666');}
       else if(it.type==='mp'){const a=~~(player.maxMp*.4);player.mp=Math.min(player.maxMp,player.mp+a);showMessage(`💧 MP +${a}`,'#6666ff');}
-      else{const a=5+~~(Math.random()*10*floor);player.gold+=a;showMessage(`💰 Gold +${a}`,'#ffcc00');}
+      else if(it.type==='xp'){const a=10+~~(Math.random()*15*floor);player.xp+=a;showMessage(`⭐ XP +${a}`,'#44ff44');checkLevelUp();}
       spawnParticles(it.x,it.z,it.type==='hp'?'#ff4444':it.type==='mp'?'#4444ff':'#ffcc00',15);playSound('pickup');updateHUD();
     }
   }

@@ -3,7 +3,7 @@
 //  SAVE / LOAD (localStorage)
 // ═══════════════════════════════════
 function saveProgress(){
-  const data={floor,currentCipherStage,cipherSolved,player:{level:player.level,xp:player.xp,xpNext:player.xpNext,hp:player.hp,maxHp:player.maxHp,mp:player.mp,maxMp:player.maxMp,gold:player.gold,kills:player.kills,attackPower:player.attackPower,defense:player.defense},totalStreak,startTime};
+  const data={floor,currentCipherStage,cipherSolved,player:{level:player.level,xp:player.xp,xpNext:player.xpNext,hp:player.hp,maxHp:player.maxHp,mp:player.mp,maxMp:player.maxMp,kills:player.kills,attackPower:player.attackPower,defense:player.defense},totalStreak,startTime};
   localStorage.setItem('cipherDungeonSave',JSON.stringify(data));
 }
 function loadProgress(){
@@ -17,7 +17,7 @@ function loadProgress(){
       player.level=d.player.level||1;player.xp=d.player.xp||0;player.xpNext=d.player.xpNext||100;
       player.hp=d.player.hp||100;player.maxHp=d.player.maxHp||100;
       player.mp=d.player.mp||50;player.maxMp=d.player.maxMp||50;
-      player.gold=d.player.gold||0;player.kills=d.player.kills||0;
+      player.kills=d.player.kills||0;
       player.attackPower=d.player.attackPower||22;player.defense=d.player.defense||5;
     }
     return true;

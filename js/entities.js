@@ -1,13 +1,10 @@
 // Entities & UI - Kill, LevelUp, Particles, HUD, Minimap
 function killEnemy(e){
-  scene.remove(e.mesh);player.xp+=e.xp;player.gold+=e.gold;player.kills++;
+  scene.remove(e.mesh);player.xp+=e.xp;player.kills++;
   spawnParticles(e.x,e.z,'#ffaa00',25);checkLevelUp();updateHUD();
-  // Always drop: 35% HP, 45% MP(=XP via MP regen), 20% gold
+  // Always drop: 35% HP, 25% MP, 40% XP
   const roll=Math.random();
-  spawnItemAt(e.x,e.z,roll<.35?'hp':roll<.8?'mp':'gold');
-  // Bonus XP drop (always)
-  player.xp+=~~(e.xp*.3);
-  showMessage(`+${~~(e.xp*.3)} Bonus XP`,'#aaffaa');
+  spawnItemAt(e.x,e.z,roll<.35?'hp':roll<.6?'mp':'xp');
   e.hp=-1;
 }
 
@@ -57,7 +54,7 @@ function drawMinimap(){
   mmCtx.fillStyle='#000';mmCtx.fillRect(0,0,120,120);
   for(let y=0;y<MAP_H;y++)for(let x=0;x<MAP_W;x++)if(map[y][x]===0){mmCtx.fillStyle='#2a2a1a';mmCtx.fillRect(x*cw,y*ch,cw,ch);}
   for(const e of enemies)if(e.hp>0){mmCtx.fillStyle=e.inBattle?'#ff8800':'#ff3333';mmCtx.fillRect(e.x/TILE*cw-1,e.z/TILE*ch-1,3,3);}
-  for(const it of items)if(!it.collected){mmCtx.fillStyle=it.type==='hp'?'#ff6666':it.type==='mp'?'#6666ff':'#ffcc00';mmCtx.fillRect(it.x/TILE*cw-1,it.z/TILE*ch-1,3,3);}
+  for(const it of items)if(!it.collected){mmCtx.fillStyle=it.type==='hp'?'#ff6666':it.type==='mp'?'#6666ff':'#44ff44';mmCtx.fillRect(it.x/TILE*cw-1,it.z/TILE*ch-1,3,3);}
   if(!cipherSolved){mmCtx.fillStyle='#00ff41';mmCtx.fillRect(terminalX/TILE*cw-2,terminalZ/TILE*ch-2,5,5);}
   mmCtx.fillStyle=cipherSolved?'#44ff44':'#442222';mmCtx.fillRect(dungeon.stairX*cw-2,dungeon.stairY*ch-2,5,5);
   const ppx=player.x/TILE*cw,ppz=player.z/TILE*ch;
