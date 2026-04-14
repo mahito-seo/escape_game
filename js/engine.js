@@ -5,9 +5,9 @@ const pCtx=pCanvas.getContext('2d');
 let W=window.innerWidth,H=window.innerHeight;
 canvas.width=W;canvas.height=H;pCanvas.width=W;pCanvas.height=H;
 
-const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
-renderer.setSize(W,H);renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+const renderer=new THREE.WebGLRenderer({canvas,antialias:false}); // antialias off for perf
+renderer.setSize(W,H);renderer.setPixelRatio(Math.min(devicePixelRatio,1.5)); // cap pixel ratio
+renderer.shadowMap.enabled=false; // shadows off for perf
 renderer.toneMapping=THREE.ReinhardToneMapping;renderer.toneMappingExposure=2.0;
 
 const scene=new THREE.Scene();

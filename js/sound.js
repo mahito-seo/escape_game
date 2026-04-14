@@ -29,33 +29,35 @@ function playSound(name){
 // ═══════════════════════════════════
 // Place MP3 files as: audio/bgm1.mp3 ~ audio/bgm6.mp3
 // If a file doesn't exist, that floor plays in silence.
-// Try .ogg first then .mp3 (browser support varies)
+// Try .mp3 first (Safari), then .ogg (Chrome/Firefox)
 const BGM_BASES=['audio/bgm1','audio/bgm2','audio/bgm3','audio/bgm4','audio/bgm5','audio/bgm6'];
+const BGM_VOL=0.15; // master BGM volume
+const BGM_VOL_MUTED=0.04; // during battle/cipher
 let bgmAudio=null;
 let bgmPlaying=false;
 let bgmCurrentFloor=-1;
-
-function tryPlayAudio(base,exts,vol,loop){
-  return new Promise((resolve)=>{
-    function tryNext(i){
-      if(i>=exts.length){resolve(null);return;}
-      const a=new Audio(base+exts[i]);
-      a.loop=loop;a.volume=vol;
-      a.play().then(()=>resolve(a)).catch(()=>tryNext(i+1));
-    }
-    tryNext(0);
-  });
-}
 
 function startBGM(floorNum){
   if(bgmPlaying && bgmCurrentFloor===floorNum) return;
   stopBGM();
   bgmCurrentFloor=floorNum;
   const base=BGM_BASES[(floorNum-1)%BGM_BASES.length];
-  tryPlayAudio(base,['.ogg','.mp3'],0.3,true).then(a=>{
-    if(a){bgmAudio=a;bgmPlaying=true;}
-    else{bgmAudio=null;bgmPlaying=false;}
-  });
+  // Determine supported format
+  const testA=new Audio();
+  const canMP3=testA.canPlayType('audio/mpeg')!=='';
+  const canOGG=testA.canPlayType('audio/ogg')!=='';
+  const exts=[];
+  if(canMP3)exts.push('.mp3');
+  if(canOGG)exts.push('.ogg');
+  if(!exts.length){bgmPlaying=false;return;}
+  // Try each extension
+  function tryExt(i){
+    if(i>=exts.length){bgmPlaying=false;return;}
+    const a=new Audio(base+exts[i]);
+    a.loop=true;a.volume=BGM_VOL;
+    a.play().then(()=>{bgmAudio=a;bgmPlaying=true;}).catch(()=>tryExt(i+1));
+  }
+  tryExt(0);
 }
 
 function stopBGM(){
@@ -72,5 +74,5 @@ function setBGMVolume(vol){
   if(bgmAudio) bgmAudio.volume=vol;
 }
 
-function muteBGM(){setBGMVolume(0.08);}
-function unmuteBGM(){setBGMVolume(0.3);}
+function muteBGM(){setBGMVolume(BGM_VOL_MUTED);}
+function unmuteBGM(){setBGMVolume(BGM_VOL);}

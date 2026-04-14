@@ -1,4 +1,12 @@
 // Game Loop, Input, Pause System
+
+// Cache DOM elements (avoid getElementById every frame)
+const _elApproach=document.getElementById('approach-indicator');
+const _elApproachText=document.getElementById('approach-text');
+const _elApproachRing=document.querySelector('.approach-ring');
+const _elMinimap=document.getElementById('minimap');
+const _elMinimapCD=document.getElementById('minimap-countdown');
+
 function updateCDs(dt){
   player.skills.forEach((s,i)=>{
     if(s.cd>0)s.cd=Math.max(0,s.cd-dt);
@@ -13,21 +21,22 @@ function updateTorches(t){for(const tc of torches){
   tc.light.intensity=tc.base+Math.sin(t*3+tc.base)*.4;
   tc.flame.scale.set(1+Math.sin(t*7)*.2,1+Math.cos(t*5)*.3,1+Math.sin(t*6)*.2);
   tc.flame.rotation.z=Math.sin(t*4)*.15;
-  if(tc.flame2){tc.flame2.scale.set(1+Math.sin(t*9)*.25,1+Math.cos(t*6)*.35,1+Math.sin(t*8)*.25);tc.flame2.rotation.z=Math.cos(t*5)*.2;}
+  if(tc.flame2){tc.flame2.scale.y=1+Math.cos(t*6)*.35;}
   if(tc.ember){tc.ember.material.opacity=.3+Math.sin(t*4+tc.base)*.15;}
 }}
 
 let lastTime=0;
+let hudThrottle=0; // only update HUD every 5 frames
 function loop(ts){
   requestAnimationFrame(loop);
-  if(gameState==='battle'||gameState==='cipher'||gameState==='title'||gameState==='dead'||gameState==='complete'||gameState==='paused'||gameState==='swap')return;
+  if(gameState!=='playing')return;
   const dt=Math.min((ts-lastTime)/1000,.05);lastTime=ts;
 
   player.yaw-=mouse.dx*.002;
   player.pitch=Math.max(-Math.PI/3,Math.min(Math.PI/3,player.pitch-mouse.dy*.002));
   mouse.dx=0;mouse.dy=0;
 
-  const spd=player.speed*(1+(player.level-1)*.12); // bigger speed boost per level
+  const spd=player.speed*(1+(player.level-1)*.12);
   let mx=0,mz=0;
   if(keys['KeyW']||keys['ArrowUp']){mx+=Math.sin(player.yaw+Math.PI)*spd;mz+=Math.cos(player.yaw+Math.PI)*spd;}
   if(keys['KeyS']||keys['ArrowDown']){mx-=Math.sin(player.yaw+Math.PI)*spd;mz-=Math.cos(player.yaw+Math.PI)*spd;}
@@ -41,54 +50,68 @@ function loop(ts){
   camera.rotation.order='YXZ';camera.rotation.y=player.yaw;camera.rotation.x=player.pitch;
 
   player.mp=Math.min(player.maxMp,player.mp+dt*2);
-  updateEnemies(dt);updateProjectiles();checkTerminal();checkItems();checkStair();updateCDs(dt);updateTorches(ts/1000);
+  updateEnemies(dt);updateProjectiles();checkTerminal();checkItems();checkStair();updateCDs(dt);
 
-  // Animate terminal
+  // Animate torches every other frame
+  if(ts%2<1)updateTorches(ts/1000);
+
+  // Animate terminal (only if nearby)
   if(terminalMesh&&!cipherSolved){
-    terminalMesh.children.forEach((c,i)=>{if(i>=3)return;c.position.y=1.5+Math.sin(ts/1000*2+i*2)*.2;c.rotation.y+=dt*(1+i*.5);c.rotation.x+=dt*.5;});
-    if(terminalGlow)terminalGlow.scale.setScalar(1+Math.sin(ts/500)*.3);
-    if(terminalLight)terminalLight.intensity=3+Math.sin(ts/400)*.8;
+    const tdx=terminalX-player.x,tdz=terminalZ-player.z;
+    if(tdx*tdx+tdz*tdz<400){ // only animate if within ~20 tiles
+      terminalMesh.children.forEach((c,i)=>{if(i>=3)return;c.position.y=1.5+Math.sin(ts/1000*2+i*2)*.2;c.rotation.y+=dt*(1+i*.5);});
+      if(terminalGlow)terminalGlow.scale.setScalar(1+Math.sin(ts/500)*.3);
+      if(terminalLight)terminalLight.intensity=3+Math.sin(ts/400)*.8;
+    }
   }
   if(stairMesh)stairMesh.rotation.y+=dt*.3;
 
-  // Approach indicator
-  const ai=document.getElementById('approach-indicator'),at=document.getElementById('approach-text');
+  // Approach indicator (cached DOM)
   if(approachTarget&&!battleActive&&!cipherActive){
-    ai.classList.add('show');
-    if(approachTarget==='terminal'){at.textContent='🔓 DECRYPT!';document.querySelector('.approach-ring').style.borderColor='rgba(0,255,65,.8)';}
-    else{at.textContent='⚔ BATTLE!';document.querySelector('.approach-ring').style.borderColor='rgba(255,100,0,.8)';}
-  }else ai.classList.remove('show');
+    _elApproach.classList.add('show');
+    if(approachTarget==='terminal'){_elApproachText.textContent='🔓 DECRYPT!';_elApproachRing.style.borderColor='rgba(0,255,65,.8)';}
+    else{_elApproachText.textContent='⚔ BATTLE!';_elApproachRing.style.borderColor='rgba(255,100,0,.8)';}
+  }else _elApproach.classList.remove('show');
 
+  // Item animation (skip far items)
   const t=ts/1000;
-  for(const it of items)if(!it.collected&&it.mesh){it.mesh.position.y=.4+Math.sin(t*2+it.x)*.15;it.mesh.rotation.y+=dt;}
-  updateHUD();
+  for(const it of items){
+    if(it.collected||!it.mesh)continue;
+    const dx=it.x-player.x,dz=it.z-player.z;
+    if(dx*dx+dz*dz<600){it.mesh.position.y=.4+Math.sin(t*2+it.x)*.15;it.mesh.rotation.y+=dt;}
+  }
+
+  // HUD: update every 5 frames instead of every frame
+  if(++hudThrottle>=5){hudThrottle=0;updateHUD();}
+
   // Minimap only visible during reveal
   if(minimapRevealEnd>0){
-    document.getElementById('minimap').style.display='block';
+    _elMinimap.style.display='block';
     drawMinimap();
     const rem=Math.max(0,Math.ceil((minimapRevealEnd-Date.now())/1000));
-    document.getElementById('minimap-countdown').textContent=rem+'s';
-    if(Date.now()>=minimapRevealEnd){minimapRevealEnd=0;document.getElementById('minimap').style.display='none';}
+    _elMinimapCD.textContent=rem+'s';
+    if(Date.now()>=minimapRevealEnd){minimapRevealEnd=0;_elMinimap.style.display='none';}
   }
+
   pCtx.clearRect(0,0,W,H);drawParticles();
   renderer.render(scene,camera);
 }
 
 let minimapRevealEnd=0;
-const MINIMAP_COST=15; // MP cost to reveal map
-const MINIMAP_DURATION=5000; // 5 seconds
+const MINIMAP_COST=15;
+const MINIMAP_DURATION=5000;
 function revealMinimap(){
   if(player.mp<MINIMAP_COST){showMessage('MPが不足！','#ff8888');return;}
   player.mp-=MINIMAP_COST;
   minimapRevealEnd=Date.now()+MINIMAP_DURATION;
-  document.getElementById('minimap').style.display='block';
+  _elMinimap.style.display='block';
   showMessage('🗺️ マップ表示！(5秒間)','#66ccff');playSound('pickup');
   updateHUD();
 }
 
 let prevStateBeforePause=null;
 let pauseStartedAt=0;
-let totalPausedMs=0; // accumulated pause+swap time to subtract from score
+let totalPausedMs=0;
 function togglePause(){
   if(gameState==='paused'){
     totalPausedMs+=Date.now()-pauseStartedAt;
@@ -108,17 +131,35 @@ document.addEventListener('keydown',e=>{
   if(e.code==='Escape'){
     if(gameState==='playing'||gameState==='paused'){togglePause();e.preventDefault();return;}
   }
-  // DEBUG: Ctrl+Shift+L = skip floor (TODO: remove later)
-  if((e.metaKey||e.ctrlKey)&&e.shiftKey&&e.code==='KeyL'&&gameState==='playing'){
+  // DEBUG: Ctrl+Shift+L = skip floor / instant win in battle (TODO: remove later)
+  if((e.metaKey||e.ctrlKey)&&e.shiftKey&&e.code==='KeyL'){
     e.preventDefault();
-    currentCipherStage++;
-    if(currentCipherStage>=CIPHER_STAGES.length){gameComplete();return;}
-    floor++;cipherSolved=false;escapeCount=0;
-    dungeon=genDungeon();buildScene();
-    player.hp=player.maxHp;player.mp=player.maxMp;
-    updateHUD();showMessage(`⏩ DEBUG: Floor ${floor} へスキップ`,'#ff00ff');
-    startBGM(floor);saveProgress();
-    return;
+    if(gameState==='battle'){
+      // Instant win
+      stopBattleTimer();if(battleEnemy)killEnemy(battleEnemy);
+      closeBattle();showMessage('⏩ DEBUG: 即勝利','#ff00ff');
+      return;
+    }
+    if(gameState==='cipher'){
+      // Close cipher and mark solved
+      cipherSolved=true;closeCipherModal();
+      if(stairMesh){scene.remove(stairMesh);if(stairLight)scene.remove(stairLight);}
+      if(terminalMesh){scene.remove(terminalMesh);terminalMesh=null;}
+      if(terminalLight){scene.remove(terminalLight);terminalLight=null;}
+      if(terminalGlow){scene.remove(terminalGlow);terminalGlow=null;}
+      showMessage('⏩ DEBUG: 暗号スキップ','#ff00ff');updateHUD();
+      return;
+    }
+    if(gameState==='playing'){
+      currentCipherStage++;
+      if(currentCipherStage>=CIPHER_STAGES.length){gameComplete();return;}
+      floor++;cipherSolved=false;escapeCount=0;
+      dungeon=genDungeon();buildScene();
+      player.hp=player.maxHp;player.mp=player.maxMp;
+      updateHUD();showMessage(`⏩ DEBUG: Floor ${floor} へスキップ`,'#ff00ff');
+      startBGM(floor);saveProgress();
+      return;
+    }
   }
   if(gameState==='playing'){if(e.code==='Digit2')useSkill(0);if(e.code==='Digit3')useSkill(1);if(e.code==='Digit4')useSkill(2);if(e.code==='Digit5')revealMinimap();}
   if(gameState!=='battle'&&gameState!=='cipher')e.preventDefault();
@@ -127,6 +168,3 @@ document.addEventListener('keyup',e=>keys[e.code]=false);
 document.addEventListener('mousemove',e=>{if(!pointerLocked||gameState!=='playing')return;mouse.dx+=e.movementX;mouse.dy+=e.movementY;});
 canvas.addEventListener('click',()=>{if(gameState==='playing')canvas.requestPointerLock();});
 document.addEventListener('pointerlockchange',()=>pointerLocked=document.pointerLockElement===canvas);
-
-// ═══════════════════════════════════
-//  SOUND SYSTEM (Web Audio API)
