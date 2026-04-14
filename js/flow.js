@@ -39,7 +39,7 @@ function stopMobTimer(){
 }
 function tickMob(){
   // Don't count down during pause or swap
-  if(gameState==='paused'||gameState==='swap')return;
+  if(gameState==='paused'||gameState==='swap'||gameState==='dead')return;
   mobTimeLeft--;
   if(mobTimeLeft<=0){
     mobCurrentIdx=(mobCurrentIdx+1)%MOB_PLAYERS.length;
