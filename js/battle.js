@@ -17,7 +17,7 @@ function openBattle(e){
   if(battleActive||cipherActive)return;
   battleActive=true; battleEnemy=e; e.inBattle=true;
   battleQList=pickQuestions(floor); battleQIdx=0; roundCorrect=0;
-  gameState='battle'; document.exitPointerLock(); playSound('battle');
+  gameState='battle'; document.exitPointerLock(); playSound('battle'); muteBGM();
   const ef=document.getElementById('encounter-flash');
   [0,200,400].forEach(t=>{setTimeout(()=>{ef.classList.add('flash');setTimeout(()=>ef.classList.remove('flash'),120);},t);});
   document.getElementById('b-enemy-avatar').textContent=e.avatar||'👹';
@@ -181,6 +181,7 @@ function closeBattle(){
   battleActive=false;battleEnemy=null;
   document.getElementById('battle-modal').classList.remove('open');
   gameState='playing';setTimeout(()=>canvas.requestPointerLock(),350);
+  unmuteBGM();
 }
 
 // ═══════════════════════════════════

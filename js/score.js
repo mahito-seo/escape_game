@@ -19,7 +19,7 @@ function calcScore(){
 }
 
 function gameComplete(){
-  gameState='complete';document.exitPointerLock();playSound('clear');
+  gameState='complete';document.exitPointerLock();playSound('clear');stopBGM();
   const sc=calcScore();
   const min=~~(sc.elapsed/60),sec=sc.elapsed%60;
   const isExtra=currentCipherStage>=6; // completed extra stage
@@ -65,5 +65,6 @@ function startExtraStage(){
   dungeon=genDungeon();buildScene();
   gameState='playing';canvas.requestPointerLock();
   updateHUD();saveProgress();
+  startBGM(floor);
 }
 

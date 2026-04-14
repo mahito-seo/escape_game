@@ -100,5 +100,6 @@ function checkStair(){
     player.mp=Math.min(player.maxMp,player.mp+~~(player.maxMp*.5));
     updateHUD();spawnParticles(player.x,player.z,'#44ffaa',30);
     saveProgress();
+    startBGM(floor);
   }
 }

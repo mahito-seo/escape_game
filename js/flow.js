@@ -16,6 +16,7 @@ function startGame(){
     }
     updateHUD();
     startMobTimer();
+    startBGM(floor);
   },1000);
 }
 
@@ -91,7 +92,7 @@ function resetToTitle(){
   battleActive=false;cipherActive=false;
   clearInterval(battleTimerInt);clearInterval(cipherTimerInt);
   if(agentLockoutTimer)clearInterval(agentLockoutTimer);
-  stopMobTimer();
+  stopMobTimer();stopBGM();
   clearSave();
   document.exitPointerLock();
   // Reset state

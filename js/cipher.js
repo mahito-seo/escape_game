@@ -7,7 +7,7 @@ const MAX_AGENT_WRONG=5, LOCKOUT_SEC=300;
 
 function openCipherModal(){
   if(cipherActive||cipherSolved||battleActive)return;
-  cipherActive=true;gameState='cipher';document.exitPointerLock();cipherPhase=1;
+  cipherActive=true;gameState='cipher';document.exitPointerLock();cipherPhase=1;muteBGM();
   const s=CIPHER_STAGES[currentCipherStage];
   document.getElementById('cm-avatar').textContent=s.avatar;
   document.getElementById('cm-stage-sub').textContent=s.name;
@@ -190,6 +190,7 @@ function closeCipherModal(){
   cipherActive=false;cipherPhase=1;
   document.getElementById('cipher-modal').classList.remove('open');
   gameState='playing';setTimeout(()=>canvas.requestPointerLock(),350);
+  unmuteBGM();
 }
 document.getElementById('c-input').addEventListener('keydown',e=>{if(e.key==='Enter')submitCipherAnswer();});
 
