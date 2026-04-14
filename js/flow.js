@@ -38,8 +38,8 @@ function stopMobTimer(){
   document.getElementById('mob-timer').classList.remove('active');
 }
 function tickMob(){
-  // Don't count down during pause or swap
-  if(gameState==='paused'||gameState==='swap'||gameState==='dead')return;
+  // Don't count down during pause, swap, death, battle, or cipher
+  if(gameState==='paused'||gameState==='swap'||gameState==='dead'||gameState==='battle'||gameState==='cipher')return;
   mobTimeLeft--;
   if(mobTimeLeft<=0){
     mobCurrentIdx=(mobCurrentIdx+1)%MOB_PLAYERS.length;
