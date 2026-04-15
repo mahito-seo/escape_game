@@ -84,6 +84,8 @@ function buildScene(){
   rooms.forEach((r,i)=>{
     if(i%2===0)placeTorch(r.x*TILE+.5,r.y*TILE+.5);
     if(r.w>4&&r.h>4)placeTorch((r.x+r.w-1)*TILE-.5,(r.y+r.h-1)*TILE-.5);
+    // Pillars in larger rooms
+    if(r.w>=4&&r.h>=4)spawnRoomPillars(r,theme);
   });
 
   const r0=rooms[0];
@@ -355,6 +357,93 @@ function spawnDecorations(rm){
     g.position.set(px,0,pz);scene.add(g);
     // Add collision (except flat/thin items)
     if(collR>0.1)decoBlocks.push({x:px,z:pz,r:collR});
+  }
+}
+
+// Theme-specific floor-to-ceiling pillars
+function spawnRoomPillars(rm,theme){
+  const H=TILE*1.2; // ceiling height
+  const fi=(floor-1)%FLOOR_THEMES.length;
+  // Place pillars at room corners (inset slightly)
+  const corners=[[rm.x+.8,rm.y+.8],[rm.x+rm.w-.8,rm.y+.8],[rm.x+.8,rm.y+rm.h-.8],[rm.x+rm.w-.8,rm.y+rm.h-.8]];
+  // Extra large rooms get center pillars too
+  if(rm.w>=6&&rm.h>=6){
+    corners.push([rm.x+~~(rm.w/2),rm.y+.8],[rm.x+~~(rm.w/2),rm.y+rm.h-.8]);
+  }
+  for(const[cx,cz] of corners){
+    if(Math.random()>.6)continue; // 60% chance per corner
+    const px=cx*TILE,pz=cz*TILE;
+    const g=new THREE.Group();
+    const baseMat=new THREE.MeshStandardMaterial({color:theme.wall,emissive:new THREE.Color(theme.wall).multiplyScalar(.05),roughness:.7,metalness:.15});
+    const accentMat=new THREE.MeshStandardMaterial({color:new THREE.Color(theme.wall).multiplyScalar(1.3),roughness:.6,metalness:.2});
+
+    if(fi===0){
+      // Ancient Ruins: stone column with base/capital
+      const base=new THREE.Mesh(new THREE.BoxGeometry(.6,.15,.6),baseMat);base.position.y=.08;g.add(base);
+      const shaft=new THREE.Mesh(new THREE.BoxGeometry(.35,H-.3,.35),baseMat);shaft.position.y=H/2;g.add(shaft);
+      const capital=new THREE.Mesh(new THREE.BoxGeometry(.55,.15,.55),baseMat);capital.position.y=H-.08;g.add(capital);
+      // Cracks
+      const crack=new THREE.Mesh(new THREE.BoxGeometry(.02,H*.4,.36),new THREE.MeshStandardMaterial({color:0x1a1a10}));
+      crack.position.set(.17,H*.4,0);g.add(crack);
+    }else if(fi===1){
+      // Ice Cave: frozen crystal column
+      const iceMat=new THREE.MeshStandardMaterial({color:0x88bbdd,emissive:0x224466,emissiveIntensity:.8,transparent:true,opacity:.75,metalness:.3,roughness:.3});
+      const shaft=new THREE.Mesh(new THREE.BoxGeometry(.3,H,.3),iceMat);shaft.position.y=H/2;g.add(shaft);
+      // Ice spikes
+      const spike1=new THREE.Mesh(new THREE.BoxGeometry(.15,.6,.15),iceMat);spike1.position.set(.2,H*.3,.2);spike1.rotation.z=.2;g.add(spike1);
+      const spike2=new THREE.Mesh(new THREE.BoxGeometry(.12,.5,.12),iceMat);spike2.position.set(-.18,H*.6,-.15);spike2.rotation.z=-.15;g.add(spike2);
+    }else if(fi===2){
+      // Lava: dark stone pillar with glowing cracks
+      const shaft=new THREE.Mesh(new THREE.BoxGeometry(.4,H,.4),baseMat);shaft.position.y=H/2;g.add(shaft);
+      const glowMat=new THREE.MeshStandardMaterial({color:0xff4400,emissive:0xff2200,emissiveIntensity:2,transparent:true,opacity:.6});
+      for(let i=0;i<3;i++){
+        const crack=new THREE.Mesh(new THREE.BoxGeometry(.02,H*.2,.42),glowMat);
+        crack.position.set(.2,H*.2+i*H*.3,0);g.add(crack);
+      }
+    }else if(fi===3){
+      // Dark Forest: tree trunk pillar with roots/branches
+      const woodMat=new THREE.MeshStandardMaterial({color:0x3a2a10,emissive:0x0a0800,roughness:.95});
+      const trunk=new THREE.Mesh(new THREE.BoxGeometry(.35,H,.35),woodMat);trunk.position.y=H/2;g.add(trunk);
+      // Roots at base
+      for(let i=0;i<3;i++){
+        const a=i*Math.PI*2/3;
+        const root=new THREE.Mesh(new THREE.BoxGeometry(.12,.2,.4),woodMat);
+        root.position.set(Math.cos(a)*.25,.1,Math.sin(a)*.25);root.rotation.y=a;g.add(root);
+      }
+      // Branch at top
+      const branch=new THREE.Mesh(new THREE.BoxGeometry(.5,.12,.12),woodMat);
+      branch.position.set(.3,H-.3,0);branch.rotation.z=-.3;g.add(branch);
+      // Vines
+      const vineMat=new THREE.MeshStandardMaterial({color:0x2a5a1a,emissive:0x0a1a00});
+      const vine=new THREE.Mesh(new THREE.BoxGeometry(.04,H*.5,.04),vineMat);vine.position.set(.18,H*.5,.18);g.add(vine);
+    }else if(fi===4){
+      // Abyss Temple: ornate dark stone with rune glow
+      const shaft=new THREE.Mesh(new THREE.BoxGeometry(.35,H,.35),baseMat);shaft.position.y=H/2;g.add(shaft);
+      const base=new THREE.Mesh(new THREE.BoxGeometry(.5,.2,.5),baseMat);base.position.y=.1;g.add(base);
+      const cap=new THREE.Mesh(new THREE.BoxGeometry(.5,.15,.5),baseMat);cap.position.y=H-.08;g.add(cap);
+      // Glowing runes
+      const runeMat=new THREE.MeshStandardMaterial({color:0x8844ff,emissive:0x6622cc,emissiveIntensity:2,transparent:true,opacity:.5});
+      for(let i=0;i<3;i++){
+        const rune=new THREE.Mesh(new THREE.BoxGeometry(.36,.08,.02),runeMat);
+        rune.position.set(0,H*.25+i*H*.25,.18);g.add(rune);
+      }
+    }else if(fi===5){
+      // Phoenix Furnace: iron pillar with chains and ember glow
+      const ironMat=new THREE.MeshStandardMaterial({color:0x3a3a3a,roughness:.6,metalness:.5});
+      const shaft=new THREE.Mesh(new THREE.BoxGeometry(.3,H,.3),ironMat);shaft.position.y=H/2;g.add(shaft);
+      // Metal rings
+      for(let i=0;i<4;i++){
+        const ring=new THREE.Mesh(new THREE.BoxGeometry(.45,.06,.45),ironMat);
+        ring.position.y=H*.15+i*H*.25;g.add(ring);
+      }
+      // Ember glow at base
+      const emberMat=new THREE.MeshStandardMaterial({color:0xff4400,emissive:0xff2200,emissiveIntensity:2,transparent:true,opacity:.4});
+      const ember=new THREE.Mesh(new THREE.BoxGeometry(.4,.1,.4),emberMat);ember.position.y=.05;g.add(ember);
+    }
+
+    g.position.set(px,0,pz);
+    scene.add(g);
+    decoBlocks.push({x:px,z:pz,r:.4}); // collision
   }
 }
 
