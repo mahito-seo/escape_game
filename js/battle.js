@@ -60,7 +60,9 @@ function loadQ(){
     ['A','B','C','D'].forEach((l,i)=>{
       if(i>=q.choices.length)return;
       const b=document.createElement('button');b.className='choice-btn';
-      b.innerHTML=`<span class="choice-letter">${l}</span><code>${q.choices[i]}</code>`;
+      const ltr=document.createElement('span');ltr.className='choice-letter';ltr.textContent=l;
+      const code=document.createElement('code');code.textContent=q.choices[i];
+      b.appendChild(ltr);b.appendChild(code);
       b.onclick=()=>submitChoice(i);cg.appendChild(b);
     });
   }else{
