@@ -18,14 +18,16 @@ function checkLevelUp(){
     player.maxHp+=20;player.hp=player.maxHp;player.maxMp+=10;player.mp=player.maxMp;
     player.attackPower+=8;player.defense+=2;
     showMessage(`⬆ LEVEL UP! Lv.${player.level}`,'#aaffaa');playSound('levelup');
-    spawnParticles(player.x,player.z,'#88ff88',40);
+    spawnParticles(player.x,player.z,'#88ff88',15);
   }
 }
 
-function spawnParticles(x3,z3,color,n=15){
+function spawnParticles(x3,z3,color,n=10){
+  if(pParticles.length>80)return; // cap total particles for perf
   const v=new THREE.Vector3(x3,1.2,z3);v.project(camera);if(v.z>1)return;
   const px=(v.x+1)/2*W,py=(1-v.y)/2*H;
-  for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,sp=1+Math.random()*4;pParticles.push({x:px,y:py,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,life:1,decay:.02+Math.random()*.03,size:2+Math.random()*4,color});}
+  const count=Math.min(n,15); // max 15 per burst
+  for(let i=0;i<count;i++){const a=Math.random()*Math.PI*2,sp=1+Math.random()*3;pParticles.push({x:px,y:py,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,life:1,decay:.03+Math.random()*.04,size:2+Math.random()*3,color});}
 }
 function drawParticles(){
   pParticles=pParticles.filter(p=>p.life>0);

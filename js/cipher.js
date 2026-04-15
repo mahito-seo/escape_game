@@ -10,11 +10,36 @@ function openCipherModal(){
   cipherActive=true;gameState='cipher';document.exitPointerLock();cipherPhase=1;muteBGM();
   const s=CIPHER_STAGES[currentCipherStage];
   document.getElementById('cm-avatar').textContent=s.avatar;
+  document.getElementById('cm-name').textContent='暗号ターミナル';
   document.getElementById('cm-stage-sub').textContent=s.name;
   document.getElementById('cm-mission').textContent=s.mission;
   document.getElementById('cm-data').textContent=s.data;
+  document.getElementById('cm-data').style.display='';
   document.getElementById('cm-hint').textContent=s.hint;
   document.getElementById('cm-footer').textContent=s.footer;
+  document.getElementById('cipher-close-btn').style.display='none';
+  // Show in-game editor if stage has template
+  if(s.template){
+    document.getElementById('code-editor-wrap').classList.add('show');
+    document.getElementById('code-editor').value=s.template;
+    document.getElementById('code-editor').disabled=false;
+    document.getElementById('code-output-wrap').classList.remove('show');
+    document.getElementById('code-run-btn').onclick=()=>{
+      try{
+        const result=miniPyEval(document.getElementById('code-editor').value);
+        document.getElementById('code-output-wrap').classList.add('show');
+        document.getElementById('code-output').textContent=result||'(出力なし)';
+        document.getElementById('code-output').style.color=result.startsWith('Error')?'#ff6666':'#ffaa88';
+      }catch(e){
+        document.getElementById('code-output-wrap').classList.add('show');
+        document.getElementById('code-output').textContent='Error: '+e.message;
+        document.getElementById('code-output').style.color='#ff6666';
+      }
+    };
+  }else{
+    document.getElementById('code-editor-wrap').classList.remove('show');
+    document.getElementById('code-output-wrap').classList.remove('show');
+  }
   document.getElementById('c-input').value='';document.getElementById('c-input').disabled=false;
   document.getElementById('c-submit').disabled=false;
   document.getElementById('c-result').style.display='none';document.getElementById('c-result').className='';
@@ -250,6 +275,9 @@ function cipherTimeOut(){
 function closeCipherModal(){
   cipherActive=false;cipherPhase=1;
   document.getElementById('cipher-modal').classList.remove('open');
+  document.getElementById('code-editor-wrap').classList.remove('show');
+  document.getElementById('code-output-wrap').classList.remove('show');
+  document.getElementById('cm-data').style.display='';
   gameState='playing';setTimeout(()=>canvas.requestPointerLock(),350);
   unmuteBGM();
 }
