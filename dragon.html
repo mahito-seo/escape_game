@@ -330,19 +330,30 @@
   <h2>暗号の迷宮 〜 脱出せよ 〜</h2>
   <div class="title-divider"></div>
   <button id="start-btn" onclick="startGame()">🔓 ENTER THE DUNGEON 🔓</button>
-  <p class="title-desc">敵を倒しながらダンジョンを探索せよ<br>暗号ターミナルで5つの暗号を解読すれば脱出できる</p>
+  <p class="title-desc">拠点が攻撃された。全データが暗号ロックされた。<br>地下施設を突破し、5つの暗号を解読して脱出せよ。</p>
 </div>
 
 <!-- Tutorial -->
 <div id="tutorial-screen">
   <div class="tutorial-box">
-    <h1>📖 ゲームの遊び方</h1>
+    <h1>📖 BRIEFING</h1>
 
-    <div class="tutorial-section">
-      <h3>🎯 目的</h3>
-      <p>ダンジョンを探索し、各フロアの<span style="color:#00ff41;">暗号ターミナル（緑の光）</span>を見つけて<br>
-      Pythonで暗号を解読 → AIエージェントで謎を解く → 脱出口へ進む<br>
-      全5ステージをクリアすれば脱出成功！</p>
+    <div class="tutorial-section" style="border-color:#ff6600;">
+      <h3 style="color:#ff8844;">📡 緊急通信</h3>
+      <p style="color:#ffcc88;">エージェント、聞こえるか。<br><br>
+      我々の拠点「<span style="color:#ff6600;">SHADOW NETWORK</span>」が何者かに攻撃された。<br>
+      全システムが暗号ロックされ、エージェントの情報、作戦データ、<br>
+      緊急連絡プロトコル… すべてが地下施設の各階層に散らばった。<br><br>
+      施設内のセキュリティシステムが暴走し、<br>
+      <span style="color:#ff4444;">侵入者排除プログラム（モンスター）</span>が徘徊している。<br><br>
+      君のミッションはこうだ：<br>
+      <span style="color:#00ff41;">① 各階層の暗号ターミナルを見つけ、Pythonで暗号を解読せよ</span><br>
+      <span style="color:#ff6600;">② 復号した機密データをAIエージェントに渡し、情報を繋げよ</span><br>
+      <span style="color:#44aaff;">③ 5つの階層を突破し、脱出コードを手に入れろ</span><br><br>
+      データは層を重ねるほど複雑になる。<br>
+      だが覚えておけ…<span style="color:#ffcc00;">すべてのデータは繋がっている。</span><br>
+      一つでも欠ければ、最後の暗号は解けない。<br><br>
+      健闘を祈る。</p>
     </div>
 
     <div class="tutorial-section">
@@ -353,42 +364,34 @@
     </div>
 
     <div class="tutorial-section">
-      <h3>⚔ モンスターバトル</h3>
-      <p>敵に近づくとPythonクイズバトルが始まります。<br>
-      正解すると敵にダメージ！ 不正解だと自分がダメージ！<br>
-      敵を倒すと<span style="color:#44ff44;">XP（経験値）</span>と<span style="color:#ff6666;">HP回復</span>を獲得。<br>
-      スキル（火球・雷撃）を当てれば直接ダメージも可能。</p>
+      <h3>⚔ セキュリティプログラム（敵）</h3>
+      <p>施設内のセキュリティプログラムが暴走している。<br>
+      接触するとPythonクイズで<span style="color:#ff8844;">認証バトル</span>が始まる。<br>
+      正解で無力化（ダメージ）、不正解で反撃を受ける。<br>
+      倒すと<span style="color:#44ff44;">XP</span>と<span style="color:#ff6666;">HP回復</span>を獲得。スキルで直接攻撃も可能。</p>
     </div>
 
     <div class="tutorial-section">
-      <h3>📈 レベルシステム</h3>
-      <p>XPを貯めるとレベルアップ！ HP/MP/攻撃力/移動速度が上がります。<br>
-      <span style="color:#ff8844;">各フロアの暗号を解くにはフロア番号以上のレベルが必要です。</span><br>
-      例: 2階の暗号 → Lv.2以上必須。レベルが足りなければ敵を倒して上げよう！</p>
+      <h3>📈 セキュリティクリアランス（レベル）</h3>
+      <p>XPを貯めるとクリアランスレベルが上がる。HP/MP/攻撃力/移動速度UP。<br>
+      <span style="color:#ff8844;">各階層の暗号ターミナルはクリアランスレベルが必要。</span><br>
+      2階 → Lv.2以上、3階 → Lv.3以上… レベルが足りなければ敵を倒せ！</p>
     </div>
 
     <div class="tutorial-section">
       <h3>🔐 暗号解読（2フェーズ制）</h3>
-      <p><strong style="color:#00ff41;">Phase 1:</strong> Pythonファイル（stage1.py～）のコードを完成させてパスフレーズを入力<br>
-      <strong style="color:#ff6600;">Phase 2:</strong> 機密データをAIエージェントに渡し、質問に答える<br>
-      3回間違えると2分間の見直し時間が発生。制限時間切れは3分の見直し時間。</p>
+      <p><strong style="color:#00ff41;">Phase 1:</strong> Pythonファイルのコードを完成させてパスフレーズを入力<br>
+      <strong style="color:#ff6600;">Phase 2:</strong> 復号した機密データをAIエージェントに渡し、推論で答えを導く<br>
+      <span style="color:#888;">※ 3回間違え→2分見直し / 制限時間切れ→3分見直し</span></p>
     </div>
 
     <div class="tutorial-section">
       <h3>👥 モブプログラミング（3人1組）</h3>
-      <p>5分ごとにドライバー交代の通知が表示されます。<br>
-      交代時はゲームが一時停止するので、落ち着いて交代してください。<br>
-      交代中のタイマーはスコアに影響しません。</p>
+      <p>5分ごとにドライバー交代。交代中はゲーム一時停止。<br>
+      チームで役割を分担しよう：操作担当・コード担当・Agent担当</p>
     </div>
 
-    <div class="tutorial-section">
-      <h3>🏆 スコア</h3>
-      <p>クリアタイム + 戦闘XP + 連続正解ボーナスで RANK S～E が決まります。<br>
-      ポーズ中・交代中・休憩中の時間はカウントされません。<br>
-      HPが0になると5分の休憩ペナルティ → スポーン地点に戻されます。</p>
-    </div>
-
-    <button class="tutorial-start-btn" onclick="closeTutorial()">▶ ゲームスタート</button>
+    <button class="tutorial-start-btn" onclick="closeTutorial()">▶ ミッション開始</button>
   </div>
 </div>
 

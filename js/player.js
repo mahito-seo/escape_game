@@ -105,7 +105,9 @@ function checkStair(){
     floor++;cipherSolved=false;escapeCount=0;
     playSound('portal');
     const nextTheme=FLOOR_THEMES[(floor-1)%FLOOR_THEMES.length];
-    showMessage(`⬇ ${floor}階「${nextTheme.name}」へ！`,'#44ffaa');
+    const storyMsg=['','','さらに深くへ… データの核心に近づいている','連絡プロトコルが見えてきた… あと少しだ','最深部だ。すべてがここで繋がる'];
+    showMessage(`⬇ ${floor}階「${nextTheme.name}」`,'#44ffaa');
+    if(storyMsg[floor-1])showMessage(storyMsg[floor-1],'#ffcc88');
     dungeon=genDungeon();buildScene();
     player.hp=Math.min(player.maxHp,player.hp+50); // +50 HP on stage clear
     player.mp=player.maxMp; // full MP restore

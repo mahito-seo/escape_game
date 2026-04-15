@@ -26,8 +26,8 @@ function actualStart(hasSave){
   if(hasSave){
     showMessage(`セーブデータをロード！ Stage ${currentCipherStage+1} / Floor ${floor}`,'#ffcc44');
   }else{
-    showMessage('暗号の迷宮へようこそ！','#88ffaa');
-    showMessage(`1階「${FLOOR_THEMES[0].name}」- 暗号ターミナルを探せ！`,'#00ff41');
+    showMessage('SHADOW NETWORK 地下施設に侵入','#88ffaa');
+    showMessage(`1階「${FLOOR_THEMES[0].name}」— 暗号ターミナルを探せ`,'#00ff41');
   }
   updateHUD();
   startMobTimer();

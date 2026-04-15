@@ -25,7 +25,7 @@ function gameComplete(){
     `<span style="font-size:14px;color:#888;">Lv.${player.level} | ${player.kills}体撃破 | 🔥${totalStreak}連続正解</span>`;
 
   if(isExtra){
-    // TRUE ENDING - S rank guaranteed + BIG fanfare
+    // TRUE ENDING
     playSound('truefanfare');
     document.getElementById('overlay-title').innerHTML=`🔥 TRUE ESCAPE 🔥`;
     document.getElementById('overlay-title').style.color='#ff8800';
@@ -33,23 +33,32 @@ function gameComplete(){
       `<span style="font-size:80px;display:block;margin-bottom:12px;color:#ffdd00;text-shadow:0 0 40px #ffdd00;font-family:'Cinzel Decorative',serif;">RANK S</span>`+
       `<span style="font-size:28px;color:#ffdd00;">PERFECT CLEAR</span><br><br>`+
       statsLine+`<br><br>`+
-      `<span style="color:#ff8800;font-size:16px;">エクストラステージクリア！真の脱出者です！</span>`;
+      `<span style="color:#ffcc88;font-size:15px;line-height:1.8;">全エージェントの帰還指令を復号した。<br>`+
+      `SHADOW NETWORKの全データを奪還し、<br>`+
+      `攻撃者の痕跡を突き止めた。<br><br>`+
+      `<span style="color:#ff8800;">君は真のエージェントだ。</span></span>`;
     document.getElementById('overlay-btn').textContent='もう一度挑戦する';
     document.getElementById('overlay-btn').style.display='inline-block';
     document.getElementById('overlay-btn').onclick=restartGame;
   }else{
-    // NORMAL ENDING - fanfare + looks like a final screen
+    // NORMAL ENDING
     playSound('fanfare');
-    document.getElementById('overlay-title').innerHTML=`🔓 ESCAPE SUCCESS 🔓`;
+    document.getElementById('overlay-title').innerHTML=`🔓 MISSION COMPLETE 🔓`;
     document.getElementById('overlay-title').style.color='#00ff41';
     document.getElementById('overlay-sub').innerHTML=
       `<span style="font-size:72px;display:block;margin-bottom:12px;color:${sc.rankColor};text-shadow:0 0 30px ${sc.rankColor};font-family:'Cinzel Decorative',serif;">RANK ${sc.rank}</span>`+
       `<span style="font-size:28px;color:${sc.rankColor};">${sc.total}pts</span><br><br>`+
       statsLine+`<br><br>`+
-      `<span style="font-size:16px;color:#88ffaa;">おめでとうございます！<br>全5ステージの暗号を解読し、ダンジョンから脱出しました！</span><br><br>`+
-      `<span style="font-size:13px;color:#668866;">学んだ暗号技術：<br>・文字列の逆順（Stage 1）<br>・ASCIIオフセット（Stage 2）<br>・Base64+hex（Stage 3）<br>・XOR暗号（Stage 4）<br>・多重暗号（Stage 5）</span><br><br>`+
-      `<span style="font-size:11px;color:#444;cursor:pointer;text-decoration:underline;" onclick="document.getElementById('extra-reveal').style.display='block'">…しかし、まだ隠されたステージがあるらしい</span>`+
-      `<div id="extra-reveal" style="display:none;margin-top:16px;"><button onclick="startExtraStage()" style="font-family:'Cinzel',serif;font-size:14px;letter-spacing:3px;color:#000;background:linear-gradient(135deg,#ff8844,#cc4400);border:none;padding:12px 36px;cursor:pointer;border-radius:3px;box-shadow:0 0 20px rgba(255,100,0,.5);">🔥 EXTRA STAGE へ挑む 🔥</button></div>`;
+      `<span style="font-size:15px;color:#88ffaa;line-height:1.8;">ミッション完了。<br>`+
+      `5つの暗号を解読し、脱出コードを手に入れた。<br>`+
+      `エージェントの配置情報、作戦データ、優先度マップ、<br>`+
+      `緊急連絡プロトコル… すべてのデータを繋ぎ、<br>`+
+      `SHADOW NETWORKからの脱出に成功した。</span><br><br>`+
+      `<span style="font-size:13px;color:#668866;">習得スキル：リスト操作 / chr関数 / 辞書ソート / 文字列処理 / 関数パイプライン</span><br><br>`+
+      `<span style="font-size:11px;color:#555;cursor:pointer;text-decoration:underline;" onclick="document.getElementById('extra-reveal').style.display='block'">…しかし、施設の最深部にもう一つの階層があるという噂が…</span>`+
+      `<div id="extra-reveal" style="display:none;margin-top:16px;">`+
+      `<p style="color:#ff8844;font-size:12px;margin-bottom:10px;">帰還指令がまだ復号されていない。全エージェントが危険な状態だ。</p>`+
+      `<button onclick="startExtraStage()" style="font-family:'Cinzel',serif;font-size:14px;letter-spacing:3px;color:#000;background:linear-gradient(135deg,#ff8844,#cc4400);border:none;padding:12px 36px;cursor:pointer;border-radius:3px;box-shadow:0 0 20px rgba(255,100,0,.5);">🔥 EXTRA STAGE — 帰還指令を復号する 🔥</button></div>`;
     document.getElementById('overlay-btn').textContent='終了する';
     document.getElementById('overlay-btn').style.display='inline-block';
     document.getElementById('overlay-btn').onclick=resetToTitle;
@@ -62,8 +71,8 @@ function startExtraStage(){
   document.getElementById('overlay-btn').onclick=restartGame;
   floor++;cipherSolved=false;escapeCount=0;
   playSound('battle');
-  showMessage('🔥 EXTRA STAGE — 不死鳥の炉','#ff4400');
-  showMessage('ここからが本当の試練だ…','#ff8844');
+  showMessage('🔥 最高機密区画「不死鳥の炉」','#ff4400');
+  showMessage('帰還指令を復号せよ。全エージェントの命がかかっている。','#ff8844');
   dungeon=genDungeon();buildScene();
   gameState='playing';canvas.requestPointerLock();
   updateHUD();saveProgress();
