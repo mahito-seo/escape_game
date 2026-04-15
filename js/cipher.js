@@ -28,10 +28,12 @@ function openCipherModal(){
   startCipherTimer();setTimeout(()=>document.getElementById('c-input').focus(),100);
 }
 function startCipherTimer(){
-  clearInterval(cipherTimerInt);cipherTimerVal=90+currentCipherStage*30;
-  const el=document.getElementById('cipher-timer');el.classList.remove('danger');el.textContent=cipherTimerVal;
-  cipherTimerInt=setInterval(()=>{cipherTimerVal--;el.textContent=cipherTimerVal;
-    if(cipherTimerVal<=15)el.classList.add('danger');
+  clearInterval(cipherTimerInt);cipherTimerVal=300+currentCipherStage*60; // 5min base + 1min per stage
+  const el=document.getElementById('cipher-timer');el.classList.remove('danger');
+  const fmtTime=(s)=>{const m=Math.floor(s/60);return m>0?`${m}:${String(s%60).padStart(2,'0')}`:String(s);};
+  el.textContent=fmtTime(cipherTimerVal);
+  cipherTimerInt=setInterval(()=>{cipherTimerVal--;el.textContent=fmtTime(cipherTimerVal);
+    if(cipherTimerVal<=30)el.classList.add('danger');
     if(cipherTimerVal<=0){clearInterval(cipherTimerInt);cipherTimeOut();}
   },1000);
 }
