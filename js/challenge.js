@@ -21,6 +21,8 @@ function miniPyEval(code){
       .replace(/\bstr\((.+?)\)/g,'String($1)')
       .replace(/\bint\((.+?)\)/g,'parseInt($1)')
       .replace(/\bfloat\((.+?)\)/g,'parseFloat($1)')
+      .replace(/\bchr\((.+?)\)/g,'String.fromCharCode($1)')
+      .replace(/\bord\((.+?)\)/g,'($1).charCodeAt(0)')
       .replace(/\babs\((.+?)\)/g,'Math.abs($1)')
       .replace(/\bmax\((.+?)\)/g,'Math.max($1)')
       .replace(/\bmin\((.+?)\)/g,'Math.min($1)')
@@ -32,6 +34,7 @@ function miniPyEval(code){
       .replace(/\.upper\(\)/g,'.toUpperCase()')
       .replace(/\.lower\(\)/g,'.toLowerCase()')
       .replace(/\.count\((.+?)\)/g,'.split($1).length-1')
+      .replace(/\.sort\(\)/g,'.sort((a,b)=>a>b?1:a<b?-1:0)')
       .replace(/\.replace\((.+?),\s*(.+?)\)/g,'.replaceAll($1,$2)')
       .replace(/\.split\((.+?)\)/g,'.split($1)')
       .replace(/\.join\((.+?)\)/g,'($1).join(this)')
@@ -44,6 +47,8 @@ function miniPyEval(code){
       .replace(/(\w+)\.values\(\)/g,'Object.values($1)')
       .replace(/(\w+)\.keys\(\)/g,'Object.keys($1)')
       .replace(/(\w+)\.items\(\)/g,'Object.entries($1)')
+      // [::-1] reverse for strings/arrays
+      .replace(/(\w+)\[::\s*-1\]/g,'(typeof $1==="string"?$1.split("").reverse().join(""):$1.slice().reverse())')
       // ** power
       .replace(/(\d+)\s*\*\*\s*(\d+)/g,'Math.pow($1,$2)')
       // // integer division
@@ -56,22 +61,45 @@ function miniPyEval(code){
     // Fix join pattern: "x".join(y) → y.join("x")
     js=js.replace(/"([^"]*)"\s*\.\s*join\s*\(\s*(\w+)\s*\)/g,'$2.join("$1")');
     js=js.replace(/'([^']*)'\s*\.\s*join\s*\(\s*(\w+)\s*\)/g,"$2.join('$1')");
-    // Handle def/return with simple single-line functions
+    // for x in range(a,b): → special handling (convert range inline)
+    js=js.replace(/^(\s*)for\s+(\w+)\s+in\s+range\((\d+),\s*(\d+)\)\s*:/gm,
+      '$1for(let $2=$3;$2<$4;$2++){');
+    js=js.replace(/^(\s*)for\s+(\w+)\s+in\s+range\((\d+)\)\s*:/gm,
+      '$1for(let $2=0;$2<$3;$2++){');
+    // for x in variable: → for(const x of ...)
+    js=js.replace(/^(\s*)for\s+(\w+)\s+in\s+(\w+)\s*:/gm,'$1for(const $2 of (Array.isArray($3)?$3:Object.keys($3))){');
+    js=js.replace(/^(\s*)for\s+(\w+)\s+in\s+(.+?)\s*:/gm,'$1for(const $2 of $3){');
+    // if condition: → if(condition){
+    js=js.replace(/^(\s*)if\s+(.+?)\s*:/gm,'$1if($2){');
+    // elif → }else if
+    js=js.replace(/^(\s*)elif\s+(.+?)\s*:/gm,'$1}else if($2){');
+    // else: → }else{
+    js=js.replace(/^(\s*)else\s*:/gm,'$1}else{');
+    // Handle def/return
     js=js.replace(/def\s+(\w+)\s*\(([^)]*)\)\s*:/g,'function $1($2){');
     js=js.replace(/^\s*return\s+/gm,'return ');
-    // Add closing braces for functions (very rough)
+    // += for strings (Python: result += x, JS same but need no change)
+    // Handle indentation-based blocks → add closing braces
     const lines=js.split('\n');
-    let result=[];let inFunc=false;
+    let result=[];
+    let blockStack=[]; // track indent levels that opened blocks
     for(let i=0;i<lines.length;i++){
       const line=lines[i];
-      if(line.match(/^function\s/)){
-        if(inFunc)result.push('}');
-        inFunc=true;result.push(line);
-      }else if(inFunc&&line.match(/^\S/)&&!line.match(/^return/)){
-        result.push('}');inFunc=false;result.push(line);
-      }else{result.push(line);}
+      const trimmed=line.trimStart();
+      const indent=line.length-trimmed.length;
+      // Close blocks when indent decreases
+      while(blockStack.length>0&&indent<=blockStack[blockStack.length-1]&&trimmed.length>0){
+        blockStack.pop();
+        result.push(' '.repeat(indent)+'}');
+      }
+      // Track block openers
+      if(trimmed.match(/^(for|if|else|function|def)\b/)&&line.includes('{')){
+        blockStack.push(indent);
+      }
+      result.push(line);
     }
-    if(inFunc)result.push('}');
+    // Close remaining blocks
+    while(blockStack.length>0){blockStack.pop();result.push('}');}
     js=result.join('\n');
 
     const __out=[];
