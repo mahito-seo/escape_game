@@ -2,50 +2,43 @@
 ==============================================
   Stage 2 — 数字の手紙（簡単）
 ==============================================
-  暗号方式: ASCII文字コード + オフセット
-  目標: 数字のリストを文字に変換してパスフレーズを得る
+  暗号方式: ASCII文字コード
+  目標: 数値リストを文字に変換する
 ==============================================
 """
 from verify import check
 
-# 暗号データ（各数字は文字コード + オフセット）
-encrypted = [72, 78, 85, 77, 74, 87]
-
-# オフセット値
-OFFSET = 5
+# 暗号データ（ASCII文字コード）
+codes = [67, 73, 80, 72, 69, 82]
 
 
-def decode(numbers, offset):
+def decode(codes):
     """
-    数字のリストからオフセットを引いてASCII文字に変換する関数
+    ASCII文字コードのリストからパスフレーズを組み立てる関数
 
     【やること】
-    1. リストの各数字から offset を引く
-    2. 引いた結果をASCII文字に変換する
-    3. すべての文字をつなげて返す
+    1. リストの各数字をASCII文字に変換する
+    2. すべての文字をつなげて返す
 
     【ヒント】
-    - chr(数値) で数値をASCII文字に変換できます
-      例: chr(65) → 'A', chr(66) → 'B'
-    - for文でリストの各要素を処理しましょう
+    - chr(65) → 'A', chr(66) → 'B', chr(67) → 'C'
+    - 各コードに chr() を適用しましょう
     """
 
     result = ""
 
-    for num in numbers:
+    for code in codes:
         # ===== ここを埋めてください =====
-        char = chr(num - offset)
+        pass  # ← code を chr() で文字に変換して result に追加
         # ================================
-        result += char
 
     return result
 
 
 # 実行
 if __name__ == "__main__":
-    answer = decode(encrypted, OFFSET)
-    print(f"暗号データ: {encrypted}")
-    print(f"オフセット: {OFFSET}")
+    answer = decode(codes)
+    print(f"暗号データ: {codes}")
     print(f"復号結果: {answer}")
     print()
 

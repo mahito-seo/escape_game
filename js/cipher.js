@@ -72,16 +72,51 @@ async function submitCipherAnswer(){
   }else{
     cipherWrongCount++;r.style.display='flex';r.className='wrong-res';
     document.getElementById('cr-icon').textContent='❌';
-    document.getElementById('cr-msg').innerHTML=`不正解… (${cipherWrongCount}回目)`;
-    document.getElementById('c-continue-btn').style.display='inline-block';
-    document.getElementById('c-continue-btn').textContent='再挑戦 ▶';
-    document.getElementById('c-continue-btn').onclick=()=>{
-      r.style.display='none';document.getElementById('c-input').value='';startCipherTimer();document.getElementById('c-input').focus();
-    };
-    if(cipherWrongCount>=5){
-      document.getElementById('cr-msg').innerHTML='5回不正解…ターミナルがロック。もう一度近づいて挑戦しよう。';
+    const remain=3-cipherWrongCount;
+    if(remain>0){
+      document.getElementById('cr-msg').innerHTML=`不正解… (${cipherWrongCount}/3回) あと${remain}回で休憩`;
+      document.getElementById('c-continue-btn').style.display='inline-block';
+      document.getElementById('c-continue-btn').textContent='再挑戦 ▶';
+      document.getElementById('c-continue-btn').onclick=()=>{
+        r.style.display='none';document.getElementById('c-input').value='';startCipherTimer();document.getElementById('c-input').focus();
+      };
+    }else{
+      // 3回不正解 → 強制休憩
+      document.getElementById('cr-msg').innerHTML='3回不正解… 休憩してからもう一度挑戦しよう。';
+      document.getElementById('c-continue-btn').style.display='inline-block';
       document.getElementById('c-continue-btn').textContent='閉じる';
-      document.getElementById('c-continue-btn').onclick=()=>{closeCipherModal();cipherWrongCount=0;};
+      document.getElementById('c-continue-btn').onclick=()=>{
+        closeCipherModal();cipherWrongCount=0;
+        // Trigger death-like rest (but shorter - 2 min)
+        gameState='dead';document.exitPointerLock();
+        document.getElementById('overlay-title').textContent='☕ 休憩タイム';
+        document.getElementById('overlay-title').style.color='#ffcc00';
+        document.getElementById('overlay-btn').style.display='none';
+        const endTime=Date.now()+120000; // 2 minutes
+        const restInt=setInterval(()=>{
+          const rem=Math.max(0,Math.ceil((endTime-Date.now())/1000));
+          const m=Math.floor(rem/60),s=rem%60;
+          document.getElementById('overlay-sub').innerHTML=
+            `<span style="font-size:16px;color:#ffcc00;">暗号解読に3回失敗しました</span><br><br>`+
+            `<span style="font-size:48px;font-family:'Cinzel Decorative',serif;color:#ffcc00;">${m}:${String(s).padStart(2,'0')}</span><br><br>`+
+            `<span style="color:#aaa;font-size:14px;">少し休憩して、コードを見直しましょう！</span>`;
+          if(rem<=0){
+            clearInterval(restInt);
+            totalPausedMs+=120000;
+            document.getElementById('overlay-title').textContent='🔄 再挑戦！';
+            document.getElementById('overlay-title').style.color='#44ff88';
+            document.getElementById('overlay-sub').innerHTML='休憩完了！ ターミナルに近づいて再挑戦しよう。';
+            document.getElementById('overlay-btn').style.display='inline-block';
+            document.getElementById('overlay-btn').textContent='続行する';
+            document.getElementById('overlay-btn').onclick=()=>{
+              document.getElementById('overlay-screen').classList.remove('show');
+              document.getElementById('overlay-btn').onclick=restartGame;
+              gameState='playing';canvas.requestPointerLock();updateHUD();
+            };
+          }
+        },1000);
+        document.getElementById('overlay-screen').classList.add('show');
+      };
     }
   }
 }
