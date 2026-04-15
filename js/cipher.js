@@ -13,13 +13,13 @@ function openCipherModal(){
   document.getElementById('cm-name').textContent='暗号ターミナル';
   document.getElementById('cm-stage-sub').textContent=s.name;
   document.getElementById('cm-mission').textContent=s.mission;
-  document.getElementById('cm-data').textContent=s.data;
-  document.getElementById('cm-data').style.display='';
   document.getElementById('cm-hint').textContent=s.hint;
   document.getElementById('cm-footer').textContent=s.footer;
   document.getElementById('cipher-close-btn').style.display='none';
-  // Show in-game editor if stage has template
+  cipherCodeRan=false; // must run code before submitting
+  // Show in-game editor if stage has template (hide raw data block)
   if(s.template){
+    document.getElementById('cm-data').style.display='none';
     document.getElementById('code-editor-wrap').classList.add('show');
     document.getElementById('code-editor').value=s.template;
     document.getElementById('code-editor').disabled=false;
@@ -29,7 +29,12 @@ function openCipherModal(){
         const result=miniPyEval(document.getElementById('code-editor').value);
         document.getElementById('code-output-wrap').classList.add('show');
         document.getElementById('code-output').textContent=result||'(出力なし)';
-        document.getElementById('code-output').style.color=result.startsWith('Error')?'#ff6666':'#ffaa88';
+        if(result.startsWith('Error')){
+          document.getElementById('code-output').style.color='#ff6666';
+        }else{
+          document.getElementById('code-output').style.color='#44ff88';
+          cipherCodeRan=true; // allow passphrase submit
+        }
       }catch(e){
         document.getElementById('code-output-wrap').classList.add('show');
         document.getElementById('code-output').textContent='Error: '+e.message;
@@ -37,8 +42,11 @@ function openCipherModal(){
       }
     };
   }else{
+    document.getElementById('cm-data').textContent=s.data;
+    document.getElementById('cm-data').style.display='';
     document.getElementById('code-editor-wrap').classList.remove('show');
     document.getElementById('code-output-wrap').classList.remove('show');
+    cipherCodeRan=true; // no template = no run required
   }
   document.getElementById('c-input').value='';document.getElementById('c-input').disabled=false;
   document.getElementById('c-submit').disabled=false;
@@ -64,8 +72,10 @@ function startCipherTimer(){
 }
 function stopCipherTimer(){clearInterval(cipherTimerInt);document.getElementById('cipher-timer').classList.remove('danger');}
 
+let cipherCodeRan=false;
 async function submitCipherAnswer(){
   const v=document.getElementById('c-input').value.trim().toUpperCase();if(!v)return;
+  if(!cipherCodeRan){showMessage('⚠ まずコードを実行してください！','#ff8844');return;}
   stopCipherTimer();const s=CIPHER_STAGES[currentCipherStage],h=await sha256(v);
   const r=document.getElementById('c-result');
   if(h===s.passHash){
