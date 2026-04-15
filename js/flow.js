@@ -1,23 +1,37 @@
 // Game Flow - Start, Mob Timer, Reset, Restart
 function startGame(){
-  // Try to load save
   const hasSave=loadProgress();
   if(!hasSave)startTime=Date.now();
   document.getElementById('title-screen').style.opacity='0';
   setTimeout(()=>{
     document.getElementById('title-screen').style.display='none';
-    if(hasSave){dungeon=genDungeon();buildScene();}
-    gameState='playing';canvas.requestPointerLock();
     if(hasSave){
-      showMessage(`セーブデータをロード！ Stage ${currentCipherStage+1} / Floor ${floor}`,'#ffcc44');
+      // Saved game: skip tutorial, start immediately
+      dungeon=genDungeon();buildScene();
+      actualStart(true);
     }else{
-      showMessage('暗号の迷宮へようこそ！','#88ffaa');
-      showMessage(`1階「${FLOOR_THEMES[0].name}」- 暗号ターミナルを探せ！`,'#00ff41');
+      // New game: show tutorial first
+      document.getElementById('tutorial-screen').classList.add('show');
     }
-    updateHUD();
-    startMobTimer();
-    startBGM(floor);
   },1000);
+}
+
+function closeTutorial(){
+  document.getElementById('tutorial-screen').classList.remove('show');
+  actualStart(false);
+}
+
+function actualStart(hasSave){
+  gameState='playing';canvas.requestPointerLock();
+  if(hasSave){
+    showMessage(`セーブデータをロード！ Stage ${currentCipherStage+1} / Floor ${floor}`,'#ffcc44');
+  }else{
+    showMessage('暗号の迷宮へようこそ！','#88ffaa');
+    showMessage(`1階「${FLOOR_THEMES[0].name}」- 暗号ターミナルを探せ！`,'#00ff41');
+  }
+  updateHUD();
+  startMobTimer();
+  startBGM(floor);
 }
 
 // ═══════════════════════════════════

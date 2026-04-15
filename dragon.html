@@ -237,6 +237,18 @@
   #pause-screen p { font-size:16px; color:#66aa88; letter-spacing:3px; margin-bottom:32px; }
   .pause-btn { font-family:'Cinzel',serif; font-size:14px; letter-spacing:3px; color:#000; background:linear-gradient(135deg,#88ffaa,#00aa41); border:none; padding:12px 36px; cursor:pointer; border-radius:3px; margin:6px; pointer-events:all; }
 
+  /* ── Tutorial Screen ── */
+  #tutorial-screen { position:fixed; inset:0; background:rgba(0,0,0,.95); display:none; flex-direction:column; align-items:center; justify-content:flex-start; z-index:110; overflow-y:auto; padding:40px 20px; }
+  #tutorial-screen.show { display:flex; }
+  .tutorial-box { max-width:700px; width:100%; }
+  .tutorial-box h1 { font-family:'Cinzel Decorative',serif; font-size:32px; color:#00ff41; text-shadow:0 0 20px rgba(0,255,65,.5); text-align:center; margin-bottom:24px; }
+  .tutorial-section { background:rgba(0,20,10,.6); border:1px solid #00aa41; border-radius:6px; padding:16px 20px; margin-bottom:16px; }
+  .tutorial-section h3 { color:#44ffaa; font-size:15px; margin-bottom:8px; letter-spacing:2px; }
+  .tutorial-section p { color:#aaccaa; font-size:13px; line-height:1.8; font-family:'Source Code Pro',monospace; }
+  .tutorial-section .key { display:inline-block; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2); border-radius:3px; padding:1px 6px; font-size:12px; color:#ddd; margin:0 2px; }
+  .tutorial-start-btn { display:block; margin:24px auto 0; font-family:'Cinzel',serif; font-size:16px; letter-spacing:4px; color:#000; background:linear-gradient(135deg,#88ffaa,#00aa41); border:none; padding:14px 48px; cursor:pointer; border-radius:3px; font-weight:600; box-shadow:0 0 20px rgba(0,200,65,.5); }
+  .tutorial-start-btn:hover { transform:scale(1.03); }
+
   .dev-reset {
     position:fixed; bottom:12px; right:12px;
     padding:6px 14px; background:#333; color:#ff4444;
@@ -319,6 +331,65 @@
   <div class="title-divider"></div>
   <button id="start-btn" onclick="startGame()">🔓 ENTER THE DUNGEON 🔓</button>
   <p class="title-desc">敵を倒しながらダンジョンを探索せよ<br>暗号ターミナルで5つの暗号を解読すれば脱出できる</p>
+</div>
+
+<!-- Tutorial -->
+<div id="tutorial-screen">
+  <div class="tutorial-box">
+    <h1>📖 ゲームの遊び方</h1>
+
+    <div class="tutorial-section">
+      <h3>🎯 目的</h3>
+      <p>ダンジョンを探索し、各フロアの<span style="color:#00ff41;">暗号ターミナル（緑の光）</span>を見つけて<br>
+      Pythonで暗号を解読 → AIエージェントで謎を解く → 脱出口へ進む<br>
+      全5ステージをクリアすれば脱出成功！</p>
+    </div>
+
+    <div class="tutorial-section">
+      <h3>🎮 操作方法</h3>
+      <p><span class="key">W</span> 前進　<span class="key">S</span> 後退　<span class="key">A</span> 右移動　<span class="key">D</span> 左移動<br>
+      <span class="key">マウス</span> 視点移動　<span class="key">ESC</span> ポーズ<br>
+      <span class="key">2</span> 🔥火球　<span class="key">3</span> ⚡雷撃　<span class="key">4</span> 💊回復　<span class="key">5</span> 🗺️マップ(5秒/MP30)</p>
+    </div>
+
+    <div class="tutorial-section">
+      <h3>⚔ モンスターバトル</h3>
+      <p>敵に近づくとPythonクイズバトルが始まります。<br>
+      正解すると敵にダメージ！ 不正解だと自分がダメージ！<br>
+      敵を倒すと<span style="color:#44ff44;">XP（経験値）</span>と<span style="color:#ff6666;">HP回復</span>を獲得。<br>
+      スキル（火球・雷撃）を当てれば直接ダメージも可能。</p>
+    </div>
+
+    <div class="tutorial-section">
+      <h3>📈 レベルシステム</h3>
+      <p>XPを貯めるとレベルアップ！ HP/MP/攻撃力/移動速度が上がります。<br>
+      <span style="color:#ff8844;">各フロアの暗号を解くにはフロア番号以上のレベルが必要です。</span><br>
+      例: 2階の暗号 → Lv.2以上必須。レベルが足りなければ敵を倒して上げよう！</p>
+    </div>
+
+    <div class="tutorial-section">
+      <h3>🔐 暗号解読（2フェーズ制）</h3>
+      <p><strong style="color:#00ff41;">Phase 1:</strong> Pythonファイル（stage1.py～）のコードを完成させてパスフレーズを入力<br>
+      <strong style="color:#ff6600;">Phase 2:</strong> 機密データをAIエージェントに渡し、質問に答える<br>
+      3回間違えると2分間の見直し時間が発生。制限時間切れは3分の見直し時間。</p>
+    </div>
+
+    <div class="tutorial-section">
+      <h3>👥 モブプログラミング（3人1組）</h3>
+      <p>5分ごとにドライバー交代の通知が表示されます。<br>
+      交代時はゲームが一時停止するので、落ち着いて交代してください。<br>
+      交代中のタイマーはスコアに影響しません。</p>
+    </div>
+
+    <div class="tutorial-section">
+      <h3>🏆 スコア</h3>
+      <p>クリアタイム + 戦闘XP + 連続正解ボーナスで RANK S～E が決まります。<br>
+      ポーズ中・交代中・休憩中の時間はカウントされません。<br>
+      HPが0になると5分の休憩ペナルティ → スポーン地点に戻されます。</p>
+    </div>
+
+    <button class="tutorial-start-btn" onclick="closeTutorial()">▶ ゲームスタート</button>
+  </div>
 </div>
 
 <!-- Overlay -->

@@ -214,13 +214,37 @@ function agentComplete(){
 }
 
 function cipherTimeOut(){
-  const r=document.getElementById('c-result');r.style.display='flex';r.className='wrong-res';
-  document.getElementById('cr-icon').textContent='⏰';
-  document.getElementById('cr-msg').innerHTML='時間切れ…もう一度近づいて挑戦しよう。';
   document.getElementById('c-input').disabled=true;document.getElementById('c-submit').disabled=true;
-  document.getElementById('c-continue-btn').style.display='inline-block';
-  document.getElementById('c-continue-btn').textContent='閉じる';
-  document.getElementById('c-continue-btn').onclick=()=>closeCipherModal();
+  closeCipherModal();
+  // 3 minute review time
+  gameState='dead';document.exitPointerLock();
+  document.getElementById('overlay-title').textContent='⏰ 時間切れ';
+  document.getElementById('overlay-title').style.color='#ffcc00';
+  document.getElementById('overlay-btn').style.display='none';
+  const endTime=Date.now()+180000;
+  const revInt=setInterval(()=>{
+    const rem=Math.max(0,Math.ceil((endTime-Date.now())/1000));
+    const m=Math.floor(rem/60),s=rem%60;
+    document.getElementById('overlay-sub').innerHTML=
+      `<span style="font-size:16px;color:#ffcc00;">暗号の制限時間を超えました</span><br><br>`+
+      `<span style="font-size:48px;font-family:'Cinzel Decorative',serif;color:#ffcc00;">${m}:${String(s).padStart(2,'0')}</span><br><br>`+
+      `<span style="color:#aaa;font-size:14px;">📝 プログラムを見直す時間です！<br>stage${Math.min(currentCipherStage+1,6)}.py のコードを確認しましょう。<br>ヒントを読み直してみてください。</span>`;
+    if(rem<=0){
+      clearInterval(revInt);
+      totalPausedMs+=180000;
+      document.getElementById('overlay-title').textContent='🔄 再挑戦！';
+      document.getElementById('overlay-title').style.color='#44ff88';
+      document.getElementById('overlay-sub').innerHTML='見直し完了！ ターミナルに近づいて再挑戦しよう。';
+      document.getElementById('overlay-btn').style.display='inline-block';
+      document.getElementById('overlay-btn').textContent='続行する';
+      document.getElementById('overlay-btn').onclick=()=>{
+        document.getElementById('overlay-screen').classList.remove('show');
+        document.getElementById('overlay-btn').onclick=restartGame;
+        gameState='playing';canvas.requestPointerLock();updateHUD();
+      };
+    }
+  },1000);
+  document.getElementById('overlay-screen').classList.add('show');
 }
 
 function closeCipherModal(){
