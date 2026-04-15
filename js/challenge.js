@@ -7,8 +7,14 @@
 function miniPyEval(code){
   let output=[];
   try{
+    // Strip Python comments first (# ...)
+    let js=code.split('\n').map(line=>{
+      // Remove # comments (but not inside strings)
+      const idx=line.search(/(?<!['"\\])#/);
+      return idx>=0?line.substring(0,idx):line;
+    }).join('\n');
     // Convert common Python to JS
-    let js=code
+    js=js
       .replace(/print\((.+)\)/g,'__out.push(String($1))')
       .replace(/\bTrue\b/g,'true').replace(/\bFalse\b/g,'false').replace(/\bNone\b/g,'null')
       .replace(/\blen\((.+?)\)/g,'($1).length')
@@ -210,12 +216,19 @@ function openCodingChallenge(ct){
   // Close button
   document.getElementById('cipher-close-btn').style.display='inline-block';
 
-  // Run button
+  // Run button - always re-executable
   document.getElementById('code-run-btn').onclick=()=>{
-    const code=editor.value;
-    const result=miniPyEval(code);
-    document.getElementById('code-output-wrap').classList.add('show');
-    document.getElementById('code-output').textContent=result||'(出力なし)';
+    try{
+      const code=editor.value;
+      const result=miniPyEval(code);
+      document.getElementById('code-output-wrap').classList.add('show');
+      document.getElementById('code-output').textContent=result||'(出力なし)';
+      document.getElementById('code-output').style.color=result.startsWith('Error')?'#ff6666':'#ffaa88';
+    }catch(e){
+      document.getElementById('code-output-wrap').classList.add('show');
+      document.getElementById('code-output').textContent='Error: '+e.message;
+      document.getElementById('code-output').style.color='#ff6666';
+    }
   };
 
   // Timer (120s)
