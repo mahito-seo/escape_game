@@ -40,8 +40,8 @@ let approachTarget=null; // enemy or 'terminal'
 function updateEnemies(dt){
   battleCooldown=Math.max(0,battleCooldown-dt);
   approachTarget=null;
-  // Freeze enemies during cipher solving
-  if(cipherActive)return;
+  // Freeze enemies during cipher/challenge
+  if(cipherActive||challengeActive)return;
   const TRIGGER_DIST=1.6;
   for(const e of enemies){
     if(e.hp<=0)continue;
