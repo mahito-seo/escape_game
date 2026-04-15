@@ -66,4 +66,14 @@ function drawMinimap(){
   mmCtx.strokeStyle='#fff';mmCtx.lineWidth=1;mmCtx.beginPath();mmCtx.moveTo(ppx,ppz);mmCtx.lineTo(ppx+Math.sin(player.yaw+Math.PI)*8,ppz+Math.cos(player.yaw+Math.PI)*8);mmCtx.stroke();
 }
 
-function isWall(x,z){const mx=Math.round(x/TILE),mz=Math.round(z/TILE);if(mx<0||mx>=MAP_W||mz<0||mz>=MAP_H)return true;return dungeon.map[mz][mx]===1;}
+function isWall(x,z){
+  const mx=Math.round(x/TILE),mz=Math.round(z/TILE);
+  if(mx<0||mx>=MAP_W||mz<0||mz>=MAP_H)return true;
+  if(dungeon.map[mz][mx]===1)return true;
+  // Check decoration collisions
+  for(const db of decoBlocks){
+    const dx=x-db.x,dz=z-db.z;
+    if(dx*dx+dz*dz<db.r*db.r)return true;
+  }
+  return false;
+}

@@ -26,4 +26,5 @@ let stairMesh,stairLight;
 let terminalMesh,terminalLight,terminalGlow;
 let terminalX=0,terminalZ=0;
 let battleCooldown=0;
+let decoBlocks=[]; // decoration collision boxes {x,z,r}
 

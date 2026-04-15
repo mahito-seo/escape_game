@@ -1,7 +1,7 @@
 // Scene Building - Terrain, Portal, Terminal, Enemies, Torches, Items
 function buildScene(){
   scene.children.slice().forEach(c=>{if(c.isMesh||c.isGroup||c.isPointLight)scene.remove(c);});
-  torches=[];items=[];enemies=[];projectiles=[];challengeTerminals=[];
+  torches=[];items=[];enemies=[];projectiles=[];challengeTerminals=[];decoBlocks=[];
   // Apply floor theme
   const theme=FLOOR_THEMES[(floor-1)%FLOOR_THEMES.length];
   // Richer materials with emissive tint for depth
@@ -245,78 +245,116 @@ function buildScene(){
 function spawnDecorations(rm){
   const theme=FLOOR_THEMES[(floor-1)%FLOOR_THEMES.length];
   if(!theme.decos)return;
-  const decoCount=1+~~(Math.random()*3); // 1-3 decorations per room
-  for(let d=0;d<decoCount;d++){
-    // Pick a random deco type
+  const count=1+~~(Math.random()*2);
+  for(let d=0;d<count;d++){
     const pool=theme.decos.filter(dc=>Math.random()<dc.chance);
     if(!pool.length)continue;
     const dc=pool[~~(Math.random()*pool.length)];
-    const dx=(rm.x+.5+Math.random()*(rm.w-1))*TILE;
-    const dz=(rm.y+.5+Math.random()*(rm.h-1))*TILE;
+    const px=(rm.x+1+Math.random()*(rm.w-2))*TILE;
+    const pz=(rm.y+1+Math.random()*(rm.h-2))*TILE;
     const mat=new THREE.MeshStandardMaterial({color:dc.col,emissive:dc.em||0x000000,emissiveIntensity:dc.em?1.5:0,roughness:.8});
+    const g=new THREE.Group();
+    let collR=dc.w*.5; // collision radius
 
-    let mesh;
-    if(dc.type==='pillar'||dc.type==='tree'||dc.type==='chain'){
-      mesh=new THREE.Mesh(new THREE.CylinderGeometry(dc.w*.5,dc.w*.6,dc.h,6),mat);
-      mesh.position.set(dx,dc.h*.5,dz);
+    if(dc.type==='pillar'){
+      // Stone pillar: base + column + broken top
+      const base=new THREE.Mesh(new THREE.BoxGeometry(dc.w*1.2,.15,dc.w*1.2),mat);base.position.y=.08;g.add(base);
+      const col=new THREE.Mesh(new THREE.BoxGeometry(dc.w,dc.h,dc.w),mat);col.position.y=dc.h*.5;g.add(col);
+      const top=new THREE.Mesh(new THREE.BoxGeometry(dc.w*1.1,.12,dc.w*1.1),mat);top.position.y=dc.h;g.add(top);
+      collR=dc.w*.7;
+    }else if(dc.type==='tree'){
+      // Dead tree: thick trunk + branches
+      const trunk=new THREE.Mesh(new THREE.BoxGeometry(dc.w*1.5,dc.h,dc.w*1.5),mat);trunk.position.y=dc.h*.5;g.add(trunk);
+      const br1=new THREE.Mesh(new THREE.BoxGeometry(dc.w,dc.h*.3,dc.w*.5),mat);br1.position.set(dc.w*.8,dc.h*.7,0);br1.rotation.z=-.5;g.add(br1);
+      const br2=new THREE.Mesh(new THREE.BoxGeometry(dc.w*.5,dc.h*.25,dc.w),mat);br2.position.set(-dc.w*.6,dc.h*.5,dc.w*.3);br2.rotation.z=.4;g.add(br2);
+      collR=dc.w;
+    }else if(dc.type==='crate'){
+      // Wooden crate with cross planks
+      const box=new THREE.Mesh(new THREE.BoxGeometry(dc.w,dc.h,dc.w),mat);box.position.y=dc.h*.5;g.add(box);
+      const plank=new THREE.Mesh(new THREE.BoxGeometry(dc.w*.1,dc.h*.8,dc.w*1.02),new THREE.MeshStandardMaterial({color:0x3a2a10,roughness:.9}));
+      plank.position.y=dc.h*.5;plank.rotation.z=.7;g.add(plank);
+      collR=dc.w*.5;
     }else if(dc.type==='crystal'||dc.type==='frost'){
-      mesh=new THREE.Mesh(new THREE.ConeGeometry(dc.w,dc.h,5),mat);
-      mat.transparent=true;mat.opacity=.7;
-      mesh.position.set(dx,dc.h*.5,dz);
-      mesh.rotation.z=(Math.random()-.5)*.4;
-    }else if(dc.type==='crate'||dc.type==='server'||dc.type==='console'||dc.type==='forge'||dc.type==='anvil'){
-      mesh=new THREE.Mesh(new THREE.BoxGeometry(dc.w,dc.h,dc.w*.8),mat);
-      mesh.position.set(dx,dc.h*.5,dz);
-      mesh.rotation.y=Math.random()*Math.PI;
-      // Add screen glow for consoles/servers
-      if(dc.type==='console'||dc.type==='server'){
-        const screenM=new THREE.MeshStandardMaterial({color:dc.em||0x44ff44,emissive:dc.em||0x44ff44,emissiveIntensity:2,transparent:true,opacity:.6});
-        const screen=new THREE.Mesh(new THREE.PlaneGeometry(dc.w*.7,dc.h*.4),screenM);
-        screen.position.set(dx,dc.h*.7,dz+dc.w*.41);screen.rotation.y=mesh.rotation.y;
-        scene.add(screen);
+      mat.transparent=true;mat.opacity=.7;mat.metalness=.3;
+      const c1=new THREE.Mesh(new THREE.BoxGeometry(dc.w*.4,dc.h,dc.w*.4),mat);c1.position.y=dc.h*.5;c1.rotation.y=.3;g.add(c1);
+      const c2=new THREE.Mesh(new THREE.BoxGeometry(dc.w*.3,dc.h*.7,dc.w*.3),mat);c2.position.set(dc.w*.3,dc.h*.35,dc.w*.2);c2.rotation.z=.2;g.add(c2);
+      collR=dc.w*.4;
+    }else if(dc.type==='server'||dc.type==='console'){
+      // Server rack / console: tall box + screen
+      const rack=new THREE.Mesh(new THREE.BoxGeometry(dc.w,dc.h,dc.w*.6),mat);rack.position.y=dc.h*.5;g.add(rack);
+      const scrM=new THREE.MeshStandardMaterial({color:dc.em||0x44ff44,emissive:dc.em||0x44ff44,emissiveIntensity:2,transparent:true,opacity:.6});
+      const scr=new THREE.Mesh(new THREE.BoxGeometry(dc.w*.7,dc.h*.35,.02),scrM);scr.position.set(0,dc.h*.65,dc.w*.31);g.add(scr);
+      // Blinking lights
+      for(let i=0;i<3;i++){
+        const led=new THREE.Mesh(new THREE.BoxGeometry(.04,.04,.02),new THREE.MeshStandardMaterial({color:0x44ff44,emissive:0x44ff44,emissiveIntensity:3}));
+        led.position.set(-dc.w*.25+i*.12,dc.h*.3,dc.w*.31);g.add(led);
       }
-    }else if(dc.type==='tablet'||dc.type==='bones'){
-      mesh=new THREE.Mesh(new THREE.BoxGeometry(dc.w,dc.h*.15,dc.w*.7),mat);
-      mesh.position.set(dx,dc.h*.08,dz);
-      mesh.rotation.y=Math.random()*Math.PI;
-    }else if(dc.type==='mushroom'){
-      const g=new THREE.Group();
-      const stem=new THREE.Mesh(new THREE.CylinderGeometry(dc.w*.3,dc.w*.4,dc.h*.6,5),
-        new THREE.MeshStandardMaterial({color:0xccccaa,roughness:.9}));
-      stem.position.y=dc.h*.3;g.add(stem);
-      const cap=new THREE.Mesh(new THREE.SphereGeometry(dc.w,6,4,0,Math.PI*2,0,Math.PI*.5),mat);
-      cap.position.y=dc.h*.6;g.add(cap);
-      g.position.set(dx,0,dz);g.scale.setScalar(.7+Math.random()*.6);
-      scene.add(g);return; // group, not single mesh
-    }else if(dc.type==='rock'||dc.type==='barrel'){
-      mesh=new THREE.Mesh(new THREE.DodecahedronGeometry(dc.w*.5,0),mat);
-      mesh.position.set(dx,dc.w*.3,dz);
-      mesh.rotation.set(Math.random(),Math.random(),Math.random());
+      collR=dc.w*.5;
+    }else if(dc.type==='rock'){
+      const r1=new THREE.Mesh(new THREE.BoxGeometry(dc.w,dc.h,dc.w*.8),mat);r1.position.y=dc.h*.5;r1.rotation.y=Math.random()*Math.PI;g.add(r1);
+      const r2=new THREE.Mesh(new THREE.BoxGeometry(dc.w*.6,dc.h*.4,dc.w*.5),mat);r2.position.set(dc.w*.3,dc.h*.2,dc.w*.2);g.add(r2);
+      collR=dc.w*.5;
+    }else if(dc.type==='barrel'){
+      const body=new THREE.Mesh(new THREE.CylinderGeometry(dc.w*.4,dc.w*.4,dc.h,8),mat);body.position.y=dc.h*.5;g.add(body);
+      const rim1=new THREE.Mesh(new THREE.TorusGeometry(dc.w*.4,.02,4,8),new THREE.MeshStandardMaterial({color:0x4a4a4a,metalness:.5}));rim1.position.y=dc.h*.15;rim1.rotation.x=Math.PI/2;g.add(rim1);
+      const rim2=rim1.clone();rim2.position.y=dc.h*.85;g.add(rim2);
+      collR=dc.w*.4;
     }else if(dc.type==='pipe'){
-      mesh=new THREE.Mesh(new THREE.CylinderGeometry(dc.w*.5,dc.w*.5,dc.h*3,6),mat);
-      mesh.position.set(dx,dc.h,dz);
-      mesh.rotation.z=Math.PI/2;mesh.rotation.y=Math.random()*Math.PI;
-    }else if(dc.type==='altar'){
-      const g=new THREE.Group();
-      const base=new THREE.Mesh(new THREE.BoxGeometry(dc.w,dc.h*.3,dc.w),mat);
-      base.position.y=dc.h*.15;g.add(base);
-      const top=new THREE.Mesh(new THREE.BoxGeometry(dc.w*.8,dc.h*.1,dc.w*.8),mat);
-      top.position.y=dc.h*.35;g.add(top);
-      if(dc.em){
-        const glow=new THREE.Mesh(new THREE.SphereGeometry(.15,6,6),
-          new THREE.MeshStandardMaterial({color:dc.em,emissive:dc.em,emissiveIntensity:3,transparent:true,opacity:.5}));
-        glow.position.y=dc.h*.6;g.add(glow);
+      const p=new THREE.Mesh(new THREE.CylinderGeometry(.08,.08,dc.w*2,6),mat);p.position.y=.5;p.rotation.z=Math.PI/2;g.add(p);
+      collR=.1; // thin, small collision
+    }else if(dc.type==='mushroom'){
+      const stem=new THREE.Mesh(new THREE.CylinderGeometry(dc.w*.25,dc.w*.35,dc.h*.5,5),new THREE.MeshStandardMaterial({color:0xccccaa,roughness:.9}));
+      stem.position.y=dc.h*.25;g.add(stem);
+      const cap=new THREE.Mesh(new THREE.CylinderGeometry(dc.w*.1,dc.w*1.2,dc.h*.25,6),mat);
+      cap.position.y=dc.h*.55;g.add(cap);
+      collR=dc.w*.3;
+    }else if(dc.type==='bones'){
+      // Flat bones on ground
+      for(let i=0;i<3;i++){
+        const b=new THREE.Mesh(new THREE.BoxGeometry(dc.w*(0.5+Math.random()*.5),.04,.06),mat);
+        b.position.set((Math.random()-.5)*dc.w,.02,(Math.random()-.5)*dc.w);b.rotation.y=Math.random()*Math.PI;g.add(b);
       }
-      g.position.set(dx,0,dz);scene.add(g);return;
+      collR=0; // no collision for flat ground items
+    }else if(dc.type==='altar'){
+      const base=new THREE.Mesh(new THREE.BoxGeometry(dc.w,dc.h*.4,dc.w),mat);base.position.y=dc.h*.2;g.add(base);
+      const slab=new THREE.Mesh(new THREE.BoxGeometry(dc.w*1.1,.08,dc.w*1.1),mat);slab.position.y=dc.h*.42;g.add(slab);
+      if(dc.em){
+        const orb=new THREE.Mesh(new THREE.SphereGeometry(.12,6,6),new THREE.MeshStandardMaterial({color:dc.em,emissive:dc.em,emissiveIntensity:3,transparent:true,opacity:.5}));
+        orb.position.y=dc.h*.7;g.add(orb);
+      }
+      collR=dc.w*.6;
     }else if(dc.type==='statue'){
-      const g=new THREE.Group();
-      const body=new THREE.Mesh(new THREE.CylinderGeometry(dc.w*.4,dc.w*.5,dc.h*.7,6),mat);
-      body.position.y=dc.h*.35;g.add(body);
-      const head=new THREE.Mesh(new THREE.SphereGeometry(dc.w*.35,6,6),mat);
-      head.position.y=dc.h*.8;g.add(head);
-      g.position.set(dx,0,dz);scene.add(g);return;
+      // Blocky humanoid statue
+      const pedestal=new THREE.Mesh(new THREE.BoxGeometry(dc.w*.8,.2,dc.w*.8),mat);pedestal.position.y=.1;g.add(pedestal);
+      const body=new THREE.Mesh(new THREE.BoxGeometry(dc.w*.5,dc.h*.5,dc.w*.3),mat);body.position.y=dc.h*.35;g.add(body);
+      const head=new THREE.Mesh(new THREE.BoxGeometry(dc.w*.35,dc.w*.35,dc.w*.35),mat);head.position.y=dc.h*.7;g.add(head);
+      // One arm broken off
+      const arm=new THREE.Mesh(new THREE.BoxGeometry(dc.w*.15,dc.h*.3,dc.w*.15),mat);arm.position.set(dc.w*.35,dc.h*.3,0);g.add(arm);
+      collR=dc.w*.5;
+    }else if(dc.type==='forge'){
+      const body=new THREE.Mesh(new THREE.BoxGeometry(dc.w,dc.h,dc.w),mat);body.position.y=dc.h*.5;g.add(body);
+      // Fire inside
+      if(dc.em){
+        const fire=new THREE.Mesh(new THREE.BoxGeometry(dc.w*.6,dc.h*.3,dc.w*.3),new THREE.MeshStandardMaterial({color:dc.em,emissive:dc.em,emissiveIntensity:3,transparent:true,opacity:.7}));
+        fire.position.set(0,dc.h*.2,dc.w*.4);g.add(fire);
+      }
+      collR=dc.w*.5;
+    }else if(dc.type==='chain'){
+      // Hanging chain: series of small boxes
+      for(let i=0;i<~~(dc.h/.15);i++){
+        const link=new THREE.Mesh(new THREE.BoxGeometry(.06,.12,.06),mat);link.position.y=dc.h-i*.15;link.rotation.y=i%2?0:Math.PI/4;g.add(link);
+      }
+      collR=.1;
+    }else if(dc.type==='anvil'){
+      const base=new THREE.Mesh(new THREE.BoxGeometry(dc.w*.8,dc.h*.4,dc.w*.5),mat);base.position.y=dc.h*.2;g.add(base);
+      const top=new THREE.Mesh(new THREE.BoxGeometry(dc.w,dc.h*.2,dc.w*.4),mat);top.position.y=dc.h*.5;g.add(top);
+      const horn=new THREE.Mesh(new THREE.BoxGeometry(dc.w*.15,dc.h*.15,dc.w*.3),mat);horn.position.set(dc.w*.5,dc.h*.45,0);g.add(horn);
+      collR=dc.w*.5;
     }
-    if(mesh)scene.add(mesh);
+
+    g.position.set(px,0,pz);scene.add(g);
+    // Add collision (except flat/thin items)
+    if(collR>0.1)decoBlocks.push({x:px,z:pz,r:collR});
   }
 }
 
