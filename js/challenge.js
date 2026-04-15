@@ -310,8 +310,9 @@ function closeChallengeModal(){
   document.getElementById('code-output-wrap').classList.remove('show');
   document.getElementById('cm-data').style.display='';
   document.getElementById('cipher-close-btn').style.display='none';
-  document.getElementById('c-submit').onclick=null;
-  document.getElementById('c-input').onkeydown=null;
+  // Restore original cipher handlers
+  document.getElementById('c-submit').onclick=()=>submitCipherAnswer();
+  document.getElementById('c-input').onkeydown=(e)=>{if(e.key==='Enter')submitCipherAnswer();};
   gameState='playing';unmuteBGM();
   setTimeout(()=>canvas.requestPointerLock(),350);
 }

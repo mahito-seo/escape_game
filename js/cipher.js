@@ -24,7 +24,7 @@ function openCipherModal(){
     document.getElementById('code-editor').value=s.template;
     document.getElementById('code-editor').disabled=false;
     document.getElementById('code-output-wrap').classList.remove('show');
-    document.getElementById('code-run-btn').onclick=()=>{
+    document.getElementById('code-run-btn').onclick=async()=>{
       try{
         const result=miniPyEval(document.getElementById('code-editor').value);
         document.getElementById('code-output-wrap').classList.add('show');
@@ -32,8 +32,18 @@ function openCipherModal(){
         if(result.startsWith('Error')){
           document.getElementById('code-output').style.color='#ff6666';
         }else{
-          document.getElementById('code-output').style.color='#44ff88';
-          cipherCodeRan=true; // allow passphrase submit
+          cipherCodeRan=true;
+          // Check if output matches passphrase
+          const h=await sha256(result.trim().toUpperCase());
+          if(h===s.passHash){
+            document.getElementById('code-output').style.color='#44ff88';
+            document.getElementById('code-output').textContent=result+'\n\n✅ 正解！ このパスフレーズを下に入力してください';
+            document.getElementById('c-input').value=result.trim();
+            document.getElementById('c-input').focus();
+            playSound('correct');
+          }else{
+            document.getElementById('code-output').style.color='#ffaa88';
+          }
         }
       }catch(e){
         document.getElementById('code-output-wrap').classList.add('show');
