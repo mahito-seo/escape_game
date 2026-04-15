@@ -233,6 +233,87 @@ function buildScene(){
       enemies.push({mesh:body,x:ex,z:ez,name:t.name,avatar:t.avatar,hp:~~(t.hp*sc),maxHp:~~(t.hp*sc),atk:~~(t.atk*(1+(floor-1)*.15)),speed:t.spd*spdSc,xp:~~(t.xp*(1+(floor-1)*.1)),xpBonus:t.xpBonus,size:t.sz,state:'idle',attackTimer:0,leg1,leg2,arm1,arm2,legPhase:0,alertTimer:0,inBattle:false,dying:false});
     }
     if(Math.random()<.4)spawnItemInRoom(rm);
+    // Decorations
+    spawnDecorations(rm);
+  }
+}
+
+// Room decoration spawner
+function spawnDecorations(rm){
+  const theme=FLOOR_THEMES[(floor-1)%FLOOR_THEMES.length];
+  if(!theme.decos)return;
+  const decoCount=1+~~(Math.random()*3); // 1-3 decorations per room
+  for(let d=0;d<decoCount;d++){
+    // Pick a random deco type
+    const pool=theme.decos.filter(dc=>Math.random()<dc.chance);
+    if(!pool.length)continue;
+    const dc=pool[~~(Math.random()*pool.length)];
+    const dx=(rm.x+.5+Math.random()*(rm.w-1))*TILE;
+    const dz=(rm.y+.5+Math.random()*(rm.h-1))*TILE;
+    const mat=new THREE.MeshStandardMaterial({color:dc.col,emissive:dc.em||0x000000,emissiveIntensity:dc.em?1.5:0,roughness:.8});
+
+    let mesh;
+    if(dc.type==='pillar'||dc.type==='tree'||dc.type==='chain'){
+      mesh=new THREE.Mesh(new THREE.CylinderGeometry(dc.w*.5,dc.w*.6,dc.h,6),mat);
+      mesh.position.set(dx,dc.h*.5,dz);
+    }else if(dc.type==='crystal'||dc.type==='frost'){
+      mesh=new THREE.Mesh(new THREE.ConeGeometry(dc.w,dc.h,5),mat);
+      mat.transparent=true;mat.opacity=.7;
+      mesh.position.set(dx,dc.h*.5,dz);
+      mesh.rotation.z=(Math.random()-.5)*.4;
+    }else if(dc.type==='crate'||dc.type==='server'||dc.type==='console'||dc.type==='forge'||dc.type==='anvil'){
+      mesh=new THREE.Mesh(new THREE.BoxGeometry(dc.w,dc.h,dc.w*.8),mat);
+      mesh.position.set(dx,dc.h*.5,dz);
+      mesh.rotation.y=Math.random()*Math.PI;
+      // Add screen glow for consoles/servers
+      if(dc.type==='console'||dc.type==='server'){
+        const screenM=new THREE.MeshStandardMaterial({color:dc.em||0x44ff44,emissive:dc.em||0x44ff44,emissiveIntensity:2,transparent:true,opacity:.6});
+        const screen=new THREE.Mesh(new THREE.PlaneGeometry(dc.w*.7,dc.h*.4),screenM);
+        screen.position.set(dx,dc.h*.7,dz+dc.w*.41);screen.rotation.y=mesh.rotation.y;
+        scene.add(screen);
+      }
+    }else if(dc.type==='tablet'||dc.type==='bones'){
+      mesh=new THREE.Mesh(new THREE.BoxGeometry(dc.w,dc.h*.15,dc.w*.7),mat);
+      mesh.position.set(dx,dc.h*.08,dz);
+      mesh.rotation.y=Math.random()*Math.PI;
+    }else if(dc.type==='mushroom'){
+      const g=new THREE.Group();
+      const stem=new THREE.Mesh(new THREE.CylinderGeometry(dc.w*.3,dc.w*.4,dc.h*.6,5),
+        new THREE.MeshStandardMaterial({color:0xccccaa,roughness:.9}));
+      stem.position.y=dc.h*.3;g.add(stem);
+      const cap=new THREE.Mesh(new THREE.SphereGeometry(dc.w,6,4,0,Math.PI*2,0,Math.PI*.5),mat);
+      cap.position.y=dc.h*.6;g.add(cap);
+      g.position.set(dx,0,dz);g.scale.setScalar(.7+Math.random()*.6);
+      scene.add(g);return; // group, not single mesh
+    }else if(dc.type==='rock'||dc.type==='barrel'){
+      mesh=new THREE.Mesh(new THREE.DodecahedronGeometry(dc.w*.5,0),mat);
+      mesh.position.set(dx,dc.w*.3,dz);
+      mesh.rotation.set(Math.random(),Math.random(),Math.random());
+    }else if(dc.type==='pipe'){
+      mesh=new THREE.Mesh(new THREE.CylinderGeometry(dc.w*.5,dc.w*.5,dc.h*3,6),mat);
+      mesh.position.set(dx,dc.h,dz);
+      mesh.rotation.z=Math.PI/2;mesh.rotation.y=Math.random()*Math.PI;
+    }else if(dc.type==='altar'){
+      const g=new THREE.Group();
+      const base=new THREE.Mesh(new THREE.BoxGeometry(dc.w,dc.h*.3,dc.w),mat);
+      base.position.y=dc.h*.15;g.add(base);
+      const top=new THREE.Mesh(new THREE.BoxGeometry(dc.w*.8,dc.h*.1,dc.w*.8),mat);
+      top.position.y=dc.h*.35;g.add(top);
+      if(dc.em){
+        const glow=new THREE.Mesh(new THREE.SphereGeometry(.15,6,6),
+          new THREE.MeshStandardMaterial({color:dc.em,emissive:dc.em,emissiveIntensity:3,transparent:true,opacity:.5}));
+        glow.position.y=dc.h*.6;g.add(glow);
+      }
+      g.position.set(dx,0,dz);scene.add(g);return;
+    }else if(dc.type==='statue'){
+      const g=new THREE.Group();
+      const body=new THREE.Mesh(new THREE.CylinderGeometry(dc.w*.4,dc.w*.5,dc.h*.7,6),mat);
+      body.position.y=dc.h*.35;g.add(body);
+      const head=new THREE.Mesh(new THREE.SphereGeometry(dc.w*.35,6,6),mat);
+      head.position.y=dc.h*.8;g.add(head);
+      g.position.set(dx,0,dz);scene.add(g);return;
+    }
+    if(mesh)scene.add(mesh);
   }
 }
 
