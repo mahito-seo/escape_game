@@ -73,7 +73,7 @@ function loadQ(){
   }else{
     cg.style.display='none';ia.style.display='flex';
     const inp=document.getElementById('battle-input');inp.value='';inp.disabled=false;
-    if(q.type==='code')inp.placeholder=q.hint?`💻 コード入力 (ヒント: ${q.hint})`:'💻 コードを入力…';
+    if(q.type==='code')inp.placeholder=q.hint?`💻 実行結果を入力 (ヒント: ${q.hint})`:'💻 Pythonの実行結果を入力…';
     else inp.placeholder=q.hint?`ヒント: ${q.hint}`:'答えを入力…';
     document.getElementById('battle-submit').disabled=false;
     setTimeout(()=>inp.focus(),80);
@@ -101,8 +101,8 @@ function submitFreeAnswer(){
   if(!v)return;stopBattleTimer();
   document.getElementById('battle-input').disabled=true;document.getElementById('battle-submit').disabled=true;
   if(q.type==='code'){
-    // Code-input: evaluate with test function
-    if(q.test&&q.test(v))onCorrect(q);else onWrong(q);
+    // Code question: compare answer string
+    if(v.toLowerCase()===String(q.ans).toLowerCase())onCorrect(q);else onWrong(q);
   }else{
     if(v.toLowerCase()===String(q.ans).toLowerCase())onCorrect(q);else onWrong(q);
   }
