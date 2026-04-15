@@ -35,10 +35,11 @@ function loop(ts){
 
   const spd=player.speed*(1+(player.level-1)*.12);
   let mx=0,mz=0;
-  if(keys['KeyW']||keys['ArrowUp']){mx+=Math.sin(player.yaw+Math.PI)*spd;mz+=Math.cos(player.yaw+Math.PI)*spd;}
-  if(keys['KeyS']||keys['ArrowDown']){mx-=Math.sin(player.yaw+Math.PI)*spd;mz-=Math.cos(player.yaw+Math.PI)*spd;}
-  if(keys['KeyA']||keys['ArrowRight']){mx+=Math.sin(player.yaw+Math.PI+Math.PI/2)*spd;mz+=Math.cos(player.yaw+Math.PI+Math.PI/2)*spd;}
-  if(keys['KeyD']||keys['ArrowLeft']){mx+=Math.sin(player.yaw+Math.PI-Math.PI/2)*spd;mz+=Math.cos(player.yaw+Math.PI-Math.PI/2)*spd;}
+  const fwd=player.yaw+Math.PI;
+  if(keys['KeyW']||keys['ArrowUp']){mx+=Math.sin(fwd)*spd;mz+=Math.cos(fwd)*spd;}
+  if(keys['KeyS']||keys['ArrowDown']){mx-=Math.sin(fwd)*spd;mz-=Math.cos(fwd)*spd;}
+  if(keys['KeyA']){mx+=Math.cos(fwd)*spd;mz-=Math.sin(fwd)*spd;} // right
+  if(keys['KeyD']){mx-=Math.cos(fwd)*spd;mz+=Math.sin(fwd)*spd;} // left
   const nx=player.x+mx,nz=player.z+mz;
   if(!isWall(nx+(mx>0?.4:-.4),player.z))player.x=nx;
   if(!isWall(player.x,nz+(mz>0?.4:-.4)))player.z=nz;
@@ -95,12 +96,19 @@ function loop(ts){
 }
 
 let minimapRevealEnd=0;
-const MINIMAP_COST=15;
-const MINIMAP_DURATION=5000;
+let minimapCooldownEnd=0;
+const MINIMAP_COST=30; // MP cost
+const MINIMAP_DURATION=5000; // 5s display
+const MINIMAP_COOLDOWN=60000; // 1 min cooldown
 function revealMinimap(){
-  if(player.mp<MINIMAP_COST){showMessage('MPが不足！','#ff8888');return;}
+  if(Date.now()<minimapCooldownEnd){
+    const rem=Math.ceil((minimapCooldownEnd-Date.now())/1000);
+    showMessage(`🗺️ クールダウン中… あと${rem}秒`,'#ff8888');return;
+  }
+  if(player.mp<MINIMAP_COST){showMessage('MPが不足！(30MP必要)','#ff8888');return;}
   player.mp-=MINIMAP_COST;
   minimapRevealEnd=Date.now()+MINIMAP_DURATION;
+  minimapCooldownEnd=Date.now()+MINIMAP_COOLDOWN;
   _elMinimap.style.display='block';
   showMessage('🗺️ マップ表示！(5秒間)','#66ccff');playSound('pickup');
   updateHUD();

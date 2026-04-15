@@ -1,10 +1,14 @@
 // Entities & UI - Kill, LevelUp, Particles, HUD, Minimap
 function killEnemy(e){
   scene.remove(e.mesh);player.xp+=e.xp;player.kills++;
+  // Auto HP recovery based on enemy strength
+  const hpRecover=Math.min(~~(e.maxHp*.2),~~(player.maxHp*.15)); // 20% of enemy maxHP, capped at 15% of player maxHP
+  player.hp=Math.min(player.maxHp,player.hp+hpRecover);
+  showMessage(`❤️ +${hpRecover} HP`,'#ff8888');
   spawnParticles(e.x,e.z,'#ffaa00',25);checkLevelUp();updateHUD();
-  // Always drop: 35% HP, 25% MP, 40% XP
+  // Drop: 50% MP, 50% XP (no HP drop - auto recovered)
   const roll=Math.random();
-  spawnItemAt(e.x,e.z,roll<.35?'hp':roll<.6?'mp':'xp');
+  spawnItemAt(e.x,e.z,roll<.5?'mp':'xp');
   e.hp=-1;
 }
 

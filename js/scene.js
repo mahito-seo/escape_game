@@ -4,9 +4,12 @@ function buildScene(){
   torches=[];items=[];enemies=[];projectiles=[];
   // Apply floor theme
   const theme=FLOOR_THEMES[(floor-1)%FLOOR_THEMES.length];
-  wallMat=new THREE.MeshStandardMaterial({color:theme.wall,roughness:.85,metalness:.1});
-  floorMat=new THREE.MeshStandardMaterial({color:theme.floor,roughness:.95});
-  ceilMat=new THREE.MeshStandardMaterial({color:theme.ceil,roughness:.95});
+  // Richer materials with emissive tint for depth
+  const wallEmit=new THREE.Color(theme.wall).multiplyScalar(.08);
+  const floorEmit=new THREE.Color(theme.floor).multiplyScalar(.05);
+  wallMat=new THREE.MeshStandardMaterial({color:theme.wall,emissive:wallEmit,roughness:.75,metalness:.15,bumpScale:.3});
+  floorMat=new THREE.MeshStandardMaterial({color:theme.floor,emissive:floorEmit,roughness:.9,metalness:.05});
+  ceilMat=new THREE.MeshStandardMaterial({color:theme.ceil,emissive:floorEmit,roughness:.95});
   scene.fog=new THREE.Fog(theme.fog,theme.fogNear,theme.fogFar);
   const{map,rooms,stairX,stairY,termX,termY}=dungeon;
   const dummy=new THREE.Object3D();
@@ -248,7 +251,7 @@ function placeTorch(x,z){
 }
 
 function spawnItemInRoom(rm){
-  const types=['hp','mp','xp'],type=types[~~(Math.random()*3)];
+  const types=['mp','xp'],type=types[~~(Math.random()*2)];
   spawnItemAt((rm.x+1+Math.random()*(rm.w-2))*TILE,(rm.y+1+Math.random()*(rm.h-2))*TILE,type);
 }
 function spawnItemAt(ix,iz,type){

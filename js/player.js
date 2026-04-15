@@ -87,10 +87,9 @@ function checkItems(){
     const dx=it.x-player.x,dz=it.z-player.z;
     if(Math.sqrt(dx*dx+dz*dz)<1.2){
       it.collected=true;scene.remove(it.mesh);if(it.light)scene.remove(it.light);
-      if(it.type==='hp'){const a=~~(player.maxHp*.25);player.hp=Math.min(player.maxHp,player.hp+a);showMessage(`❤️ HP +${a}`,'#ff6666');}
-      else if(it.type==='mp'){const a=~~(player.maxMp*.4);player.mp=Math.min(player.maxMp,player.mp+a);showMessage(`💧 MP +${a}`,'#6666ff');}
+      if(it.type==='mp'){const a=~~(player.maxMp*.4);player.mp=Math.min(player.maxMp,player.mp+a);showMessage(`💧 MP +${a}`,'#6666ff');}
       else if(it.type==='xp'){const a=10+~~(Math.random()*15*floor);player.xp+=a;showMessage(`⭐ XP +${a}`,'#44ff44');checkLevelUp();}
-      spawnParticles(it.x,it.z,it.type==='hp'?'#ff4444':it.type==='mp'?'#4444ff':'#ffcc00',15);playSound('pickup');updateHUD();
+      spawnParticles(it.x,it.z,it.type==='mp'?'#4444ff':'#44ff44',15);playSound('pickup');updateHUD();
     }
   }
 }
@@ -108,8 +107,8 @@ function checkStair(){
     const nextTheme=FLOOR_THEMES[(floor-1)%FLOOR_THEMES.length];
     showMessage(`⬇ ${floor}階「${nextTheme.name}」へ！`,'#44ffaa');
     dungeon=genDungeon();buildScene();
-    player.hp=Math.min(player.maxHp,player.hp+~~(player.maxHp*.3));
-    player.mp=Math.min(player.maxMp,player.mp+~~(player.maxMp*.5));
+    player.hp=Math.min(player.maxHp,player.hp+50); // +50 HP on stage clear
+    player.mp=player.maxMp; // full MP restore
     updateHUD();spawnParticles(player.x,player.z,'#44ffaa',30);
     saveProgress();
     startBGM(floor);
