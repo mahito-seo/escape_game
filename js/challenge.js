@@ -89,53 +89,53 @@ function miniPyEval(code){
 // ═══════════════════════════════════
 const CODE_CHALLENGES=[
   // Easy: _____ を埋める
-  {diff:'easy',xp:30,answer:'14',
+  {diff:'easy',xp:60,answer:'14',
    q:'_____ を埋めてリストの合計を出力せよ',
    template:'numbers = [3, 1, 4, 1, 5]\ntotal = _____  # ← numbers の合計を求める関数は？\nprint(total)',
    hint:'sum() 関数を使う'},
-  {diff:'easy',xp:30,answer:'HELLO',
+  {diff:'easy',xp:60,answer:'HELLO',
    q:'_____ を埋めて文字列を大文字にして出力せよ',
    template:'text = "hello"\nresult = _____  # ← text を大文字にするには？\nprint(result)',
    hint:'.upper() メソッド'},
-  {diff:'easy',xp:35,answer:'5',
+  {diff:'easy',xp:70,answer:'5',
    q:'_____ を埋めてリストの要素数を出力せよ',
    template:'nums = [1, 2, 3, 4, 5]\ncount = _____  # ← nums の要素数を返す関数は？\nprint(count)',
    hint:'len() 関数'},
-  {diff:'easy',xp:30,answer:'Pn',
+  {diff:'easy',xp:60,answer:'Pn',
    q:'_____ を埋めて最初と最後の文字を結合して出力せよ',
    template:'word = "Python"\nfirst = _____  # ← 最初の文字を取り出すには？\nlast = _____   # ← 最後の文字を取り出すには？\nprint(first + last)',
    hint:'[0]は最初、[-1]は最後の文字'},
   // Normal: もう少し考える必要あり
-  {diff:'normal',xp:50,answer:'9',
+  {diff:'normal',xp:100,answer:'9',
    q:'_____ を埋めてリストを降順ソートし、最大値を出力せよ',
    template:'data = [5, 2, 8, 1, 9]\nresult = sorted(data, _____)  # ← 降順にするオプションは？\nprint(result[0])',
    hint:'reverse=True'},
-  {diff:'normal',xp:50,answer:'3',
+  {diff:'normal',xp:100,answer:'3',
    q:'_____ を埋めて "a" の出現回数を出力せよ',
    template:'text = "banana"\ncount = text._____  # ← 特定の文字の出現回数を数えるメソッドは？\nprint(count)',
    hint:'.count("a")'},
-  {diff:'normal',xp:55,answer:'60',
+  {diff:'normal',xp:110,answer:'60',
    q:'_____ を埋めて辞書の値の合計を出力せよ',
    template:'d = {"x": 10, "y": 20, "z": 30}\nvalues = _____  # ← 辞書の値の一覧を取得するには？\nprint(sum(values))',
    hint:'d.values()'},
-  {diff:'normal',xp:50,answer:'apple-banana-cherry',
+  {diff:'normal',xp:100,answer:'apple-banana-cherry',
    q:'_____ を埋めてリストの要素をハイフンで結合して出力せよ',
    template:'words = ["apple", "banana", "cherry"]\nresult = _____  # ← "-" で結合するには？\nprint(result)',
    hint:'"-".join(リスト)'},
   // Hard: 複数箇所を埋める / ロジックを書く
-  {diff:'hard',xp:80,answer:'55',
+  {diff:'hard',xp:150,answer:'55',
    q:'_____ を埋めて各要素の二乗の合計を出力せよ',
    template:'nums = [1, 2, 3, 4, 5]\nsquares = [_____ for x in nums]  # ← x の二乗は？\nprint(sum(squares))',
    hint:'x**2'},
-  {diff:'hard',xp:80,answer:'P,y,t,h,o,n',
+  {diff:'hard',xp:150,answer:'P,y,t,h,o,n',
    q:'_____ を埋めて文字列の各文字をカンマで結合して出力せよ',
    template:'text = "Python"\nresult = _____.join(_____)  # ← 区切り文字.join(対象)\nprint(result)',
    hint:'",".join(text)'},
-  {diff:'hard',xp:90,answer:'2',
+  {diff:'hard',xp:170,answer:'2',
    q:'_____ を埋めて1〜30で15の倍数の個数を出力せよ',
    template:'fizz = [x for x in range(1, 31) if _____]  # ← 15の倍数の条件は？\nprint(len(fizz))',
    hint:'x % 15 == 0'},
-  {diff:'hard',xp:85,answer:'720',
+  {diff:'hard',xp:160,answer:'720',
    q:'_____ を埋めて階乗関数を完成させ、6! を出力せよ',
    template:'def factorial(n):\n    if n <= 1:\n        return 1\n    return _____  # ← n と factorial を使った再帰は？\nprint(factorial(6))',
    hint:'n * factorial(n - 1)'},
@@ -160,6 +160,16 @@ function spawnChallengeTerminal(rm){
   star.position.y=1.2;tg.add(star);
   tg.position.set(cx,0,cz);scene.add(tg);
   challengeTerminals.push({mesh:tg,x:cx,z:cz,solved:false});
+  // Guard pillars flanking the terminal
+  const pilMat=new THREE.MeshStandardMaterial({color:0x6a5a20,emissive:0x332a00,emissiveIntensity:.3,roughness:.6,metalness:.3});
+  for(let side=-1;side<=1;side+=2){
+    const px=cx+side*1.2,pz=cz;
+    const p=new THREE.Mesh(new THREE.BoxGeometry(.18,TILE*1.2,.18),pilMat);
+    p.position.set(px,TILE*.6,pz);scene.add(p);
+    const orb=new THREE.Mesh(new THREE.SphereGeometry(.08,6,6),new THREE.MeshStandardMaterial({color:0xffcc00,emissive:0xffaa00,emissiveIntensity:3,transparent:true,opacity:.6}));
+    orb.position.set(px,TILE*1.15,pz);scene.add(orb);
+    decoBlocks.push({x:px,z:pz,r:.25});
+  }
 }
 
 function checkChallengeTerminals(){
@@ -189,41 +199,54 @@ function openCodingChallenge(ct){
   document.getElementById('cm-avatar').textContent='⭐';
   document.getElementById('cm-name').textContent='コーディングチャレンジ';
   document.getElementById('cm-stage-sub').textContent=`${ch.diff.toUpperCase()} — XP +${ch.xp}`;
-  document.getElementById('cm-mission').textContent=ch.q;
+  document.getElementById('cm-mission').textContent=ch.q+'\n\n穴埋めを完成させて「▶ 実行」を押せ！\n正しい結果が出力されれば自動クリア！';
   document.getElementById('cm-data').style.display='none';
   document.getElementById('cm-hint').textContent=`ヒント: ${ch.hint}`;
   document.getElementById('cm-footer').textContent=`⭐ XP +${ch.xp}`;
 
   // Show editor with template
-  const editorWrap=document.getElementById('code-editor-wrap');
-  editorWrap.classList.add('show');
+  document.getElementById('code-editor-wrap').classList.add('show');
   const editor=document.getElementById('code-editor');
   editor.value=ch.template;
   editor.disabled=false;
   document.getElementById('code-output-wrap').classList.remove('show');
 
-  // Answer input
-  document.getElementById('c-input').value='';
-  document.getElementById('c-input').disabled=false;
-  document.getElementById('c-input').placeholder='実行結果を入力して「解読」を押す';
-  document.getElementById('c-submit').disabled=false;
+  // Hide answer input row (auto-check on run)
+  document.getElementById('cm-input-row').style.display='none';
   document.getElementById('c-result').style.display='none';
-  document.getElementById('cm-input-row').style.display='flex';
   document.getElementById('c-continue-btn').style.display='none';
   document.getElementById('secret-reveal').classList.remove('show');
   document.getElementById('agent-phase').classList.remove('show');
-
-  // Close button
   document.getElementById('cipher-close-btn').style.display='inline-block';
 
-  // Run button - always re-executable
+  // Run button: execute + auto-check answer
   document.getElementById('code-run-btn').onclick=()=>{
     try{
       const code=editor.value;
       const result=miniPyEval(code);
       document.getElementById('code-output-wrap').classList.add('show');
       document.getElementById('code-output').textContent=result||'(出力なし)';
-      document.getElementById('code-output').style.color=result.startsWith('Error')?'#ff6666':'#ffaa88';
+      // Auto-check: if output matches answer → success!
+      const trimResult=result.trim();
+      if(trimResult===ch.answer||trimResult.toUpperCase()===ch.answer.toUpperCase()){
+        document.getElementById('code-output').style.color='#44ff88';
+        clearInterval(cipherTimerInt);
+        const r=document.getElementById('c-result');
+        r.style.display='flex';r.className='correct-res';
+        document.getElementById('cr-icon').textContent='⭐';
+        document.getElementById('cr-msg').innerHTML=`<strong>正解！ XP +${ch.xp}</strong>`;
+        player.xp+=ch.xp;checkLevelUp();updateHUD();
+        ct.solved=true;scene.remove(ct.mesh);
+        playSound('correct');spawnParticles(player.x,player.z,'#ffdd44',20);
+        editor.disabled=true;
+        // Auto-close after 2 seconds
+        setTimeout(()=>closeChallengeModal(),2000);
+      }else if(result.startsWith('Error')){
+        document.getElementById('code-output').style.color='#ff6666';
+      }else{
+        document.getElementById('code-output').style.color='#ffaa88';
+        showMessage('出力が違う… コードを修正して再実行！','#ff8844');
+      }
     }catch(e){
       document.getElementById('code-output-wrap').classList.add('show');
       document.getElementById('code-output').textContent='Error: '+e.message;
@@ -231,55 +254,24 @@ function openCodingChallenge(ct){
     }
   };
 
-  // Timer (120s)
-  clearInterval(cipherTimerInt);cipherTimerVal=120;
+  // Timer (5 min) — timeout removes terminal permanently
+  const CHALLENGE_TIME=300;
+  clearInterval(cipherTimerInt);cipherTimerVal=CHALLENGE_TIME;
   const el=document.getElementById('cipher-timer');el.classList.remove('danger');
   const fmtT=(s)=>{const m=Math.floor(s/60);return m>0?`${m}:${String(s%60).padStart(2,'0')}`:String(s);};
   el.textContent=fmtT(cipherTimerVal);
   cipherTimerInt=setInterval(()=>{cipherTimerVal--;el.textContent=fmtT(cipherTimerVal);
-    if(cipherTimerVal<=15)el.classList.add('danger');
-    if(cipherTimerVal<=0){clearInterval(cipherTimerInt);closeChallengeModal();showMessage('⏰ 時間切れ','#ff8844');}
+    if(cipherTimerVal<=30)el.classList.add('danger');
+    if(cipherTimerVal<=0){
+      clearInterval(cipherTimerInt);
+      ct.solved=true;scene.remove(ct.mesh); // terminal disappears on timeout
+      closeChallengeModal();
+      showMessage('⏰ 時間切れ… チャレンジ端末が消えた','#ff4444');
+    }
   },1000);
-
-  // Submit handler
-  document.getElementById('c-submit').onclick=submitChallengeAnswer;
-  document.getElementById('c-input').onkeydown=(e)=>{if(e.key==='Enter')submitChallengeAnswer();};
 
   modal.classList.add('open');
   setTimeout(()=>editor.focus(),100);
-}
-
-function submitChallengeAnswer(){
-  if(!currentChallenge)return;
-  const{ch,ct}=currentChallenge;
-  const val=document.getElementById('c-input').value.trim();
-  if(!val)return;
-  clearInterval(cipherTimerInt);
-  const r=document.getElementById('c-result');
-  if(val===ch.answer||val.toUpperCase()===ch.answer.toUpperCase()){
-    r.style.display='flex';r.className='correct-res';
-    document.getElementById('cr-icon').textContent='⭐';
-    document.getElementById('cr-msg').innerHTML=`<strong>正解！ XP +${ch.xp}</strong>`;
-    player.xp+=ch.xp;checkLevelUp();updateHUD();
-    ct.solved=true;scene.remove(ct.mesh);
-    playSound('correct');spawnParticles(player.x,player.z,'#ffdd44',20);
-    document.getElementById('c-input').disabled=true;document.getElementById('c-submit').disabled=true;
-    document.getElementById('code-editor').disabled=true;
-  }else{
-    r.style.display='flex';r.className='wrong-res';
-    document.getElementById('cr-icon').textContent='❌';
-    document.getElementById('cr-msg').textContent=`不正解（入力: "${val}"）— 実行ボタンで結果を確認しよう`;
-    playSound('wrong');
-    // Restart timer
-    cipherTimerVal=120;
-    const el=document.getElementById('cipher-timer');el.classList.remove('danger');
-    const fmtT=(s)=>{const m=Math.floor(s/60);return m>0?`${m}:${String(s%60).padStart(2,'0')}`:String(s);};
-    el.textContent=fmtT(cipherTimerVal);
-    cipherTimerInt=setInterval(()=>{cipherTimerVal--;el.textContent=fmtT(cipherTimerVal);
-      if(cipherTimerVal<=15)el.classList.add('danger');
-      if(cipherTimerVal<=0){clearInterval(cipherTimerInt);closeChallengeModal();showMessage('⏰ 時間切れ','#ff8844');}
-    },1000);
-  }
 }
 
 function closeChallengeModal(){

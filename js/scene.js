@@ -77,6 +77,21 @@ function buildScene(){
     terminalLight=new THREE.PointLight(0x00ff41,3,10);terminalLight.position.set(terminalX,1.5,terminalZ);scene.add(terminalLight);
     terminalGlow=new THREE.Mesh(new THREE.SphereGeometry(.3,8,8),new THREE.MeshStandardMaterial({color:0x00ff41,emissive:0x00ff41,emissiveIntensity:4,transparent:true,opacity:.3}));
     terminalGlow.position.set(terminalX,1.6,terminalZ);scene.add(terminalGlow);
+    // Sanctum: 4 pillars around terminal
+    const sanctumMat=new THREE.MeshStandardMaterial({color:0x2a4a2a,emissive:0x00aa41,emissiveIntensity:.3,roughness:.5,metalness:.3});
+    for(let i=0;i<4;i++){
+      const a=i*Math.PI/2+Math.PI/4;
+      const px=terminalX+Math.cos(a)*1.8,pz=terminalZ+Math.sin(a)*1.8;
+      const p=new THREE.Mesh(new THREE.BoxGeometry(.2,TILE*1.2,.2),sanctumMat);
+      p.position.set(px,TILE*.6,pz);scene.add(p);
+      decoBlocks.push({x:px,z:pz,r:.3});
+      // Glow orb on top
+      const orb=new THREE.Mesh(new THREE.SphereGeometry(.1,6,6),new THREE.MeshStandardMaterial({color:0x00ff41,emissive:0x00ff41,emissiveIntensity:3,transparent:true,opacity:.6}));
+      orb.position.set(px,TILE*1.15,pz);scene.add(orb);
+    }
+    // Floor ring
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(1.5,.05,4,16),new THREE.MeshStandardMaterial({color:0x00ff41,emissive:0x00aa41,emissiveIntensity:1.5}));
+    ring.position.set(terminalX,.02,terminalZ);ring.rotation.x=-Math.PI/2;scene.add(ring);
   }else{terminalMesh=null;terminalLight=null;terminalGlow=null;}
 
   scene.add(new THREE.AmbientLight(theme.ambient,theme.ambientI));
@@ -364,12 +379,14 @@ function spawnDecorations(rm){
 function spawnRoomPillars(rm,theme){
   const H=TILE*1.2; // ceiling height
   const fi=(floor-1)%FLOOR_THEMES.length;
-  // Place pillars at room corners (inset slightly)
-  const corners=[[rm.x+.8,rm.y+.8],[rm.x+rm.w-.8,rm.y+.8],[rm.x+.8,rm.y+rm.h-.8],[rm.x+rm.w-.8,rm.y+rm.h-.8]];
-  // Extra large rooms get center pillars too
-  if(rm.w>=6&&rm.h>=6){
-    corners.push([rm.x+~~(rm.w/2),rm.y+.8],[rm.x+~~(rm.w/2),rm.y+rm.h-.8]);
-  }
+  // Place pillars symmetrically inside the room
+  const cx=rm.x+rm.w/2, cz=rm.y+rm.h/2;
+  const corners=[];
+  // 4 pillars around center (offset by 1/3 of room size)
+  const ox=Math.min(rm.w/3,2), oz=Math.min(rm.h/3,2);
+  corners.push([cx-ox,cz-oz],[cx+ox,cz-oz],[cx-ox,cz+oz],[cx+ox,cz+oz]);
+  // Very large rooms: add center column
+  if(rm.w>=7&&rm.h>=7) corners.push([cx,cz]);
   for(const[cx,cz] of corners){
     if(Math.random()>.6)continue; // 60% chance per corner
     const px=cx*TILE,pz=cz*TILE;

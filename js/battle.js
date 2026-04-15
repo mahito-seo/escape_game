@@ -73,7 +73,7 @@ function loadQ(){
   }else{
     cg.style.display='none';ia.style.display='flex';
     const inp=document.getElementById('battle-input');inp.value='';inp.disabled=false;
-    if(q.type==='code')inp.placeholder=q.hint?`💻 実行結果を入力 (ヒント: ${q.hint})`:'💻 Pythonの実行結果を入力…';
+    if(q.type==='code')inp.placeholder='💻 このコードの実行結果は？';
     else inp.placeholder=q.hint?`ヒント: ${q.hint}`:'答えを入力…';
     document.getElementById('battle-submit').disabled=false;
     setTimeout(()=>inp.focus(),80);
