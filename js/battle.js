@@ -7,9 +7,14 @@ function pickQuestions(fl){
   let pool;
   if(fl<=1) pool=QUESTIONS.filter(q=>q.diff==='easy');
   else if(fl<=2) pool=QUESTIONS.filter(q=>q.diff!=='hard');
-  else if(fl<=3) pool=[...QUESTIONS]; // mix of all
-  else if(fl<=5) pool=QUESTIONS.filter(q=>q.diff!=='easy'); // normal+hard
-  else pool=QUESTIONS.filter(q=>q.diff==='hard'); // Extra stage: hard only
+  else if(fl<=3) pool=[...QUESTIONS];
+  else if(fl<=5) pool=QUESTIONS.filter(q=>q.diff!=='easy');
+  else pool=QUESTIONS.filter(q=>q.diff==='hard');
+  // Mix in code-input questions for floor 3+
+  if(fl>=3&&typeof CODE_BATTLE_QS!=='undefined'){
+    const codePool=fl>=5?CODE_BATTLE_QS:CODE_BATTLE_QS.filter(q=>q.diff==='normal');
+    pool=[...pool,...codePool];
+  }
   return[...pool].sort(()=>Math.random()-.5).slice(0,BATTLE_QCOUNT);
 }
 
@@ -68,7 +73,8 @@ function loadQ(){
   }else{
     cg.style.display='none';ia.style.display='flex';
     const inp=document.getElementById('battle-input');inp.value='';inp.disabled=false;
-    inp.placeholder=q.hint?`ヒント: ${q.hint}`:'答えを入力…';
+    if(q.type==='code')inp.placeholder=q.hint?`💻 コード入力 (ヒント: ${q.hint})`:'💻 コードを入力…';
+    else inp.placeholder=q.hint?`ヒント: ${q.hint}`:'答えを入力…';
     document.getElementById('battle-submit').disabled=false;
     setTimeout(()=>inp.focus(),80);
   }
@@ -94,7 +100,12 @@ function submitFreeAnswer(){
   const q=battleQList[battleQIdx],v=document.getElementById('battle-input').value.trim();
   if(!v)return;stopBattleTimer();
   document.getElementById('battle-input').disabled=true;document.getElementById('battle-submit').disabled=true;
-  if(v.toLowerCase()===String(q.ans).toLowerCase())onCorrect(q);else onWrong(q);
+  if(q.type==='code'){
+    // Code-input: evaluate with test function
+    if(q.test&&q.test(v))onCorrect(q);else onWrong(q);
+  }else{
+    if(v.toLowerCase()===String(q.ans).toLowerCase())onCorrect(q);else onWrong(q);
+  }
 }
 document.getElementById('battle-input').addEventListener('keydown',e=>{if(e.key==='Enter')submitFreeAnswer();});
 

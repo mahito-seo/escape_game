@@ -1,7 +1,7 @@
 // Scene Building - Terrain, Portal, Terminal, Enemies, Torches, Items
 function buildScene(){
   scene.children.slice().forEach(c=>{if(c.isMesh||c.isGroup||c.isPointLight)scene.remove(c);});
-  torches=[];items=[];enemies=[];projectiles=[];
+  torches=[];items=[];enemies=[];projectiles=[];challengeTerminals=[];
   // Apply floor theme
   const theme=FLOOR_THEMES[(floor-1)%FLOOR_THEMES.length];
   // Richer materials with emissive tint for depth
@@ -235,7 +235,10 @@ function buildScene(){
     if(Math.random()<.4)spawnItemInRoom(rm);
     // Decorations
     spawnDecorations(rm);
+    // Challenge terminal (15% chance per room, not in first 2 rooms)
+    if(i>2&&Math.random()<.15)spawnChallengeTerminal(rm);
   }
+  challengeTerminals=challengeTerminals||[];
 }
 
 // Room decoration spawner

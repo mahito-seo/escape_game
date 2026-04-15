@@ -48,7 +48,7 @@ function loop(ts){
   camera.rotation.order='YXZ';camera.rotation.y=player.yaw;camera.rotation.x=player.pitch;
 
   player.mp=Math.min(player.maxMp,player.mp+dt*2);
-  updateEnemies(dt);updateProjectiles();checkTerminal();checkItems();checkStair();updateCDs(dt);
+  updateEnemies(dt);updateProjectiles();checkTerminal();checkChallengeTerminals();checkItems();checkStair();updateCDs(dt);
 
   // Animate torches every other frame
   if(ts%2<1)updateTorches(ts/1000);
