@@ -1,46 +1,38 @@
 """
 ==============================================
-  Stage 3 — 二重の封筒（普通）
+  Stage 3 — 辞書の暗号（普通）
 ==============================================
-  暗号方式: 文字列 → hex変換 → Base64エンコード
-  目標: Base64デコード → hexデコード でパスフレーズを得る
+  暗号方式: 辞書のソート
+  目標: 辞書操作とソートを使って暗号を解読する
 ==============================================
 """
-import base64
 from verify import check
 
-# 暗号データ（Base64エンコードされたhex文字列）
-encrypted = "NDQ0NTRjNTQ0MQ=="
+# 暗号データ（文字と順番のペア。順番通りに並べるとパスフレーズになる）
+cipher = {'D': 1, 'E': 2, 'L': 3, 'T': 4, 'A': 5}
 
 
-def decode(data):
+def decode(cipher):
     """
-    二重にエンコードされたデータを復号する関数
+    辞書を値（value）で昇順ソートし、キー（key）をつなげてパスフレーズを作る関数
 
     【やること】
-    1. Base64デコードして中間データを取り出す
-    2. 中間データの形式を確認する（printしてみよう！）
-    3. 中間データをさらにデコードして元の文字列を復元する
+    1. cipher を value の昇順でソートする
+    2. ソート結果の key を順番につなげる
 
     【ヒント】
-    - base64.b64decode(data) でBase64デコードできます
-      → 結果は bytes型なので .decode() で文字列にします
-    - 中間データは「16進数(hex)」の文字列です
-      例: "48656c6c6f" → "Hello"
-    - bytes.fromhex(hex文字列) でhexから元のバイト列に戻せます
-      → さらに .decode() で文字列にします
+    - sorted(cipher.items(), key=lambda x: x[1])
+      → [(key, value), ...] のリストが value 順で返る
+    - 例: sorted({'B':2, 'A':1}.items(), key=lambda x: x[1])
+      → [('A', 1), ('B', 2)]
     """
 
-    # Step 1: Base64デコード
     # ===== ここを埋めてください =====
-    hex_string = base64.b64decode(data).decode()
-    # ================================
+    # Step 1: cipher を value でソートする
+    sorted_items = []  # ← sorted() を使ってソート
 
-    print(f"[デバッグ] Base64デコード結果: {hex_string}")
-
-    # Step 2: hexデコード
-    # ===== ここを埋めてください =====
-    result = bytes.fromhex(hex_string).decode()
+    # Step 2: ソート結果の key をつなげる
+    result = ""  # ← sorted_items から key だけ取り出して結合
     # ================================
 
     return result
@@ -48,8 +40,8 @@ def decode(data):
 
 # 実行
 if __name__ == "__main__":
-    answer = decode(encrypted)
-    print(f"暗号データ: {encrypted}")
+    answer = decode(cipher)
+    print(f"暗号データ: {cipher}")
     print(f"復号結果: {answer}")
     print()
 

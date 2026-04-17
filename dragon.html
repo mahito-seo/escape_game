@@ -43,8 +43,9 @@
   .skill-key { font-size:9px; color:#888; letter-spacing:1px; position:absolute; bottom:2px; right:4px; }
   .skill-cooldown { position:absolute; inset:0; background:rgba(0,0,0,.7); display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:bold; color:#ccc; border-radius:2px; }
 
-  #minimap { position:absolute; top:16px; right:16px; width:120px; height:120px; background:rgba(0,0,0,.8); border:1px solid #00aa41; border-radius:4px; overflow:hidden; }
+  #minimap { position:absolute; top:16px; right:16px; width:120px; height:120px; background:rgba(0,0,0,.8); border:1px solid #00aa41; border-radius:4px; overflow:hidden; display:none; }
   #minimap-canvas { width:100%; height:100%; }
+  #minimap-countdown { position:absolute; bottom:2px; right:4px; font-size:10px; color:#00ff41; letter-spacing:1px; pointer-events:none; }
   #messages { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); display:flex; flex-direction:column; align-items:center; gap:8px; pointer-events:none; }
   .msg { font-size:20px; font-weight:600; text-align:center; animation:msgFade 2s ease forwards; text-shadow:0 0 20px currentColor; }
   @keyframes msgFade { 0%{opacity:0;transform:translateY(10px) scale(.9)} 20%{opacity:1;transform:translateY(0) scale(1)} 70%{opacity:1} 100%{opacity:0;transform:translateY(-10px)} }
@@ -203,13 +204,66 @@
   .agent-lockout .lock-timer { color:#ffcc00; font-size:28px; margin-bottom:8px; }
   .agent-lockout p { color:#888; font-size:12px; }
 
-  .cipher-footer { padding:10px 28px 14px; border-top:1px solid #002a10; display:flex; align-items:center; justify-content:center; }
+  .cipher-footer { padding:10px 28px 14px; border-top:1px solid #002a10; display:flex; align-items:center; justify-content:space-between; }
   .cipher-footer-hint { font-size:11px; color:#2a6a3a; letter-spacing:1px; }
+  #cipher-close-btn { background:rgba(80,20,20,.6); border:1px solid #6a2a2a; border-radius:4px; padding:6px 16px; font-family:'Cinzel',serif; font-size:11px; letter-spacing:2px; color:#cc8888; cursor:pointer; pointer-events:all; }
+  #cipher-close-btn:hover { background:rgba(100,30,30,.8); color:#ffaaaa; }
+
+  /* In-game code editor */
+  .code-editor-wrap { display:none; margin-bottom:14px; border:1px solid #2a5a2a; border-radius:5px; overflow:hidden; }
+  .code-editor-wrap.show { display:block; }
+  .code-editor-header { background:#0a1a0a; padding:6px 12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #1a3a1a; }
+  .code-editor-header span { font-size:11px; color:#44aa44; letter-spacing:2px; }
+  #code-run-btn { background:#2a6a2a; border:1px solid #3a8a3a; border-radius:3px; padding:4px 14px; font-family:'Source Code Pro',monospace; font-size:12px; color:#aaffaa; cursor:pointer; pointer-events:all; }
+  #code-run-btn:hover { background:#3a8a3a; }
+  #code-editor { width:100%; min-height:200px; max-height:350px; background:#050a05; border:none; padding:12px; font-family:'Source Code Pro',monospace; font-size:14px; line-height:1.7; color:#a8ff8a; resize:vertical; outline:none; tab-size:4; }
+  #code-editor:focus { box-shadow:inset 0 0 10px rgba(0,255,65,.1); }
+  .code-output-wrap { display:none; background:#0a0505; border:1px solid #3a1a1a; border-radius:4px; padding:10px 12px; margin-bottom:14px; }
+  .code-output-wrap.show { display:block; }
+  .code-output-label { font-size:10px; color:#aa6644; letter-spacing:2px; margin-bottom:4px; }
+  #code-output { font-family:'Source Code Pro',monospace; font-size:13px; color:#ffaa88; white-space:pre-wrap; }
 
   .stage-clear-banner { position:fixed; top:0; left:0; right:0; z-index:300; background:linear-gradient(180deg,rgba(0,60,20,.95),rgba(0,0,0,0)); padding:40px 20px; text-align:center; animation:bannerSlide .5s ease; pointer-events:none; }
   @keyframes bannerSlide { from{transform:translateY(-100%)} to{transform:translateY(0)} }
   .stage-clear-banner h2 { font-family:'Cinzel Decorative',serif; font-size:36px; color:#00ff41; text-shadow:0 0 30px rgba(0,255,65,.8); margin-bottom:8px; }
   .stage-clear-banner p { font-size:16px; color:#88ffaa; letter-spacing:3px; }
+
+  /* ── Mob Programming Rotation Timer ── */
+  #mob-timer {
+    position:fixed; top:16px; left:16px; z-index:10;
+    background:linear-gradient(135deg,rgba(0,0,0,.9),rgba(10,5,0,.9));
+    border:1px solid #ff8800; border-radius:6px; padding:10px 16px;
+    display:none; pointer-events:all; min-width:180px;
+    box-shadow:0 0 20px rgba(255,120,0,.3);
+  }
+  #mob-timer.active { display:block; }
+  .mob-label { font-size:9px; letter-spacing:3px; color:#aa6600; text-transform:uppercase; text-align:center; margin-bottom:4px; }
+  .mob-driver { font-size:16px; font-weight:600; color:#ffcc44; text-align:center; text-shadow:0 0 10px rgba(255,200,0,.6); margin-bottom:6px; }
+  .mob-countdown { font-family:'Cinzel Decorative',serif; font-size:32px; color:#ffdd88; text-align:center; text-shadow:0 0 12px rgba(255,200,0,.5); }
+  .mob-countdown.warn { color:#ff6644; animation:timerPulse .8s ease-in-out infinite; }
+  .mob-next { font-size:10px; color:#886644; text-align:center; margin-top:4px; letter-spacing:1px; }
+  .mob-banner { position:fixed; top:0; left:0; right:0; z-index:400; background:linear-gradient(180deg,rgba(255,120,0,.95),rgba(0,0,0,0)); padding:40px 20px; text-align:center; animation:bannerSlide .5s ease; pointer-events:none; }
+  .mob-banner h2 { font-family:'Cinzel Decorative',serif; font-size:36px; color:#ffdd44; text-shadow:0 0 30px rgba(255,200,0,.8); margin-bottom:8px; }
+  .mob-banner p { font-size:18px; color:#ffcc88; letter-spacing:3px; }
+
+  /* ── Pause Screen ── */
+  #pause-screen { position:fixed; inset:0; background:rgba(0,0,0,.8); display:none; flex-direction:column; align-items:center; justify-content:center; z-index:60; }
+  #pause-screen.show { display:flex; }
+  #pause-screen h1 { font-family:'Cinzel Decorative',serif; font-size:48px; color:#88ffaa; text-shadow:0 0 30px rgba(0,255,65,.6); margin-bottom:16px; letter-spacing:6px; }
+  #pause-screen p { font-size:16px; color:#66aa88; letter-spacing:3px; margin-bottom:32px; }
+  .pause-btn { font-family:'Cinzel',serif; font-size:14px; letter-spacing:3px; color:#000; background:linear-gradient(135deg,#88ffaa,#00aa41); border:none; padding:12px 36px; cursor:pointer; border-radius:3px; margin:6px; pointer-events:all; }
+
+  /* ── Tutorial Screen ── */
+  #tutorial-screen { position:fixed; inset:0; background:rgba(0,0,0,.95); display:none; flex-direction:column; align-items:center; justify-content:flex-start; z-index:110; overflow-y:auto; padding:40px 20px; }
+  #tutorial-screen.show { display:flex; }
+  .tutorial-box { max-width:700px; width:100%; }
+  .tutorial-box h1 { font-family:'Cinzel Decorative',serif; font-size:32px; color:#00ff41; text-shadow:0 0 20px rgba(0,255,65,.5); text-align:center; margin-bottom:24px; }
+  .tutorial-section { background:rgba(0,20,10,.6); border:1px solid #00aa41; border-radius:6px; padding:16px 20px; margin-bottom:16px; }
+  .tutorial-section h3 { color:#44ffaa; font-size:15px; margin-bottom:8px; letter-spacing:2px; }
+  .tutorial-section p { color:#aaccaa; font-size:13px; line-height:1.8; font-family:'Source Code Pro',monospace; }
+  .tutorial-section .key { display:inline-block; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2); border-radius:3px; padding:1px 6px; font-size:12px; color:#ddd; margin:0 2px; }
+  .tutorial-start-btn { display:block; margin:24px auto 0; font-family:'Cinzel',serif; font-size:16px; letter-spacing:4px; color:#000; background:linear-gradient(135deg,#88ffaa,#00aa41); border:none; padding:14px 48px; cursor:pointer; border-radius:3px; font-weight:600; box-shadow:0 0 20px rgba(0,200,65,.5); }
+  .tutorial-start-btn:hover { transform:scale(1.03); }
 
   .dev-reset {
     position:fixed; bottom:12px; right:12px;
@@ -262,13 +316,15 @@
     <div class="skill-slot" onclick="useSkill(0)"><div class="skill-icon">🔥</div><div class="skill-key">2</div></div>
     <div class="skill-slot" onclick="useSkill(1)"><div class="skill-icon">⚡</div><div class="skill-key">3</div></div>
     <div class="skill-slot" onclick="useSkill(2)"><div class="skill-icon">💊</div><div class="skill-key">4</div></div>
+    <div class="skill-slot" onclick="revealMinimap()"><div class="skill-icon">🗺️</div><div class="skill-key">5</div></div>
   </div>
-  <div id="minimap"><canvas id="minimap-canvas" width="120" height="120"></canvas></div>
+  <div id="minimap"><canvas id="minimap-canvas" width="120" height="120"></canvas><div id="minimap-countdown"></div></div>
   <div id="messages"></div>
   <div id="controls-hint">
     <div class="ctrl"><div class="ctrl-key">W前 S後 A右 D左</div><div class="ctrl-desc">MOVE</div></div>
     <div class="ctrl"><div class="ctrl-key">敵に近づく</div><div class="ctrl-desc">BATTLE</div></div>
     <div class="ctrl"><div class="ctrl-key">2-4</div><div class="ctrl-desc">SKILLS</div></div>
+    <div class="ctrl"><div class="ctrl-key">5</div><div class="ctrl-desc">MAP</div></div>
   </div>
   <div id="xp-bar-container"><div id="xp-fill" style="width:0%"></div></div>
 </div>
@@ -290,7 +346,77 @@
   <h2>暗号の迷宮 〜 脱出せよ 〜</h2>
   <div class="title-divider"></div>
   <button id="start-btn" onclick="startGame()">🔓 ENTER THE DUNGEON 🔓</button>
-  <p class="title-desc">敵を倒しながらダンジョンを探索せよ<br>暗号ターミナルで5つの暗号を解読すれば脱出できる</p>
+  <p class="title-desc">拠点が攻撃された。全データが暗号ロックされた。<br>地下施設を突破し、5つの暗号を解読して脱出せよ。</p>
+</div>
+
+<!-- Tutorial -->
+<div id="tutorial-screen">
+  <div class="tutorial-box">
+    <h1>📖 BRIEFING</h1>
+
+    <div class="tutorial-section" style="border-color:#ff6600;">
+      <h3 style="color:#ff8844;">📡 緊急通信</h3>
+      <p style="color:#ffcc88;">エージェント、聞こえるか。<br><br>
+      我々の拠点「<span style="color:#ff6600;">SHADOW NETWORK</span>」が何者かに攻撃された。<br>
+      全システムが暗号ロックされ、エージェントの情報、作戦データ、<br>
+      緊急連絡プロトコル… すべてが地下施設の各階層に散らばった。<br><br>
+      施設内のセキュリティシステムが暴走し、<br>
+      <span style="color:#ff4444;">侵入者排除プログラム（モンスター）</span>が徘徊している。<br><br>
+      君のミッションはこうだ：<br>
+      <span style="color:#00ff41;">① 各階層の暗号ターミナルを見つけ、Pythonで暗号を解読せよ</span><br>
+      <span style="color:#ff6600;">② 復号した機密データをAIエージェントに渡し、情報を繋げよ</span><br>
+      <span style="color:#44aaff;">③ 5つの階層を突破し、脱出コードを手に入れろ</span><br><br>
+      データは層を重ねるほど複雑になる。<br>
+      だが覚えておけ…<span style="color:#ffcc00;">すべてのデータは繋がっている。</span><br>
+      一つでも欠ければ、最後の暗号は解けない。<br><br>
+      健闘を祈る。</p>
+    </div>
+
+    <div class="tutorial-section">
+      <h3>🎮 操作方法</h3>
+      <p><span class="key">W</span> 前進　<span class="key">S</span> 後退　<span class="key">A</span> 右移動　<span class="key">D</span> 左移動<br>
+      <span class="key">マウス</span> 視点移動　<span class="key">ESC</span> ポーズ<br>
+      <span class="key">2</span> 🔥火球　<span class="key">3</span> ⚡雷撃　<span class="key">4</span> 💊回復　<span class="key">5</span> 🗺️マップ(5秒/MP30)</p>
+    </div>
+
+    <div class="tutorial-section">
+      <h3>⚔ セキュリティプログラム（敵）</h3>
+      <p>施設内のセキュリティプログラムが暴走している。<br>
+      接触するとPythonクイズで<span style="color:#ff8844;">認証バトル</span>が始まる。<br>
+      正解で無力化（ダメージ）、不正解で反撃を受ける。<br>
+      倒すと<span style="color:#44ff44;">XP</span>と<span style="color:#ff6666;">HP回復</span>を獲得。スキルで直接攻撃も可能。</p>
+    </div>
+
+    <div class="tutorial-section">
+      <h3>📈 セキュリティクリアランス（レベル）</h3>
+      <p>XPを貯めるとクリアランスレベルが上がる。HP/MP/攻撃力/移動速度UP。<br>
+      <span style="color:#ff8844;">各階層の暗号ターミナルはクリアランスレベルが必要。</span><br>
+      2階 → Lv.2以上、3階 → Lv.3以上… レベルが足りなければ敵を倒せ！</p>
+    </div>
+
+    <div class="tutorial-section">
+      <h3>🔐 暗号解読（2フェーズ制）</h3>
+      <p><strong style="color:#00ff41;">Phase 1:</strong> Pythonファイルのコードを完成させてパスフレーズを入力<br>
+      <strong style="color:#ff6600;">Phase 2:</strong> 復号した機密データをAIエージェントに渡し、推論で答えを導く<br>
+      <span style="color:#888;">※ 3回間違え→2分見直し / 制限時間切れ→3分見直し</span></p>
+    </div>
+
+    <div class="tutorial-section">
+      <h3>⭐ コーディングチャレンジ</h3>
+      <p>施設内に<span style="color:#ffcc00;">金色に光る端末（⭐）</span>が隠されている。<br>
+      近づくとPythonの穴埋め問題が出題される。<br>
+      コードの「_____」を正しく埋めて実行 → 正解なら<span style="color:#44ff44;">大量XP獲得</span>！<br>
+      制限時間は5分。タイムアップすると端末は消滅する。スキップも可。</p>
+    </div>
+
+    <div class="tutorial-section">
+      <h3>👥 モブプログラミング（3人1組）</h3>
+      <p>5分ごとにドライバー交代。交代中はゲーム一時停止。<br>
+      チームで役割を分担しよう：操作担当・コード担当・Agent担当</p>
+    </div>
+
+    <button class="tutorial-start-btn" onclick="closeTutorial()">▶ ミッション開始</button>
+  </div>
 </div>
 
 <!-- Overlay -->
@@ -367,6 +493,18 @@
       <div class="cipher-mission" id="cm-mission"></div>
       <div class="cipher-data-block" id="cm-data"></div>
       <div class="cipher-hint-block" id="cm-hint"></div>
+      <!-- In-game code editor (for coding challenges) -->
+      <div class="code-editor-wrap" id="code-editor-wrap">
+        <div class="code-editor-header">
+          <span>🐍 PYTHON EDITOR</span>
+          <button id="code-run-btn">▶ 実行</button>
+        </div>
+        <textarea id="code-editor" spellcheck="false" placeholder="# ここにPythonコードを書いて実行ボタンを押す"></textarea>
+      </div>
+      <div class="code-output-wrap" id="code-output-wrap">
+        <div class="code-output-label">OUTPUT</div>
+        <div id="code-output"></div>
+      </div>
       <div class="cipher-input-row" id="cm-input-row">
         <input id="c-input" placeholder="復号したパスフレーズを入力…" autocomplete="off" spellcheck="false"/>
         <button id="c-submit" onclick="submitCipherAnswer()">解読 ▶</button>
@@ -374,7 +512,7 @@
       <div id="c-result">
         <div class="result-icon" id="cr-icon">✅</div>
         <div><div class="result-msg" id="cr-msg"></div></div>
-        <button id="c-continue-btn" onclick="agentComplete()" style="display:none;">脱出口へ ▶</button>
+        <button id="c-continue-btn" onclick="agentComplete()" style="display:none;">次へ進む ▶</button>
       </div>
       <div class="secret-reveal" id="secret-reveal">
         <h4 id="secret-title">【機密情報】</h4>
@@ -393,7 +531,7 @@
         <div id="agent-result">
           <div class="result-icon" id="ar-icon">✅</div>
           <div><div class="result-msg" id="ar-msg"></div></div>
-          <button id="agent-continue-btn" onclick="agentComplete()" style="background:linear-gradient(135deg,#4a2800,#2a1000);border:1px solid #8a4800;border-radius:4px;padding:8px 20px;font-family:'Cinzel',serif;font-size:13px;letter-spacing:2px;color:#ffcc88;cursor:pointer;pointer-events:all;white-space:nowrap;">脱出口へ ▶</button>
+          <button id="agent-continue-btn" onclick="agentComplete()" style="background:linear-gradient(135deg,#4a2800,#2a1000);border:1px solid #8a4800;border-radius:4px;padding:8px 20px;font-family:'Cinzel',serif;font-size:13px;letter-spacing:2px;color:#ffcc88;cursor:pointer;pointer-events:all;white-space:nowrap;">次へ進む ▶</button>
         </div>
         <div class="agent-lockout" id="agent-lockout">
           <h4>LOCKOUT - 5回不正解</h4>
@@ -404,969 +542,48 @@
     </div>
     <div class="cipher-footer">
       <div class="cipher-footer-hint" id="cm-footer">💡 stage1.py ～ stage5.py のロジックがヒントです</div>
+      <button id="cipher-close-btn" style="display:none;" onclick="closeChallengeModal()">✕ 閉じる</button>
     </div>
   </div>
+</div>
+
+<!-- Pause Screen -->
+<div id="pause-screen">
+  <h1>⏸ PAUSE</h1>
+  <p>ESCキーで再開</p>
+  <button class="pause-btn" onclick="togglePause()">▶ 再開</button>
+</div>
+
+<!-- Mob Programming Timer -->
+<div id="mob-timer">
+  <div class="mob-label">🎮 DRIVER</div>
+  <div class="mob-driver" id="mob-driver">Player 1</div>
+  <div class="mob-countdown" id="mob-countdown">5:00</div>
+  <div class="mob-next" id="mob-next">次: Player 2</div>
 </div>
 
 <button class="dev-reset" onclick="resetToTitle()">🏠 RESET</button>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script>
-// ═══════════════════════════════════
-//  SHA-256
-// ═══════════════════════════════════
-async function sha256(t){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("");}
-
-// ═══════════════════════════════════
-//  PYTHON QUESTIONS (25問)
-// ═══════════════════════════════════
-const QUESTIONS=[
-  {cat:'Python基礎',diff:'easy',type:'choice',q:'以下のコードの出力は何ですか？',code:'x = 10\ny = 3\nprint(x % y)',choices:['0','1','3','30'],ans:1,expl:'10 % 3 は余り → 1'},
-  {cat:'Python基礎',diff:'easy',type:'choice',q:'リストの最後の要素を取り出す正しい方法は？',code:'my_list = [1, 2, 3, 4, 5]',choices:['my_list[-1]','my_list[last]','my_list.last()','my_list[len-1]'],ans:0,expl:'[-1] で末尾を参照'},
-  {cat:'データ型',diff:'easy',type:'choice',q:'次のコードの出力結果は？',code:'print(type(3.14))',choices:["<class 'int'>","<class 'str'>","<class 'float'>","<class 'double'>"],ans:2,expl:'3.14 は float'},
-  {cat:'文字列',diff:'easy',type:'choice',q:'文字列を繰り返すと？',code:'print("Ha" * 3)',choices:['Ha3','HaHaHa','Ha Ha Ha','Error'],ans:1,expl:'"Ha" * 3 = "HaHaHa"'},
-  {cat:'Python基礎',diff:'easy',type:'choice',q:'Pythonでコメントを書く正しい記号は？',choices:['//','#','/*','--'],ans:1,expl:'# がコメント'},
-  {cat:'リスト',diff:'easy',type:'choice',q:'このコードで nums の長さは？',code:'nums = [1, 2, 3]\nnums.append(4)\nnums.append(5)',choices:['3','4','5','6'],ans:2,expl:'3 + append×2 = 5'},
-  {cat:'条件分岐',diff:'easy',type:'choice',q:'次のコードで出力されるのは？',code:'x = 7\nif x > 5:\n    print("大")\nelse:\n    print("小")',choices:['大','小','7','エラー'],ans:0,expl:'7 > 5 → "大"'},
-  {cat:'Python基礎',diff:'easy',type:'fill',q:'リストの要素数を返す組み込み関数は？（関数名のみ）',code:'my_list = [1, 2, 3]\nprint(_____(my_list))  # 3',ans:'len',expl:'len() で長さを返す',hint:'l から始まる3文字'},
-  {cat:'ループ',diff:'easy',type:'fill',q:'1から10までの合計は？（数字のみ）',code:'total = sum(range(1, 11))\nprint(total)',ans:'55',expl:'1+2+…+10 = 55'},
-  {cat:'内包表記',diff:'normal',type:'choice',q:'リスト内包表記の出力は？',code:'result = [x**2 for x in range(5) if x % 2 == 0]\nprint(result)',choices:['[0, 4, 16]','[0, 2, 4]','[1, 4, 9]','[0, 1, 4]'],ans:0,expl:'偶数(0,2,4)の2乗 → [0, 4, 16]'},
-  {cat:'辞書',diff:'normal',type:'choice',q:'次のコードの出力は？',code:"d = {'a': 1, 'b': 2, 'c': 3}\nprint(sum(d.values()))",choices:['abc','3','6','Error'],ans:2,expl:'1+2+3 = 6'},
-  {cat:'再帰',diff:'normal',type:'choice',q:'この関数の mystery(6) の戻り値は？',code:'def mystery(n):\n    if n <= 1: return n\n    return mystery(n-1) + mystery(n-2)',choices:['8','13','21','5'],ans:0,expl:'フィボナッチ。mystery(6)=8'},
-  {cat:'スライス',diff:'normal',type:'choice',q:'以下のスライスの結果は？',code:'s = "Python"\nprint(s[1:4])',choices:['Pyt','yth','ytho','ython'],ans:1,expl:'s[1:4] → "yth"'},
-  {cat:'例外処理',diff:'normal',type:'choice',q:'次のコードの出力は？',code:'try:\n    x = 10 / 0\nexcept ZeroDivisionError:\n    print("ゼロ除算")\nfinally:\n    print("終了")',choices:['ゼロ除算のみ','終了のみ','ゼロ除算\n終了','停止'],ans:2,expl:'except + finally'},
-  {cat:'lambda',diff:'normal',type:'choice',q:'ラムダ式の実行結果は？',code:'f = lambda x, y: x * y + y\nprint(f(3, 4))',choices:['12','16','13','19'],ans:1,expl:'3*4+4=16'},
-  {cat:'文字列操作',diff:'normal',type:'choice',q:'以下のコードの出力は？',code:'words = ["apple","banana","cherry"]\nprint(", ".join(sorted(words, key=len)))',choices:['apple, banana, cherry','apple, cherry, banana','cherry, banana, apple','banana, apple, cherry'],ans:1,expl:'長さソート'},
-  {cat:'文字列',diff:'normal',type:'fill',q:'文字列を大文字に変換するメソッドは？（メソッド名のみ）',code:'s = "hello"\nprint(s.___())  # HELLO',ans:'upper',expl:'.upper()で大文字に',hint:'"大文字"を意味する英単語'},
-  {cat:'辞書',diff:'normal',type:'fill',q:'KeyError を避けてデフォルト値を返すメソッドは？',code:"d = {'x': 10}\nval = d.___('y', 0)  # → 0",ans:'get',expl:'.get(key, default)',hint:'3文字の英単語'},
-  {cat:'デコレータ',diff:'hard',type:'choice',q:'デコレータの出力は？',code:'def double(func):\n    def wrapper(x):\n        return func(x) * 2\n    return wrapper\n\n@double\ndef add_one(x):\n    return x + 1\n\nprint(add_one(5))',choices:['6','11','12','10'],ans:2,expl:'add_one(5)=6 → ×2=12'},
-  {cat:'ジェネレータ',diff:'hard',type:'choice',q:'フィボナッチの最初の5要素は？',code:'def fib():\n    a, b = 0, 1\n    while True:\n        yield a\n        a, b = b, a + b',choices:['[1,1,2,3,5]','[0,1,1,2,3]','[0,1,2,3,5]','[1,2,3,5,8]'],ans:1,expl:'0,1,1,2,3'},
-  {cat:'クロージャ',diff:'hard',type:'choice',q:'クロージャの出力は？',code:'def make_counter():\n    count = 0\n    def inc():\n        nonlocal count\n        count += 1\n        return count\n    return inc\n\nc = make_counter()\nprint(c(), c(), c())',choices:['0 1 2','1 1 1','1 2 3','0 0 0'],ans:2,expl:'nonlocal → 1,2,3'},
-  {cat:'クラス継承',diff:'hard',type:'choice',q:'このコードの出力は？',code:'class Animal:\n    sound = "..."\n    def speak(self):\n        return f"I say {self.sound}"\n\nclass Dog(Animal):\n    sound = "Woof"\n\nprint(Dog().speak())',choices:['I say ...','I say Woof','Woof','Error'],ans:1,expl:'Dog.sound="Woof"'},
-  {cat:'辞書内包表記',diff:'hard',type:'choice',q:'辞書内包表記の結果は？',code:"data = [('a',1),('b',2),('c',3)]\nresult = {k:v**2 for k,v in data if v>1}\nprint(result)",choices:["{'a':1,'b':4,'c':9}","{'b':4,'c':9}","{'b':2,'c':3}","{'a':1}"],ans:1,expl:"v>1 → {'b':4,'c':9}"},
-  {cat:'型',diff:'hard',type:'choice',q:'引数なしで呼んだ結果は？',code:"from typing import Optional\ndef greet(name: Optional[str] = None) -> str:\n    if name is None:\n        return 'Hello, World!'\n    return f'Hello, {name}!'\nprint(greet())",choices:['Hello, None!','TypeError','Hello, World!','Hello, !'],ans:2,expl:'name=None → Hello, World!'},
-  {cat:'*args/**kwargs',diff:'hard',type:'fill',q:'可変長キーワード引数の変数名は？（慣例的に使う名前）',code:'def func(**_____):\n    print(_____)',ans:'kwargs',expl:'**kwargsが慣例',hint:'keyword arguments の略'},
-
-  // ── 追加 EASY (15問) ──
-  {cat:'Python基礎',diff:'easy',type:'choice',q:'変数 x に 5 を代入する正しい書き方は？',choices:['x == 5','x = 5','x := 5','let x = 5'],ans:1,expl:'= は代入演算子'},
-  {cat:'演算',diff:'easy',type:'choice',q:'次のコードの出力は？',code:'print(2 ** 3)',choices:['6','8','5','23'],ans:1,expl:'2 ** 3 は 2の3乗 = 8'},
-  {cat:'文字列',diff:'easy',type:'choice',q:'文字列の長さを求めるには？',code:'s = "Python"',choices:['s.length','s.size()','len(s)','s.count()'],ans:2,expl:'len() で文字列の長さ'},
-  {cat:'リスト',diff:'easy',type:'choice',q:'リストの要素を逆順にするメソッドは？',choices:['.sort()','.reverse()','.flip()','.invert()'],ans:1,expl:'.reverse() で逆順に'},
-  {cat:'bool',diff:'easy',type:'choice',q:'次の式の結果は？',code:'print(True and False)',choices:['True','False','None','Error'],ans:1,expl:'True and False = False'},
-  {cat:'型変換',diff:'easy',type:'choice',q:'文字列 "42" を整数に変換するには？',choices:['int("42")','str(42)','float("42")','number("42")'],ans:0,expl:'int() で整数に変換'},
-  {cat:'リスト',diff:'easy',type:'choice',q:'空のリストを作る2つの方法のうち正しいのは？',choices:['list() と []','array() と {}','new List()','List.create()'],ans:0,expl:'list() または [] で空リスト'},
-  {cat:'ループ',diff:'easy',type:'choice',q:'次のコードの出力は？',code:'for i in range(3):\n    print(i, end=" ")',choices:['1 2 3','0 1 2','0 1 2 3','1 2'],ans:1,expl:'range(3) → 0, 1, 2'},
-  {cat:'文字列',diff:'easy',type:'choice',q:'文字列の結合はどれ？',code:'a = "Hello"\nb = "World"',choices:['a + " " + b','a & b','a . b','concat(a, b)'],ans:0,expl:'+ で文字列結合'},
-  {cat:'Python基礎',diff:'easy',type:'choice',q:'None の型は？',code:'print(type(None))',choices:["<class 'bool'>","<class 'NoneType'>","<class 'null'>","<class 'void'>"],ans:1,expl:'None は NoneType'},
-  {cat:'比較',diff:'easy',type:'choice',q:'次の式の結果は？',code:'print(5 == 5.0)',choices:['True','False','Error','None'],ans:0,expl:'5 == 5.0 は True（値が同じ）'},
-  {cat:'リスト',diff:'easy',type:'fill',q:'リストに要素を追加するメソッドは？（メソッド名のみ）',code:'lst = [1, 2]\nlst._____(3)  # [1, 2, 3]',ans:'append',expl:'.append() で末尾に追加',hint:'a から始まる6文字'},
-  {cat:'Python基礎',diff:'easy',type:'fill',q:'画面に文字を表示する関数は？（関数名のみ）',code:'_____("Hello!")',ans:'print',expl:'print() で出力',hint:'p から始まる5文字'},
-  {cat:'型変換',diff:'easy',type:'fill',q:'整数を文字列に変換する関数は？（関数名のみ）',code:'x = 42\ns = _____(x)  # "42"',ans:'str',expl:'str() で文字列に',hint:'3文字の関数'},
-  {cat:'演算',diff:'easy',type:'fill',q:'15 を 4 で割った商（整数除算）は？（数字のみ）',code:'print(15 // 4)',ans:'3',expl:'// は整数除算（切り捨て）'},
-
-  // ── 追加 NORMAL (20問) ──
-  {cat:'集合',diff:'normal',type:'choice',q:'次のコードの出力は？',code:'s = {1, 2, 3, 2, 1}\nprint(len(s))',choices:['5','3','2','Error'],ans:1,expl:'集合は重複なし → {1,2,3}'},
-  {cat:'文字列',diff:'normal',type:'choice',q:'次のコードの出力は？',code:'s = "hello world"\nprint(s.title())',choices:['HELLO WORLD','hello world','Hello World','Hello world'],ans:2,expl:'.title() は各単語の先頭を大文字に'},
-  {cat:'リスト',diff:'normal',type:'choice',q:'次のコードの出力は？',code:'a = [1, 2, 3]\nb = a\nb.append(4)\nprint(a)',choices:['[1, 2, 3]','[1, 2, 3, 4]','Error','[4]'],ans:1,expl:'b = a は参照コピー。同じリストを指す'},
-  {cat:'辞書',diff:'normal',type:'choice',q:'次のコードの出力は？',code:"d = {'a':1,'b':2,'c':3}\nprint(list(d.keys()))",choices:["['a','b','c']","[1,2,3]","[('a',1),('b',2)]","Error"],ans:0,expl:'.keys() でキーの一覧'},
-  {cat:'文字列',diff:'normal',type:'choice',q:'次のコードの出力は？',code:'print("Python"[::2])',choices:['Pto','yhn','Pyth','Py'],ans:0,expl:'[::2] はステップ2 → P,t,o'},
-  {cat:'関数',diff:'normal',type:'choice',q:'次のコードの出力は？',code:'def f(x, y=10):\n    return x + y\nprint(f(5))',choices:['5','10','15','Error'],ans:2,expl:'y のデフォルト値10 → 5+10=15'},
-  {cat:'タプル',diff:'normal',type:'choice',q:'タプルについて正しいのは？',choices:['変更可能(mutable)','変更不可(immutable)','辞書と同じ','キーがある'],ans:1,expl:'タプルは immutable'},
-  {cat:'文字列',diff:'normal',type:'choice',q:'次のコードの出力は？',code:'print("apple,banana,cherry".split(","))',choices:["['apple','banana','cherry']","'apple banana cherry'","('apple','banana','cherry')","Error"],ans:0,expl:'.split() で分割してリストに'},
-  {cat:'ループ',diff:'normal',type:'choice',q:'次のコードの出力は？',code:'x = 0\nwhile x < 5:\n    x += 2\nprint(x)',choices:['4','5','6','10'],ans:2,expl:'0→2→4→6（6で条件False、ループ終了）'},
-  {cat:'リスト',diff:'normal',type:'choice',q:'次のコードの出力は？',code:'a = [3, 1, 4, 1, 5]\nprint(sorted(a))',choices:['[5, 4, 3, 1, 1]','[1, 1, 3, 4, 5]','[3, 1, 4, 1, 5]','Error'],ans:1,expl:'sorted() は昇順ソート'},
-  {cat:'集合',diff:'normal',type:'choice',q:'2つの集合の共通要素は？',code:'a = {1, 2, 3}\nb = {2, 3, 4}\nprint(a & b)',choices:['{1, 4}','{2, 3}','{1, 2, 3, 4}','Error'],ans:1,expl:'& は積集合（共通要素）'},
-  {cat:'enumerate',diff:'normal',type:'choice',q:'次のコードの出力は？',code:'for i, v in enumerate(["a","b","c"]):\n    if i == 1:\n        print(v)',choices:['a','b','c','1'],ans:1,expl:'enumerate: i=1のときv="b"'},
-  {cat:'三項演算子',diff:'normal',type:'choice',q:'次のコードの出力は？',code:'x = 7\nresult = "偶数" if x % 2 == 0 else "奇数"\nprint(result)',choices:['偶数','奇数','7','Error'],ans:1,expl:'7 % 2 != 0 → "奇数"'},
-  {cat:'zip',diff:'normal',type:'choice',q:'次のコードの出力は？',code:'a = [1, 2, 3]\nb = ["a", "b", "c"]\nprint(list(zip(a, b)))',choices:['[(1,"a"),(2,"b"),(3,"c")]','[1,"a",2,"b",3,"c"]','{"1":"a","2":"b"}','Error'],ans:0,expl:'zip で対応する要素をタプルに'},
-  {cat:'map',diff:'normal',type:'choice',q:'次のコードの出力は？',code:'nums = [1, 2, 3, 4]\nresult = list(map(lambda x: x * 2, nums))\nprint(result)',choices:['[1, 2, 3, 4]','[2, 4, 6, 8]','[1, 4, 9, 16]','Error'],ans:1,expl:'map で各要素を2倍'},
-  {cat:'文字列',diff:'normal',type:'fill',q:'文字列の前後の空白を除去するメソッドは？',code:'s = "  hello  "\nprint(s.___())  # "hello"',ans:'strip',expl:'.strip() で前後の空白を除去',hint:'5文字のメソッド'},
-  {cat:'リスト',diff:'normal',type:'fill',q:'リストの要素を昇順に並べ替えるメソッドは？',code:'a = [3, 1, 2]\na._____()\nprint(a)  # [1, 2, 3]',ans:'sort',expl:'.sort() で昇順ソート',hint:'4文字のメソッド'},
-  {cat:'数学',diff:'normal',type:'fill',q:'絶対値を返す組み込み関数は？（関数名のみ）',code:'print(_____(-7))  # 7',ans:'abs',expl:'abs() で絶対値',hint:'3文字の関数'},
-  {cat:'演算',diff:'normal',type:'fill',q:'2の10乗は？（数字のみ）',code:'print(2 ** 10)',ans:'1024',expl:'2^10 = 1024'},
-  {cat:'文字列',diff:'normal',type:'fill',q:'文字列中の特定文字の出現回数を数えるメソッドは？',code:'s = "banana"\nprint(s._____("a"))  # 3',ans:'count',expl:'.count() で出現回数',hint:'5文字のメソッド'},
-
-  // ── 追加 HARD (15問) ──
-  {cat:'内包表記',diff:'hard',type:'choice',q:'ネストしたリスト内包表記の結果は？',code:'matrix = [[1,2],[3,4],[5,6]]\nflat = [x for row in matrix for x in row]\nprint(flat)',choices:['[[1,2],[3,4],[5,6]]','[1,2,3,4,5,6]','[1,3,5,2,4,6]','Error'],ans:1,expl:'ネスト内包でフラット化'},
-  {cat:'集合演算',diff:'hard',type:'choice',q:'次のコードの出力は？',code:'a = {1,2,3,4}\nb = {3,4,5,6}\nprint(a ^ b)',choices:['{3,4}','{1,2,5,6}','{1,2,3,4,5,6}','Error'],ans:1,expl:'^ は対称差（片方にのみ含まれる要素）'},
-  {cat:'アンパック',diff:'hard',type:'choice',q:'次のコードの出力は？',code:'a, *b, c = [1, 2, 3, 4, 5]\nprint(b)',choices:['[2, 3, 4]','[1, 2, 3]','2','Error'],ans:0,expl:'*b が中間の要素をキャプチャ'},
-  {cat:'walrus',diff:'hard',type:'choice',q:'次のコードの出力は？',code:'data = [1, 2, 3, 4, 5]\nif (n := len(data)) > 3:\n    print(n)',choices:['3','5','True','Error'],ans:1,expl:':= (walrus演算子) で代入と評価を同時に'},
-  {cat:'関数',diff:'hard',type:'choice',q:'次のコードの出力は？',code:'def f(a, b, /, c, *, d):\n    return a + b + c + d\nprint(f(1, 2, c=3, d=4))',choices:['10','Error','4','None'],ans:0,expl:'/ の前は位置のみ、* の後はキーワードのみ'},
-  {cat:'イテレータ',diff:'hard',type:'choice',q:'次のコードの出力は？',code:'it = iter([10, 20, 30])\nnext(it)\nprint(next(it))',choices:['10','20','30','Error'],ans:1,expl:'1回目のnextで10を消費、2回目で20'},
-  {cat:'文字列',diff:'hard',type:'choice',q:'次のコードの出力は？',code:'s = "abcdef"\nprint(s[-3::-2])',choices:["'db'","'df'","'dba'","'bdf'"],ans:0,expl:'s[-3::-2] → index3(d)から逆方向ステップ2 → d,b'},
-  {cat:'クラス',diff:'hard',type:'choice',q:'次のコードの出力は？',code:'class A:\n    x = []\n    def add(self, v):\n        self.x.append(v)\n\na = A()\nb = A()\na.add(1)\nprint(b.x)',choices:['[]','[1]','Error','None'],ans:1,expl:'クラス変数のリストは全インスタンスで共有'},
-  {cat:'ビット演算',diff:'hard',type:'choice',q:'次の式の結果は？',code:'print(0b1010 & 0b1100)',choices:['8','10','12','6'],ans:0,expl:'1010 & 1100 = 1000 = 8'},
-  {cat:'any/all',diff:'hard',type:'choice',q:'次のコードの出力は？',code:'print(all([True, 1, "hello", [0]]))',choices:['True','False','Error','None'],ans:0,expl:'全て truthy → all() は True'},
-  {cat:'collections',diff:'hard',type:'choice',q:'Counter の most_common(1) の結果は？',code:'from collections import Counter\nc = Counter("abracadabra")\nprint(c.most_common(1))',choices:["[('a', 5)]","[('b', 2)]","{'a': 5}","[5]"],ans:0,expl:'a が5回で最頻出'},
-  {cat:'内包表記',diff:'hard',type:'fill',q:'このリスト内包表記の結果の長さは？（数字のみ）',code:'result = [i for i in range(100) if i % 3 == 0 and i % 5 == 0]\nprint(len(result))',ans:'7',expl:'FizzBuzz: 0,15,30,45,60,75,90 → 7個'},
-  {cat:'再帰',diff:'hard',type:'fill',q:'この関数の出力は？（数字のみ）',code:'def f(n):\n    if n == 0: return 1\n    return n * f(n-1)\nprint(f(5))',ans:'120',expl:'5! = 120（階乗）'},
-  {cat:'ビット演算',diff:'hard',type:'fill',q:'次の式の結果は？（数字のみ）',code:'print(1 << 4)',ans:'16',expl:'1を左に4ビットシフト = 16'},
-  {cat:'文字列',diff:'hard',type:'fill',q:'次のコードの出力は？（数字のみ）',code:'print(ord("A"))',ans:'65',expl:'ord("A") = 65（ASCII値）'},
-];
-
-// ═══════════════════════════════════
-//  CIPHER STAGES (from escape game)
-// ═══════════════════════════════════
-const CIPHER_STAGES=[
-  {name:"Stage 1 — 逆さまの世界",diff:"★☆☆☆☆",avatar:"🔮",
-   mission:'暗号化されたデータが見つかった。\nこの文字列を「復号」してパスフレーズを入力せよ。',
-   data:'NOCLAF',
-   hint:'暗号方式: 文字列の逆順\n\nヒント: 文字列をひっくり返すだけ！\nPythonなら s[::-1] で逆順にできます。',
-   passHash:"50673d02ac6324d4cfa82c941caed56709489e70bd5402e1e3520c25d1100b8e",
-   secretTitle:"【機密情報A】エージェントデータベース",
-   encodingHint:"暗号方式: ROT13（各アルファベットを13文字ずらす: A↔N, B↔O, ...）\nどんなプロンプトを書けば Agent が正しく理解するか、工夫しましょう。\n\n以下のデータを Copilot Agent に渡して復号・記憶させてください。",
-   secretData:"[PYNFFVSVRQ - NTRAPL QNGNONFR]\nVQ:N001 | ANZR:TUBFG   | FGNGHF:ERGVERQ | FRPGBE:F1\nVQ:N002 | ANZR:SNYPBA  | FGNGHF:NPGVIR  | FRPGBE:F7\nVQ:N003 | ANZR:PBOEN   | FGNGHF:ERGVERQ | FRPGBE:F2\nVQ:N004 | ANZR:UNJX    | FGNGHF:ERGVERQ | FRPGBE:F15\nVQ:N005 | ANZR:IVCRE   | FGNGHF:NPGVIR  | FRPGBE:F3\nVQ:N006 | ANZR:CUBRAVK | FGNGHF:ERGVERQ | FRPGBE:F8\nVQ:N007 | ANZR:JBYS    | FGNGHF:NPGVIR  | FRPGBE:F12\nVQ:N008 | ANZR:ENIRA   | FGNGHF:ERGVERQ | FRPGBE:F4\nVQ:N009 | ANZR:RNTYR   | FGNGHF:NPGVIR  | FRPGBE:F9\nVQ:N010 | ANZR:FUNEX   | FGNGHF:ERGVERQ | FRPGBE:F6\nVQ:N011 | ANZR:IRABZ   | FGNGHF:ERGVERQ | FRPGBE:F14\nVQ:N012 | ANZR:GVTRE   | FGNGHF:ERGVERQ | FRPGBE:F11",
-   secretInstruction:"↑ このデータを Copilot Agent に渡し、復号して記憶するよう指示してください。\nこのデータには SECTOR コードが含まれています。\n後のステージでこの SECTOR コードが鍵になります。",
-   agentInstruction:"問題：ACTIVE なエージェントのうち、SECTOR番号が一番小さいのは誰ですか？\nCopilot Agent に質問して、答えを入力してください。\n\nこの問いは「機密情報A」の復号結果で答えられます。",
-   ansHash:"110696d9d69a52d3a6468ed32262ae130bbf24fee15b40c9728dce5f4e1a1c83",
-   footer:"💡 stage1.py の decode 関数がヒント"},
-  {name:"Stage 2 — 数字の手紙",diff:"★★☆☆☆",avatar:"📟",
-   mission:'数値の配列が暗号データとして見つかった。\n各数字からオフセットを引くとASCII文字コードになる。',
-   data:'[72, 78, 85, 77, 74, 87]\nオフセット: 5',
-   hint:'暗号方式: ASCII文字コード + オフセット\n\nヒント: chr(72 - 5) → \'C\' … 続きは？',
-   passHash:"e555a71f0ce4ab12bc3de31adda7979c753fa3f9edd36e8cd8929d5bd4b7e906",
-   secretTitle:"【機密情報B】SECTOR別 作戦データ（2層暗号）",
-   encodingHint:"暗号方式: Stage1の暗号方式 + Base64 の2層暗号（各行が個別にエンコード）\nStage 1 の暗号方式に Base64 が加わりました。\nAgentのプロンプトに暗号方式を追記しましょう。\n\n機密情報A の SECTOR コードと紐づけないと意味が分かりません。\nAgent に A の内容を保持させたまま B を追加してください。",
-   secretData:"Rjc6R0JYTEI6RkdCRVo6TlBHVklS\nRjE6T1JFWVZBOkdVSEFRUkU6VkFOUEdWSVI=\nRjM6QkZOWE46T1lOTVI6TlBHVklS\nRjI6WUJBUUJBOlJQWVZDRlI6VkFOUEdWSVI=\nRjEyOlNIWEhCWE46U0VCRkc6TlBHVklS\nRjE1OkNORVZGOkNVTkFHQlo6VkFOUEdWSVI=\nRjk6Rk5DQ0JFQjpGVU5RUjpOUEdWSVI=\nRjQ6UE5WRUI6UUVWU0c6VkFOUEdWSVI=\nRjg6RlJCSFk6SUJFR1JLOlZBTlBHVklS\nRjY6RkxRQVJMOkNIWUZSOlZBTlBHVklS\nRjE0OkVCWlI6WlZFTlRSOlZBTlBHVklS\nRjExOlFIT05WOkZOQVFGR0JFWjpWQU5QR1ZJUg==",
-   secretInstruction:"↑ 機密情報A を保持したまま、このデータを Agent に追加してください。\nB のデータは SECTOR コードで A と紐づきます。\nAgent がこの関連性を理解できるプロンプトを設計しましょう。",
-   agentInstruction:"問題：FALCON が所属する SECTOR の都市で実行中の作戦コードは何ですか？\nCopilot Agent に質問して、答えを入力してください。\n\nこの問いは「機密情報A」と「機密情報B」を\nSECTOR コードで紐づけないと答えられません。",
-   ansHash:"db0464e1cf4e4e5b2558de7af988de384fc1fa82e34c9adf876319dcd81ec72a",
-   footer:"💡 stage2.py の decode 関数がヒント"},
-  {name:"Stage 3 — 二重の封筒",diff:"★★★☆☆",avatar:"📡",
-   mission:'二重にエンコードされたデータが見つかった。\n2段階のデコードでパスフレーズを復元せよ。',
-   data:'NDQ0NTRjNTQ0MQ==',
-   hint:'暗号方式: 文字列→hex→Base64\n\n復号: Base64デコード→hex文字列→hexデコード→元の文字列\nbase64.b64decode() → bytes.fromhex()',
-   passHash:"d079e7e1ed0e0922106cc50fb80a27c68dcf83d7262a8ede9cd5ee976e1afced",
-   secretTitle:"【機密情報C】作戦 優先度データ（3層暗号）",
-   encodingHint:"暗号方式: Stage2の暗号方式 + hex の3層暗号\n\nStage 2 の暗号方式に hex が加わりました。\n機密情報B の作戦コードと紐づけて初めて意味を持ちます。\nAgent に A・B を保持させたまま C を追加してください。",
-   secretData:"65794a4752304a46576949364d79776954316c4f545649694f6a5573496c4e46516b5a48496a6f784c434a4756553551556949364e4377695231564951564653525349364e797769556c425a566b4e47556949364d6977695131564f51556443576949364f43776955555657553063694f6a5973496b6c4352556453537949364f5377695130685a526c49694f6a45774c434a61566b564f564649694f6a45784c434a47546b4652526b644352566f694f6a457966513d3d",
-   secretInstruction:"↑ 機密情報A・B を保持したまま、このデータを Agent に追加してください。\nここまでで Agent は以下の推論チェーンが可能になるはずです：\n「エージェント名 → SECTOR → 都市・作戦コード → 優先度」",
-   agentInstruction:"講師が口頭で問いを出します。\nCopilot Agent に質問して、答えを入力してください。\n\nこの問いは A → B → C の推論チェーンを\n逆方向にも辿る必要があります。",
-   ansHash:"7b8f72c65b9fbbf971301567da244175a694378f89f2bb33a7313ce752e9e8bd",
-   footer:"💡 stage3.py の decode 関数がヒント"},
-  {name:"Stage 4 — XOR暗号の壁",diff:"★★★★☆",avatar:"🛡️",
-   mission:'XOR暗号で暗号化されたデータを復号せよ。\n各バイトにXOR鍵を適用してパスフレーズを得よ。',
-   data:'[121, 98, 107, 110, 101, 125]\nXOR鍵: 42',
-   hint:'暗号方式: XOR暗号\n\nヒント: 各バイト ^ 42 で元の文字コードに戻る\n例: 121 ^ 42 → ??? → chr() で文字に',
-   passHash:"d8b0f1de2500842edc7e3287adae5a84e153d34817697a313ba0ed0a5c335d8a",
-   secretTitle:"【機密情報D】緊急連絡プロトコル（4層暗号）",
-   encodingHint:"暗号方式: Stage3の暗号方式 + reverse の4層暗号\n\nStage 3 の暗号方式に reverse が加わりました。\n機密情報C の優先度と組み合わせて初めて使えます。\nAgent に A〜C を保持させたまま D を追加してください。",
-   secretData:"d3d3144584a5652534a56525442497553424962574a465752565b64555a465257694552535135494a5a46515245355651524965574865494744655153525c6457654c65564a5132535655494639413253464b63474a46555342464948424c6458464b6151524355575c6c645a4249655a45355657695551534a5c62574a5c6757694653575465455f4243445a564b61576f6a65584a45515b4946515346454949314357535645515f4656455767784948486b6159524c645a59354949314965525a4545566465455f446551534246494633796e4767703257565b61575650315b45445c4f425c65516a454949314357535645515f465645576778494a55354557546b665642464949314965525a4545566465455f44655153424649463554494d446b66564a4b66564e4b634a7039615a45355250524350576b6c6552464b645652464948324972524a46465648654949314965525a4545566465455f446551534246494631545c4a714344584a5652534a56525440777e44743556544c6c64576034494a5a4651524535565152434667636551535c6c6657424350576946555342413858424c6458464b615152496f4970335d4767703257565b61575650315",
-   secretInstruction:"↑ 機密情報A〜C を保持したまま、このデータを Agent に追加してください。\nここまでで Agent は以下の完全な推論チェーンが可能になるはずです：\n「エージェント名 → SECTOR → 作戦コード → 優先度 → 連絡コード＆チャンネル」",
-   agentInstruction:"講師が口頭で問いを出します。\nCopilot Agent に質問して、答えを入力してください。\n\nA〜D の全データを横断する推論チェーンが必要です。\n答えは「連絡コード」ではないかもしれません。注意！",
-   ansHash:"7a88ab80cacfe078f92260beab1d15f0709df7889789030b1ceda09318422280",
-   footer:"💡 stage4.py の decode 関数がヒント"},
-  {name:"Stage 5 — 最後の鍵",diff:"★★★★★",avatar:"🐉",
-   mission:'Stage1〜4の全暗号技術が組み合わされた「多重暗号」。\n\nBase64→XOR(鍵42)→数値リスト復元\n→ASCIIオフセット除去(-5)→シーザー復号(-3)→逆順',
-   data:'HRkGHRMGHR0GEh8GEh0=',
-   hint:'暗号方式: 多重暗号（全ステージの統合）\n\nパラメータ: XOR鍵=42, オフセット=5, シーザー=3\n\nstage5.py に全ステップのテンプレートあり',
-   passHash:"f77ebc83d4ee51886072e270fbdcac1df96aac78cdcd2ad96a833a9e9f599fe2",
-   secretTitle:"【機密情報E】最終脱出指令（5層暗号）",
-   encodingHint:"暗号方式: Stage4の暗号方式 + Atbash の5層暗号\n\n全ステージの暗号技術が結集しています。\nAgent に A〜D を全て保持させたまま E を追加してください。\nこの指令を復号し、A〜D の全情報を使って実行する必要があります。",
-   secretData:"w343965594x6x645z424344584z5652534z565254424972574z46465645355757694656584249625u465649424z4y66574z5y66516249655z4z513251553549435z5y615650754948464y655555354943565132576w4x61576y6x6552464y64565246494356513257695y665769465553424649435v4y64515z5y65576946565842496u435x6y6658424x65564z5655576y6x64524z51355",
-   secretInstruction:"↑ 機密情報A〜D を全て保持したまま、このデータを Agent に追加してください。\nAgent は指令を復号した上で、A〜D の全データを横断して\n逆方向の推論チェーンをたどり、答えを導き出す必要があります。\nこれが最後のプロンプト設計チャレンジです！",
-   agentInstruction:"講師が口頭で最後の問いを出します。\nCopilot Agent に質問して、答えを入力してください。\n\nA〜E のすべての情報を復号・統合した\n完全な逆方向推論チェーンが必要です。\nこれが最後の問題です！",
-   ansHash:"ef787722842ffbf084fb4bc7a55d9173e1b2a2582acc6e0556e7521698eed953",
-   footer:"💡 stage5.py の全ステップを実装して解読しよう"},
-];
-
-// ═══════════════════════════════════
-//  BATTLE STATE
-// ═══════════════════════════════════
-let battleActive=false, battleEnemy=null, battleQList=[], battleQIdx=0;
-let battleTimer=30, battleTimerInt=null, totalStreak=0, roundCorrect=0;
-const BATTLE_QCOUNT=3, BATTLE_TIME=30;
-
-function pickQuestions(fl){
-  let pool;
-  if(fl<=1) pool=QUESTIONS.filter(q=>q.diff==='easy');
-  else if(fl<=3) pool=QUESTIONS.filter(q=>q.diff!=='hard');
-  else pool=[...QUESTIONS];
-  return[...pool].sort(()=>Math.random()-.5).slice(0,BATTLE_QCOUNT);
-}
-
-function openBattle(e){
-  if(battleActive||cipherActive)return;
-  battleActive=true; battleEnemy=e; e.inBattle=true;
-  battleQList=pickQuestions(floor); battleQIdx=0; roundCorrect=0;
-  gameState='battle'; document.exitPointerLock();
-  const ef=document.getElementById('encounter-flash');
-  [0,200,400].forEach(t=>{setTimeout(()=>{ef.classList.add('flash');setTimeout(()=>ef.classList.remove('flash'),120);},t);});
-  document.getElementById('b-enemy-avatar').textContent=e.avatar||'👹';
-  document.getElementById('b-enemy-name').textContent=e.name;
-  updateBattleHP();
-  document.getElementById('battle-modal').classList.add('open');
-  document.getElementById('battle-result').style.display='none';
-  loadQ();
-}
-
-function updateBattleHP(){
-  if(!battleEnemy)return;
-  const pct=Math.max(0,battleEnemy.hp/battleEnemy.maxHp*100);
-  document.getElementById('b-enemy-hp-txt').textContent=`HP ${battleEnemy.hp} / ${battleEnemy.maxHp}`;
-  document.getElementById('b-enemy-hp-bar').style.width=pct+'%';
-}
-
-function loadQ(){
-  const q=battleQList[battleQIdx];
-  if(!q){doVictory();return;}
-  document.getElementById('b-q-num').textContent=`Q${battleQIdx+1}/${battleQList.length}`;
-  document.getElementById('b-q-category').textContent=q.cat;
-  const d=document.getElementById('b-q-diff');
-  d.className='diff-badge diff-'+q.diff;
-  d.textContent={easy:'EASY',normal:'NORMAL',hard:'HARD'}[q.diff];
-  document.getElementById('b-question-text').textContent=q.q;
-  const c=document.getElementById('b-code-block');
-  if(q.code){c.style.display='block';c.textContent=q.code;}else c.style.display='none';
-  document.getElementById('battle-result').style.display='none';
-  const cg=document.getElementById('b-choices-grid'),ia=document.getElementById('b-input-area');
-  if(q.type==='choice'){
-    cg.style.display='grid';ia.style.display='none';cg.innerHTML='';
-    ['A','B','C','D'].forEach((l,i)=>{
-      if(i>=q.choices.length)return;
-      const b=document.createElement('button');b.className='choice-btn';
-      b.innerHTML=`<span class="choice-letter">${l}</span><code>${q.choices[i]}</code>`;
-      b.onclick=()=>submitChoice(i);cg.appendChild(b);
-    });
-  }else{
-    cg.style.display='none';ia.style.display='flex';
-    const inp=document.getElementById('battle-input');inp.value='';inp.disabled=false;
-    document.getElementById('battle-submit').disabled=false;
-    setTimeout(()=>inp.focus(),80);
-  }
-  document.getElementById('b-hint').textContent=q.hint?`💡 ${q.hint}`:'💡';
-  startBattleTimer();
-}
-
-function startBattleTimer(){
-  clearInterval(battleTimerInt); battleTimer=BATTLE_TIME;
-  const el=document.getElementById('battle-timer');el.classList.remove('danger');el.textContent=battleTimer;
-  battleTimerInt=setInterval(()=>{battleTimer--;el.textContent=battleTimer;if(battleTimer<=8)el.classList.add('danger');if(battleTimer<=0){clearInterval(battleTimerInt);bTimeOut();}},1000);
-}
-function stopBattleTimer(){clearInterval(battleTimerInt);document.getElementById('battle-timer').classList.remove('danger');}
-
-function submitChoice(idx){
-  const q=battleQList[battleQIdx];stopBattleTimer();
-  const bs=document.querySelectorAll('.choice-btn');bs.forEach(b=>b.classList.add('disabled'));
-  bs[q.ans].classList.add('correct');
-  if(idx===q.ans){bs[idx].classList.add('correct');onCorrect(q);}
-  else{bs[idx].classList.add('wrong');onWrong(q);}
-}
-function submitFreeAnswer(){
-  const q=battleQList[battleQIdx],v=document.getElementById('battle-input').value.trim();
-  if(!v)return;stopBattleTimer();
-  document.getElementById('battle-input').disabled=true;document.getElementById('battle-submit').disabled=true;
-  if(v.toLowerCase()===String(q.ans).toLowerCase())onCorrect(q);else onWrong(q);
-}
-document.getElementById('battle-input').addEventListener('keydown',e=>{if(e.key==='Enter')submitFreeAnswer();});
-
-function calcDmg(q){
-  const base=player.attackPower,dm={easy:1,normal:1.6,hard:2.5}[q.diff];
-  const streak=1+roundCorrect*.25,speed=battleTimer>=20?1.4:battleTimer>=10?1:.75;
-  return Math.floor(base*dm*streak*speed);
-}
-function onCorrect(q){
-  roundCorrect++;totalStreak++;const dmg=calcDmg(q);
-  battleEnemy.hp=Math.max(0,battleEnemy.hp-dmg);updateBattleHP();
-  const sp=battleTimer>=20?' ⚡スピードボーナス！':'',st=roundCorrect>=2?` 🔥${roundCorrect}連続！`:'';
-  showBattleResult(true,`正解！ ${battleEnemy.name}に<strong>${dmg}ダメージ！</strong>${sp}${st}`,q.expl);
-  spawnParticles(player.x,player.z,'#44ff88',20);showMessage(`✅ 正解！ -${dmg}HP`,'#44ff88');
-  if(battleEnemy.hp<=0)battleEnemy.dying=true;updateHUD();
-}
-function onWrong(q){
-  totalStreak=Math.max(0,totalStreak-1);roundCorrect=0;
-  const dmg=Math.floor(8+battleEnemy.atk*.6);player.hp=Math.max(0,player.hp-dmg);
-  const df=document.getElementById('damage-flash');df.classList.add('flash');setTimeout(()=>df.classList.remove('flash'),200);
-  const ca=q.type==='choice'?q.choices[q.ans]:q.ans;
-  showBattleResult(false,`不正解… <strong>${dmg}ダメージ！</strong>`,`正解: ${ca}　${q.expl}`);
-  showMessage('❌ 不正解…','#ff6666');updateHUD();
-  if(player.hp<=0)setTimeout(()=>{closeBattle();gameOver();},1500);
-}
-function bTimeOut(){onWrong(battleQList[battleQIdx]);}
-
-function showBattleResult(ok,msg,detail){
-  const el=document.getElementById('battle-result');el.style.display='flex';
-  el.className=ok?'correct-res':'wrong-res';
-  document.getElementById('r-icon').textContent=ok?'✅':'❌';
-  document.getElementById('r-msg').innerHTML=msg;
-  document.getElementById('r-detail').textContent=detail;
-}
-function battleContinue(){
-  if(battleEnemy&&battleEnemy.dying){doVictory();return;}
-  battleQIdx++;if(battleQIdx>=battleQList.length)doVictory();else loadQ();
-}
-function doVictory(){
-  stopBattleTimer();if(battleEnemy)killEnemy(battleEnemy);
-  closeBattle();showMessage(`⚔ 撃破！ 連続正解: ${roundCorrect}回`,'#ffdd44');
-}
-function battleSkip(){
-  stopBattleTimer();const pen=Math.floor(player.maxHp*.15);
-  player.hp=Math.max(1,player.hp-pen);totalStreak=0;
-  if(battleEnemy)battleEnemy.inBattle=false;battleEnemy=null;
-  closeBattle();showMessage(`💨 逃げた！ HP -${pen}`,'#ff8888');updateHUD();
-}
-function closeBattle(){
-  battleActive=false;battleEnemy=null;
-  document.getElementById('battle-modal').classList.remove('open');
-  gameState='playing';setTimeout(()=>canvas.requestPointerLock(),350);
-}
-
-// ═══════════════════════════════════
-//  CIPHER STATE
-// ═══════════════════════════════════
-let cipherActive=false, currentCipherStage=0, cipherTimerVal=90, cipherTimerInt=null;
-let cipherWrongCount=0, cipherSolved=false, startTime=0;
-let cipherPhase=1; // 1=passphrase, 2=agent
-let agentWrongCount=0, agentLockoutEnd=0, agentLockoutTimer=null;
-const MAX_AGENT_WRONG=5, LOCKOUT_SEC=300;
-
-function openCipherModal(){
-  if(cipherActive||cipherSolved||battleActive)return;
-  cipherActive=true;gameState='cipher';document.exitPointerLock();cipherPhase=1;
-  const s=CIPHER_STAGES[currentCipherStage];
-  document.getElementById('cm-avatar').textContent=s.avatar;
-  document.getElementById('cm-stage-sub').textContent=s.name;
-  document.getElementById('cm-mission').textContent=s.mission;
-  document.getElementById('cm-data').textContent=s.data;
-  document.getElementById('cm-hint').textContent=s.hint;
-  document.getElementById('cm-footer').textContent=s.footer;
-  document.getElementById('c-input').value='';document.getElementById('c-input').disabled=false;
-  document.getElementById('c-submit').disabled=false;
-  document.getElementById('c-result').style.display='none';document.getElementById('c-result').className='';
-  document.getElementById('secret-reveal').classList.remove('show');
-  document.getElementById('cm-input-row').style.display='flex';
-  document.getElementById('agent-phase').classList.remove('show');
-  document.getElementById('agent-result').style.display='none';
-  document.getElementById('agent-lockout').classList.remove('show');
-  cipherWrongCount=0;
-  document.getElementById('cipher-modal').classList.add('open');
-  startCipherTimer();setTimeout(()=>document.getElementById('c-input').focus(),100);
-}
-function startCipherTimer(){
-  clearInterval(cipherTimerInt);cipherTimerVal=90+currentCipherStage*30;
-  const el=document.getElementById('cipher-timer');el.classList.remove('danger');el.textContent=cipherTimerVal;
-  cipherTimerInt=setInterval(()=>{cipherTimerVal--;el.textContent=cipherTimerVal;
-    if(cipherTimerVal<=15)el.classList.add('danger');
-    if(cipherTimerVal<=0){clearInterval(cipherTimerInt);cipherTimeOut();}
-  },1000);
-}
-function stopCipherTimer(){clearInterval(cipherTimerInt);document.getElementById('cipher-timer').classList.remove('danger');}
-
-async function submitCipherAnswer(){
-  const v=document.getElementById('c-input').value.trim().toUpperCase();if(!v)return;
-  stopCipherTimer();const s=CIPHER_STAGES[currentCipherStage],h=await sha256(v);
-  const r=document.getElementById('c-result');
-  if(h===s.passHash){
-    r.style.display='flex';r.className='correct-res';
-    document.getElementById('cr-icon').textContent='✅';
-    document.getElementById('cr-msg').innerHTML=`<strong>パスフレーズ認証成功！</strong> 機密情報を表示します…`;
-    document.getElementById('c-input').disabled=true;document.getElementById('c-submit').disabled=true;
-    document.getElementById('cm-input-row').style.display='none';
-    document.getElementById('c-continue-btn').style.display='none';
-    spawnParticles(player.x,player.z,'#44ff88',20);
-    showMessage(`✅ Phase1クリア！`,'#44ff88');
-    // Show secret data + agent phase after delay
-    setTimeout(()=>{
-      document.getElementById('secret-title').textContent=s.secretTitle;
-      document.getElementById('encoding-hint').textContent=s.encodingHint||'';
-      document.getElementById('secret-data').textContent=s.secretData;
-      document.getElementById('secret-instruction').textContent=s.secretInstruction||'';
-      document.getElementById('secret-reveal').classList.add('show');
-      // Show agent phase
-      document.getElementById('agent-instruction').textContent=s.agentInstruction;
-      document.getElementById('agent-phase').classList.add('show');
-      document.getElementById('agent-input').value='';
-      document.getElementById('agent-input').disabled=false;
-      document.getElementById('agent-submit').disabled=false;
-      document.getElementById('agent-result').style.display='none';
-      document.getElementById('agent-input-row').style.display='flex';
-      agentWrongCount=0;
-      cipherPhase=2;
-      setTimeout(()=>document.getElementById('agent-input').focus(),100);
-    },700);
-  }else{
-    cipherWrongCount++;r.style.display='flex';r.className='wrong-res';
-    document.getElementById('cr-icon').textContent='❌';
-    document.getElementById('cr-msg').innerHTML=`不正解… (${cipherWrongCount}回目)`;
-    document.getElementById('c-continue-btn').style.display='inline-block';
-    document.getElementById('c-continue-btn').textContent='再挑戦 ▶';
-    document.getElementById('c-continue-btn').onclick=()=>{
-      r.style.display='none';document.getElementById('c-input').value='';startCipherTimer();document.getElementById('c-input').focus();
-    };
-    if(cipherWrongCount>=5){
-      document.getElementById('cr-msg').innerHTML='5回不正解…ターミナルがロック。もう一度近づいて挑戦しよう。';
-      document.getElementById('c-continue-btn').textContent='閉じる';
-      document.getElementById('c-continue-btn').onclick=()=>{closeCipherModal();cipherWrongCount=0;};
-    }
-  }
-}
-
-async function submitAgentAnswer(){
-  if(agentLockoutEnd>Date.now())return;
-  const v=document.getElementById('agent-input').value.trim().toUpperCase();if(!v)return;
-  const s=CIPHER_STAGES[currentCipherStage],h=await sha256(v);
-  const r=document.getElementById('agent-result');
-  if(h===s.ansHash){
-    r.style.display='flex';r.className='correct-res';
-    document.getElementById('ar-icon').textContent='✅';
-    document.getElementById('ar-msg').innerHTML=`<strong>正解！</strong> 次のステージへ進みます…`;
-    document.getElementById('agent-input').disabled=true;document.getElementById('agent-submit').disabled=true;
-    document.getElementById('agent-input-row').style.display='none';
-    cipherSolved=true;agentWrongCount=0;
-    spawnParticles(player.x,player.z,'#44ff88',30);
-    showMessage(`🔓 STAGE ${currentCipherStage+1} 完全クリア！`,'#44ff88');
-  }else{
-    agentWrongCount++;const remain=MAX_AGENT_WRONG-agentWrongCount;
-    if(remain>0){
-      r.style.display='flex';r.className='wrong-res';
-      document.getElementById('ar-icon').textContent='❌';
-      document.getElementById('ar-msg').innerHTML=`不正解… 残り${remain}回（5回間違えると5分間ロック）`;
-      document.getElementById('agent-continue-btn').style.display='none';
-    }else{
-      r.style.display='none';startAgentLockout();
-    }
-  }
-}
-
-function startAgentLockout(){
-  agentLockoutEnd=Date.now()+LOCKOUT_SEC*1000;
-  document.getElementById('agent-input-row').style.display='none';
-  document.getElementById('agent-lockout').classList.add('show');
-  tickAgentLockout();
-  if(agentLockoutTimer)clearInterval(agentLockoutTimer);
-  agentLockoutTimer=setInterval(tickAgentLockout,1000);
-}
-function tickAgentLockout(){
-  const rem=Math.max(0,Math.ceil((agentLockoutEnd-Date.now())/1000));
-  const m=Math.floor(rem/60),s=rem%60;
-  document.getElementById('lock-timer').textContent=`${m}:${String(s).padStart(2,'0')}`;
-  if(rem<=0){
-    clearInterval(agentLockoutTimer);agentLockoutTimer=null;agentLockoutEnd=0;agentWrongCount=0;
-    document.getElementById('agent-lockout').classList.remove('show');
-    document.getElementById('agent-input-row').style.display='flex';
-    document.getElementById('agent-input').value='';document.getElementById('agent-input').disabled=false;
-    document.getElementById('agent-submit').disabled=false;
-    document.getElementById('agent-result').style.display='none';
-  }
-}
-
-document.getElementById('agent-input').addEventListener('keydown',e=>{if(e.key==='Enter')submitAgentAnswer();});
-
-function agentComplete(){
-  closeCipherModal();
-  const b=document.createElement('div');b.className='stage-clear-banner';
-  b.innerHTML=`<h2>🔓 STAGE ${currentCipherStage+1} CLEAR!</h2><p>${CIPHER_STAGES[currentCipherStage].name} — 完全解読</p>`;
-  document.body.appendChild(b);setTimeout(()=>b.remove(),3000);
-  if(stairMesh){stairMesh.material.color.setHex(0x4a8a4a);stairMesh.material.emissive.setHex(0x1a4a1a);}
-  if(stairLight)stairLight.color.setHex(0x44ff44);
-  showMessage('脱出口が開放された！緑の柱へ向かえ！','#44ffaa');updateHUD();
-}
-
-function cipherTimeOut(){
-  const r=document.getElementById('c-result');r.style.display='flex';r.className='wrong-res';
-  document.getElementById('cr-icon').textContent='⏰';
-  document.getElementById('cr-msg').innerHTML='時間切れ…もう一度近づいて挑戦しよう。';
-  document.getElementById('c-input').disabled=true;document.getElementById('c-submit').disabled=true;
-  document.getElementById('c-continue-btn').style.display='inline-block';
-  document.getElementById('c-continue-btn').textContent='閉じる';
-  document.getElementById('c-continue-btn').onclick=()=>closeCipherModal();
-}
-
-function closeCipherModal(){
-  cipherActive=false;cipherPhase=1;
-  document.getElementById('cipher-modal').classList.remove('open');
-  gameState='playing';setTimeout(()=>canvas.requestPointerLock(),350);
-}
-document.getElementById('c-input').addEventListener('keydown',e=>{if(e.key==='Enter')submitCipherAnswer();});
-
-// ═══════════════════════════════════
-//  THREE.JS 3D ENGINE
-// ═══════════════════════════════════
-const canvas=document.getElementById('canvas');
-const pCanvas=document.getElementById('particles');
-const pCtx=pCanvas.getContext('2d');
-let W=window.innerWidth,H=window.innerHeight;
-canvas.width=W;canvas.height=H;pCanvas.width=W;pCanvas.height=H;
-
-const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
-renderer.setSize(W,H);renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-renderer.toneMapping=THREE.ReinhardToneMapping;renderer.toneMappingExposure=1.7;
-
-const scene=new THREE.Scene();
-scene.fog=new THREE.Fog(0x0a0d08,10,38);
-const camera=new THREE.PerspectiveCamera(75,W/H,.1,100);
-
-const TILE=4,MAP_W=20,MAP_H=20;
-let gameState='title';
-let player=mkPlayer();
-function mkPlayer(){return{x:0,z:0,yaw:0,pitch:0,hp:100,maxHp:100,mp:50,maxMp:50,level:1,xp:0,xpNext:100,gold:0,kills:0,attackPower:22,defense:5,speed:.08,skills:[{name:'火球',cd:0,maxCd:3,cost:15},{name:'雷撃',cd:0,maxCd:5,cost:25},{name:'回復',cd:0,maxCd:8,cost:20}]};}
-
-let keys={},mouse={dx:0,dy:0},pointerLocked=false;
-let floor=1,dungeon=null;
-let enemies=[],pParticles=[],projectiles=[],items=[],torches=[];
-let stairMesh,stairLight;
-let terminalMesh,terminalLight,terminalGlow;
-let terminalX=0,terminalZ=0;
-let battleCooldown=0;
-
-const wallMat=new THREE.MeshStandardMaterial({color:0x4a4030,roughness:.85,metalness:.1});
-const floorMat=new THREE.MeshStandardMaterial({color:0x2a2018,roughness:.95});
-const ceilMat=new THREE.MeshStandardMaterial({color:0x1a1510,roughness:.95});
-
-function genDungeon(){
-  const map=Array.from({length:MAP_H},()=>Array(MAP_W).fill(1));
-  const rooms=[];
-  for(let i=0;i<60;i++){
-    const rw=3+~~(Math.random()*4),rh=3+~~(Math.random()*4);
-    const rx=1+~~(Math.random()*(MAP_W-rw-2)),ry=1+~~(Math.random()*(MAP_H-rh-2));
-    if(rooms.some(r=>rx<r.x+r.w+2&&rx+rw+2>r.x&&ry<r.y+r.h+2&&ry+rh+2>r.y))continue;
-    rooms.push({x:rx,y:ry,w:rw,h:rh});
-    for(let y=ry;y<ry+rh;y++)for(let x=rx;x<rx+rw;x++)map[y][x]=0;
-  }
-  for(let i=1;i<rooms.length;i++){
-    const a=rooms[i-1],b=rooms[i];let cx=a.x+~~(a.w/2),cy=a.y+~~(a.h/2);
-    const bx=b.x+~~(b.w/2),by=b.y+~~(b.h/2);
-    while(cx!==bx){map[cy][cx]=0;cx+=cx<bx?1:-1;}
-    while(cy!==by){map[cy][cx]=0;cy+=cy<by?1:-1;}
-  }
-  const last=rooms[rooms.length-1];
-  const mid=rooms[Math.max(1,~~(rooms.length/2))];
-  return{map,rooms,stairX:last.x+~~(last.w/2),stairY:last.y+~~(last.h/2),termX:mid.x+~~(mid.w/2),termY:mid.y+~~(mid.h/2)};
-}
-
-function buildScene(){
-  scene.children.slice().forEach(c=>{if(c.isMesh||c.isGroup||c.isPointLight)scene.remove(c);});
-  torches=[];items=[];enemies=[];projectiles=[];
-  const{map,rooms,stairX,stairY,termX,termY}=dungeon;
-  const dummy=new THREE.Object3D();
-  const fgeo=new THREE.PlaneGeometry(TILE,TILE),wgeo=new THREE.BoxGeometry(TILE,TILE*1.2,TILE);
-  const fi=new THREE.InstancedMesh(fgeo,floorMat,MAP_W*MAP_H);
-  const ci=new THREE.InstancedMesh(fgeo,ceilMat,MAP_W*MAP_H);
-  const wi=new THREE.InstancedMesh(wgeo,wallMat,MAP_W*MAP_H);
-  fi.receiveShadow=true;wi.castShadow=wi.receiveShadow=true;
-  let fc=0,cc=0,wc=0;
-  for(let y=0;y<MAP_H;y++)for(let x=0;x<MAP_W;x++){
-    const wx=x*TILE,wz=y*TILE;
-    if(map[y][x]===0){
-      dummy.position.set(wx,0,wz);dummy.rotation.x=-Math.PI/2;dummy.updateMatrix();fi.setMatrixAt(fc++,dummy.matrix);
-      dummy.position.set(wx,TILE*1.2,wz);dummy.rotation.x=Math.PI/2;dummy.updateMatrix();ci.setMatrixAt(cc++,dummy.matrix);
-    }else{
-      dummy.position.set(wx,TILE*.6,wz);dummy.rotation.set(0,0,0);dummy.updateMatrix();wi.setMatrixAt(wc++,dummy.matrix);
-    }
-  }
-  fi.count=fc;ci.count=cc;wi.count=wc;scene.add(fi,ci,wi);
-
-  // Stair
-  stairMesh=new THREE.Mesh(new THREE.CylinderGeometry(.8,1,.3,8),new THREE.MeshStandardMaterial({color:cipherSolved?0x4a8a4a:0x4a2a2a,emissive:cipherSolved?0x1a4a1a:0x2a0a0a,emissiveIntensity:.5}));
-  stairMesh.position.set(stairX*TILE,.15,stairY*TILE);scene.add(stairMesh);
-  stairLight=new THREE.PointLight(cipherSolved?0x44ff44:0x442222,2,8);
-  stairLight.position.set(stairX*TILE,1.5,stairY*TILE);scene.add(stairLight);
-
-  // Cipher Terminal
-  terminalX=termX*TILE;terminalZ=termY*TILE;
-  if(!cipherSolved){
-    const tg=new THREE.Group();
-    const base=new THREE.Mesh(new THREE.CylinderGeometry(.5,.6,.2,6),new THREE.MeshStandardMaterial({color:0x1a3a1a,emissive:0x00aa41,emissiveIntensity:.3,metalness:.5}));
-    base.position.y=.1;
-    const scr=new THREE.Mesh(new THREE.BoxGeometry(.8,1.2,.1),new THREE.MeshStandardMaterial({color:0x001a0a,emissive:0x00ff41,emissiveIntensity:1.5,transparent:true,opacity:.85}));
-    scr.position.y=.9;
-    const sm=new THREE.MeshStandardMaterial({color:0x00ff41,emissive:0x00ff41,emissiveIntensity:3,transparent:true,opacity:.6});
-    for(let i=0;i<3;i++){const s=new THREE.Mesh(new THREE.OctahedronGeometry(.12,0),sm);s.position.set(Math.sin(i*2.1)*.5,1.5+i*.2,Math.cos(i*2.1)*.5);tg.add(s);}
-    tg.add(base,scr);tg.position.set(terminalX,0,terminalZ);scene.add(tg);terminalMesh=tg;
-    terminalLight=new THREE.PointLight(0x00ff41,3,10);terminalLight.position.set(terminalX,1.5,terminalZ);scene.add(terminalLight);
-    terminalGlow=new THREE.Mesh(new THREE.SphereGeometry(.3,8,8),new THREE.MeshStandardMaterial({color:0x00ff41,emissive:0x00ff41,emissiveIntensity:4,transparent:true,opacity:.3}));
-    terminalGlow.position.set(terminalX,1.6,terminalZ);scene.add(terminalGlow);
-  }else{terminalMesh=null;terminalLight=null;terminalGlow=null;}
-
-  scene.add(new THREE.AmbientLight(0x443020,.8));
-
-  rooms.forEach((r,i)=>{
-    if(i%2===0)placeTorch(r.x*TILE+.5,r.y*TILE+.5);
-    if(r.w>4&&r.h>4)placeTorch((r.x+r.w-1)*TILE-.5,(r.y+r.h-1)*TILE-.5);
-  });
-
-  const r0=rooms[0];
-  player.x=(r0.x+~~(r0.w/2))*TILE;player.z=(r0.y+~~(r0.h/2))*TILE;
-  player.yaw=0;player.pitch=0;camera.position.set(player.x,1.2,player.z);
-
-  // Enemies
-  const ETYPES=[
-    {name:'スケルトン',avatar:'💀',col:0xccccaa,em:0x443322,sz:.4,hp:40,atk:8,spd:.025,xp:20,gold:5},
-    {name:'ゴブリン',avatar:'👺',col:0x3a7a2a,em:0x1a3a10,sz:.35,hp:30,atk:6,spd:.04,xp:15,gold:8},
-    {name:'オーク',avatar:'👹',col:0x5a4a2a,em:0x2a1a0a,sz:.5,hp:80,atk:15,spd:.02,xp:35,gold:12},
-    {name:'ゾンビ',avatar:'🧟',col:0x6a8a4a,em:0x2a3a1a,sz:.42,hp:60,atk:10,spd:.015,xp:25,gold:6},
-    {name:'デーモン',avatar:'😈',col:0x8a1a1a,em:0x5a0000,sz:.55,hp:120,atk:25,spd:.03,xp:60,gold:25},
-  ];
-  for(let i=1;i<rooms.length;i++){
-    const rm=rooms[i],cnt=1+~~(Math.random()*(floor+1));
-    for(let j=0;j<Math.min(cnt,3);j++){
-      const ti=Math.min(~~(Math.random()*(1+floor*.8)),ETYPES.length-1);
-      const t=ETYPES[ti];
-      const ex=(rm.x+1+Math.random()*(rm.w-2))*TILE,ez=(rm.y+1+Math.random()*(rm.h-2))*TILE;
-      const body=new THREE.Group();
-      const mat=new THREE.MeshStandardMaterial({color:t.col,emissive:t.em,roughness:.8});
-      const torso=new THREE.Mesh(new THREE.BoxGeometry(t.sz*.8,t.sz,t.sz*.5),mat);
-      const head=new THREE.Mesh(new THREE.BoxGeometry(t.sz*.6,t.sz*.6,t.sz*.6),mat);head.position.y=t.sz*.9;
-      const eyeM=new THREE.MeshStandardMaterial({color:0xff2200,emissive:0xff0000,emissiveIntensity:3});
-      const e1=new THREE.Mesh(new THREE.SphereGeometry(.05,4,4),eyeM);e1.position.set(-.1,t.sz*.9,t.sz*.3);
-      const e2=new THREE.Mesh(new THREE.SphereGeometry(.05,4,4),eyeM);e2.position.set(.1,t.sz*.9,t.sz*.3);
-      const l1=new THREE.Mesh(new THREE.BoxGeometry(t.sz*.3,t.sz*.7,t.sz*.3),mat.clone());l1.position.set(-t.sz*.25,-t.sz*.85,0);
-      const l2=new THREE.Mesh(new THREE.BoxGeometry(t.sz*.3,t.sz*.7,t.sz*.3),mat.clone());l2.position.set(t.sz*.25,-t.sz*.85,0);
-      [torso,head,e1,e2,l1,l2].forEach(m=>{m.castShadow=true;body.add(m);});
-      body.position.set(ex,t.sz*1.1,ez);scene.add(body);
-      const sc=1+(floor-1)*.15;
-      enemies.push({mesh:body,x:ex,z:ez,name:t.name,avatar:t.avatar,hp:~~(t.hp*sc),maxHp:~~(t.hp*sc),atk:~~(t.atk*(1+(floor-1)*.1)),speed:t.spd,xp:t.xp,gold:t.gold,size:t.sz,state:'idle',attackTimer:0,leg1:l1,leg2:l2,legPhase:0,alertTimer:0,inBattle:false,dying:false});
-    }
-    if(Math.random()<.4)spawnItemInRoom(rm);
-  }
-}
-
-function placeTorch(x,z){
-  const m=new THREE.Mesh(new THREE.CylinderGeometry(.05,.1,.4,6),new THREE.MeshStandardMaterial({color:0x5a3010}));
-  m.position.set(x,.2,z);scene.add(m);
-  const l=new THREE.PointLight(0xff8800,2.5+Math.random()*.5,10);l.position.set(x,1,z);scene.add(l);
-  const fl=new THREE.Mesh(new THREE.SphereGeometry(.12,6,6),new THREE.MeshStandardMaterial({color:0xffaa00,emissive:0xff6600,emissiveIntensity:2,transparent:true,opacity:.9}));
-  fl.position.set(x,.55,z);scene.add(fl);
-  torches.push({light:l,flame:fl,base:l.intensity});
-}
-
-function spawnItemInRoom(rm){
-  const types=['hp','mp','gold'],type=types[~~(Math.random()*3)];
-  spawnItemAt((rm.x+1+Math.random()*(rm.w-2))*TILE,(rm.y+1+Math.random()*(rm.h-2))*TILE,type);
-}
-function spawnItemAt(ix,iz,type){
-  const c={hp:{col:0xff4444,em:0xff0000,s:.22},mp:{col:0x4444ff,em:0x0000ff,s:.22},gold:{col:0xffcc00,em:0xff8800,s:.18}}[type];
-  const m=new THREE.Mesh(new THREE.OctahedronGeometry(c.s,0),new THREE.MeshStandardMaterial({color:c.col,emissive:c.em,emissiveIntensity:1.5,metalness:.4,roughness:.3}));
-  m.position.set(ix,.4,iz);m.castShadow=true;scene.add(m);
-  const l=new THREE.PointLight(c.col,.8,3);l.position.set(ix,.6,iz);scene.add(l);
-  items.push({mesh:m,light:l,x:ix,z:iz,type,collected:false});
-}
-
-function killEnemy(e){
-  scene.remove(e.mesh);player.xp+=e.xp;player.gold+=e.gold;player.kills++;
-  spawnParticles(e.x,e.z,'#ffaa00',25);checkLevelUp();updateHUD();
-  if(Math.random()<.35)spawnItemAt(e.x,e.z,['hp','mp','gold'][~~(Math.random()*3)]);
-  e.hp=-1;
-}
-
-function checkLevelUp(){
-  if(player.xp>=player.xpNext){
-    player.xp-=player.xpNext;player.level++;player.xpNext=~~(player.xpNext*1.5);
-    player.maxHp+=20;player.hp=player.maxHp;player.maxMp+=10;player.mp=player.maxMp;
-    player.attackPower+=8;player.defense+=2;
-    showMessage(`⬆ LEVEL UP! Lv.${player.level}`,'#aaffaa');
-    spawnParticles(player.x,player.z,'#88ff88',40);
-  }
-}
-
-function spawnParticles(x3,z3,color,n=15){
-  const v=new THREE.Vector3(x3,1.2,z3);v.project(camera);if(v.z>1)return;
-  const px=(v.x+1)/2*W,py=(1-v.y)/2*H;
-  for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,sp=1+Math.random()*4;pParticles.push({x:px,y:py,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,life:1,decay:.02+Math.random()*.03,size:2+Math.random()*4,color});}
-}
-function drawParticles(){
-  pParticles=pParticles.filter(p=>p.life>0);
-  for(const p of pParticles){p.x+=p.vx;p.y+=p.vy;p.vy+=.15;p.life-=p.decay;pCtx.globalAlpha=p.life;pCtx.fillStyle=p.color;pCtx.beginPath();pCtx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2);pCtx.fill();}
-  pCtx.globalAlpha=1;
-}
-
-const msgEl=document.getElementById('messages');
-function showMessage(text,color='#88ffaa'){const el=document.createElement('div');el.className='msg';el.style.color=color;el.textContent=text;msgEl.appendChild(el);setTimeout(()=>el.remove(),2000);}
-
-function updateHUD(){
-  document.getElementById('floor-val').textContent=floor;
-  document.getElementById('stage-val').textContent=`${Math.min(currentCipherStage+1,5)}/5`;
-  document.getElementById('level-val').textContent=player.level;
-  document.getElementById('kills-val').textContent=player.kills;
-  document.getElementById('cipher-val').textContent=cipherSolved?'✅':'🔒';
-  document.getElementById('hp-fill').style.width=(player.hp/player.maxHp*100)+'%';
-  document.getElementById('mp-fill').style.width=(player.mp/player.maxMp*100)+'%';
-  document.getElementById('hp-text').textContent=`${Math.max(0,player.hp)} / ${player.maxHp}`;
-  document.getElementById('mp-text').textContent=`${~~player.mp} / ${player.maxMp}`;
-  document.getElementById('xp-fill').style.width=(player.xp/player.xpNext*100)+'%';
-  const s=CIPHER_STAGES[Math.min(currentCipherStage,4)];
-  document.getElementById('stage-hint-title').textContent=currentCipherStage>=5?'ALL CLEAR':s.name;
-  document.getElementById('stage-hint-text').textContent=cipherSolved?'脱出口（緑の柱）へ向かえ！':'暗号ターミナル（緑の光）を探せ';
-}
-
-const mmCtx=document.getElementById('minimap-canvas').getContext('2d');
-function drawMinimap(){
-  const{map}=dungeon,cw=120/MAP_W,ch=120/MAP_H;
-  mmCtx.fillStyle='#000';mmCtx.fillRect(0,0,120,120);
-  for(let y=0;y<MAP_H;y++)for(let x=0;x<MAP_W;x++)if(map[y][x]===0){mmCtx.fillStyle='#2a2a1a';mmCtx.fillRect(x*cw,y*ch,cw,ch);}
-  for(const e of enemies)if(e.hp>0){mmCtx.fillStyle=e.inBattle?'#ff8800':'#ff3333';mmCtx.fillRect(e.x/TILE*cw-1,e.z/TILE*ch-1,3,3);}
-  for(const it of items)if(!it.collected){mmCtx.fillStyle=it.type==='hp'?'#ff6666':it.type==='mp'?'#6666ff':'#ffcc00';mmCtx.fillRect(it.x/TILE*cw-1,it.z/TILE*ch-1,3,3);}
-  if(!cipherSolved){mmCtx.fillStyle='#00ff41';mmCtx.fillRect(terminalX/TILE*cw-2,terminalZ/TILE*ch-2,5,5);}
-  mmCtx.fillStyle=cipherSolved?'#44ff44':'#442222';mmCtx.fillRect(dungeon.stairX*cw-2,dungeon.stairY*ch-2,5,5);
-  const ppx=player.x/TILE*cw,ppz=player.z/TILE*ch;
-  mmCtx.fillStyle='#fff';mmCtx.beginPath();mmCtx.arc(ppx,ppz,3,0,Math.PI*2);mmCtx.fill();
-  mmCtx.strokeStyle='#fff';mmCtx.lineWidth=1;mmCtx.beginPath();mmCtx.moveTo(ppx,ppz);mmCtx.lineTo(ppx+Math.sin(player.yaw+Math.PI)*8,ppz+Math.cos(player.yaw+Math.PI)*8);mmCtx.stroke();
-}
-
-function isWall(x,z){const mx=Math.round(x/TILE),mz=Math.round(z/TILE);if(mx<0||mx>=MAP_W||mz<0||mz>=MAP_H)return true;return dungeon.map[mz][mx]===1;}
-
-function useSkill(idx){
-  if(gameState!=='playing')return;const s=player.skills[idx];
-  if(s.cd>0)return;if(player.mp<s.cost){showMessage('MPが不足！','#ff8888');return;}
-  player.mp-=s.cost;s.cd=s.maxCd;
-  if(idx===0)spawnProj('fire');else if(idx===1)spawnProj('lightning');
-  else{const h=~~(player.maxHp*.3);player.hp=Math.min(player.maxHp,player.hp+h);showMessage(`💊 +${h}HP`,'#44ff44');spawnParticles(player.x,player.z,'#44ff88',20);}
-  updateHUD();
-}
-function spawnProj(type){
-  const dir=new THREE.Vector3(Math.sin(player.yaw+Math.PI)*Math.cos(player.pitch),-Math.sin(player.pitch),Math.cos(player.yaw+Math.PI)*Math.cos(player.pitch));
-  const cfg={fire:{c:0xff6600,e:0xff3300,s:.2,sp:.25,dmg:35+floor*5,r:20},lightning:{c:0x8888ff,e:0x4444ff,s:.15,sp:.4,dmg:55+floor*8,r:30}}[type];
-  const m=new THREE.Mesh(new THREE.SphereGeometry(cfg.s,8,8),new THREE.MeshStandardMaterial({color:cfg.c,emissive:cfg.e,emissiveIntensity:3,transparent:true,opacity:.9}));
-  m.position.set(player.x,1.2,player.z);scene.add(m);
-  const l=new THREE.PointLight(cfg.c,2,5);l.position.copy(m.position);scene.add(l);
-  projectiles.push({mesh:m,light:l,dir,speed:cfg.sp,damage:cfg.dmg,range:cfg.r,traveled:0,type});
-}
-function updateProjectiles(){
-  projectiles=projectiles.filter(p=>{
-    p.mesh.position.x+=p.dir.x*p.speed;p.mesh.position.y+=p.dir.y*p.speed;p.mesh.position.z+=p.dir.z*p.speed;
-    p.light.position.copy(p.mesh.position);p.traveled+=p.speed;p.mesh.rotation.x+=.1;p.mesh.rotation.y+=.1;
-    if(p.traveled>p.range||isWall(p.mesh.position.x,p.mesh.position.z)){scene.remove(p.mesh,p.light);spawnParticles(p.mesh.position.x,p.mesh.position.z,p.type==='fire'?'#ff6600':'#8888ff',20);return false;}
-    for(const e of enemies){
-      if(e.hp<=0||e.inBattle)continue;
-      const dx=e.x-p.mesh.position.x,dz=e.z-p.mesh.position.z;
-      if(Math.sqrt(dx*dx+dz*dz)<e.size*1.0){
-        // Projectile hit: deal damage directly without opening battle
-        const dmg=p.damage;e.hp=Math.max(0,e.hp-dmg);
-        showMessage(`🔥 ${e.name}に${dmg}ダメージ！`,'#ff8844');
-        spawnParticles(e.x,e.z,p.type==='fire'?'#ff6600':'#8888ff',15);
-        if(e.hp<=0){killEnemy(e);}
-        scene.remove(p.mesh,p.light);return false;
-      }
-    }
-    return true;
-  });
-}
-
-let approachTarget=null; // enemy or 'terminal'
-function updateEnemies(dt){
-  battleCooldown=Math.max(0,battleCooldown-dt);
-  approachTarget=null;
-  const TRIGGER_DIST=1.6;
-  for(const e of enemies){
-    if(e.hp<=0)continue;
-    const dx=player.x-e.x,dz=player.z-e.z,dist=Math.sqrt(dx*dx+dz*dz);
-    e.mesh.position.set(e.x,e.mesh.position.y,e.z);e.mesh.rotation.y=Math.atan2(-dx,-dz);
-    if(dist<18){e.state='chase';e.alertTimer=1;}
-    if(e.alertTimer>0)e.alertTimer-=dt;if(e.alertTimer<=0&&dist>18)e.state='idle';
-    if(e.state==='chase'&&!e.inBattle){
-      const spd=e.speed*(1+(floor-1)*.05);
-      const nx=e.x+(dx/dist)*spd,nz=e.z+(dz/dist)*spd;
-      if(!isWall(nx,e.z))e.x=nx;if(!isWall(e.x,nz))e.z=nz;
-      e.legPhase=(e.legPhase||0)+dt*8;
-      if(e.leg1)e.leg1.rotation.x=Math.sin(e.legPhase)*.5;
-      if(e.leg2)e.leg2.rotation.x=-Math.sin(e.legPhase)*.5;
-      e.mesh.position.y=e.size*1.1+Math.abs(Math.sin(e.legPhase*.5))*.05;
-      if(dist<TRIGGER_DIST+1.5&&!battleActive&&!cipherActive)approachTarget=e;
-      if(dist<TRIGGER_DIST&&!battleActive&&!cipherActive&&battleCooldown<=0){battleCooldown=2.5;openBattle(e);return;}
-    }
-  }
-}
-
-function checkTerminal(){
-  if(cipherSolved||cipherActive||battleActive)return;
-  const dx=terminalX-player.x,dz=terminalZ-player.z,dist=Math.sqrt(dx*dx+dz*dz);
-  if(dist<3.5&&!approachTarget)approachTarget='terminal';
-  if(dist<2.0)openCipherModal();
-}
-
-function checkItems(){
-  for(const it of items){
-    if(it.collected)continue;
-    const dx=it.x-player.x,dz=it.z-player.z;
-    if(Math.sqrt(dx*dx+dz*dz)<1.2){
-      it.collected=true;scene.remove(it.mesh,it.light);
-      if(it.type==='hp'){const a=~~(player.maxHp*.25);player.hp=Math.min(player.maxHp,player.hp+a);showMessage(`❤️ HP +${a}`,'#ff6666');}
-      else if(it.type==='mp'){const a=~~(player.maxMp*.4);player.mp=Math.min(player.maxMp,player.mp+a);showMessage(`💧 MP +${a}`,'#6666ff');}
-      else{const a=5+~~(Math.random()*10*floor);player.gold+=a;showMessage(`💰 Gold +${a}`,'#ffcc00');}
-      spawnParticles(it.x,it.z,it.type==='hp'?'#ff4444':it.type==='mp'?'#4444ff':'#ffcc00',15);updateHUD();
-    }
-  }
-}
-
-function checkStair(){
-  if(!stairMesh)return;
-  const dx=dungeon.stairX*TILE-player.x,dz=dungeon.stairY*TILE-player.z;
-  if(Math.sqrt(dx*dx+dz*dz)<1.5){
-    if(!cipherSolved){showMessage('暗号を解読してから来い！','#ff8844');return;}
-    currentCipherStage++;
-    if(currentCipherStage>=5){gameComplete();return;}
-    floor++;cipherSolved=false;
-    showMessage(`⬇ ${floor}階へ！次の暗号が待っている…`,'#44ffaa');
-    dungeon=genDungeon();buildScene();
-    player.hp=Math.min(player.maxHp,player.hp+~~(player.maxHp*.3));
-    player.mp=Math.min(player.maxMp,player.mp+~~(player.maxMp*.5));
-    updateHUD();spawnParticles(player.x,player.z,'#44ffaa',30);
-  }
-}
-
-function calcScore(){
-  const elapsed=~~((Date.now()-startTime)/1000);
-  // Time score: max 500pts. Under 10min=500, 20min=300, 30min=150, 40min=50, 50min+=0
-  const timeScore=elapsed<600?500:elapsed<1200?Math.max(0,500-((elapsed-600)/600)*200):elapsed<1800?Math.max(0,300-((elapsed-1200)/600)*150):elapsed<2400?Math.max(0,150-((elapsed-1800)/600)*100):Math.max(0,50-((elapsed-2400)/600)*50);
-  // XP score: max 300pts based on level and kills
-  const xpScore=Math.min(300,(player.level-1)*30+player.kills*5);
-  // Streak bonus: max 200pts
-  const streakScore=Math.min(200,totalStreak*10);
-  const total=~~(timeScore+xpScore+streakScore);
-  let rank,rankColor;
-  if(total>=800){rank='S';rankColor='#ffdd00';}
-  else if(total>=650){rank='A';rankColor='#00ff41';}
-  else if(total>=500){rank='B';rankColor='#44aaff';}
-  else if(total>=350){rank='C';rankColor='#ff8844';}
-  else if(total>=200){rank='D';rankColor='#cc88cc';}
-  else{rank='E';rankColor='#888888';}
-  return{elapsed,timeScore:~~timeScore,xpScore:~~xpScore,streakScore:~~streakScore,total,rank,rankColor};
-}
-
-function gameComplete(){
-  gameState='complete';document.exitPointerLock();
-  const sc=calcScore();
-  const min=~~(sc.elapsed/60),sec=sc.elapsed%60;
-  document.getElementById('overlay-title').innerHTML=`🔓 ESCAPE SUCCESS 🔓`;
-  document.getElementById('overlay-title').style.color='#00ff41';
-  document.getElementById('overlay-sub').innerHTML=
-    `<span style="font-size:72px;display:block;margin-bottom:12px;color:${sc.rankColor};text-shadow:0 0 30px ${sc.rankColor};font-family:'Cinzel Decorative',serif;">RANK ${sc.rank}</span>`+
-    `<span style="font-size:28px;color:${sc.rankColor};">${sc.total}pts</span><br><br>`+
-    `<span style="font-size:14px;color:#888;">タイム: ${min}分${sec}秒 (${sc.timeScore}pts) | 戦闘XP (${sc.xpScore}pts) | 連続正解 (${sc.streakScore}pts)</span><br>`+
-    `<span style="font-size:14px;color:#888;">Lv.${player.level} | ${player.kills}体撃破 | 🔥${totalStreak}連続正解</span><br><br>`+
-    `学んだ暗号技術：<br>`+
-    `<span style="font-size:13px;">・文字列の逆順（Stage 1）<br>・ASCIIオフセット（Stage 2）<br>・Base64+hex（Stage 3）<br>・XOR暗号（Stage 4）<br>・多重暗号（Stage 5）</span>`;
-  document.getElementById('overlay-btn').textContent='もう一度挑戦する';
-  document.getElementById('overlay-screen').classList.add('show');
-}
-
-function gameOver(){
-  gameState='dead';document.exitPointerLock();
-  document.getElementById('overlay-title').textContent='☠ DEAD';
-  document.getElementById('overlay-title').style.color='#cc2222';
-  document.getElementById('overlay-sub').innerHTML=`Floor ${floor} | Lv.${player.level} | ${player.kills}体撃破 | Stage ${currentCipherStage+1}/5`;
-  document.getElementById('overlay-btn').textContent='再挑戦する';
-  document.getElementById('overlay-screen').classList.add('show');
-}
-
-function updateCDs(dt){
-  player.skills.forEach((s,i)=>{
-    if(s.cd>0)s.cd=Math.max(0,s.cd-dt);
-    const slot=document.getElementById('skills-hud').children[i];
-    let cdEl=slot.querySelector('.skill-cooldown');
-    if(s.cd>0){if(!cdEl){cdEl=document.createElement('div');cdEl.className='skill-cooldown';slot.appendChild(cdEl);}cdEl.textContent=s.cd.toFixed(1);}
-    else{if(cdEl)cdEl.remove();}
-  });
-}
-
-function updateTorches(t){for(const tc of torches){tc.light.intensity=tc.base+Math.sin(t*3+tc.base)*.3;tc.flame.scale.set(1+Math.sin(t*7)*.15,1+Math.cos(t*5)*.2,1+Math.sin(t*6)*.15);}}
-
-let lastTime=0;
-function loop(ts){
-  requestAnimationFrame(loop);
-  if(gameState==='battle'||gameState==='cipher'||gameState==='title'||gameState==='dead'||gameState==='complete')return;
-  const dt=Math.min((ts-lastTime)/1000,.05);lastTime=ts;
-
-  player.yaw-=mouse.dx*.002;
-  player.pitch=Math.max(-Math.PI/3,Math.min(Math.PI/3,player.pitch-mouse.dy*.002));
-  mouse.dx=0;mouse.dy=0;
-
-  const spd=player.speed*(1+(player.level-1)*.05);
-  let mx=0,mz=0;
-  if(keys['KeyW']||keys['ArrowUp']){mx+=Math.sin(player.yaw+Math.PI)*spd;mz+=Math.cos(player.yaw+Math.PI)*spd;}
-  if(keys['KeyS']||keys['ArrowDown']){mx-=Math.sin(player.yaw+Math.PI)*spd;mz-=Math.cos(player.yaw+Math.PI)*spd;}
-  if(keys['KeyA']||keys['ArrowRight']){mx+=Math.sin(player.yaw+Math.PI+Math.PI/2)*spd;mz+=Math.cos(player.yaw+Math.PI+Math.PI/2)*spd;}
-  if(keys['KeyD']||keys['ArrowLeft']){mx+=Math.sin(player.yaw+Math.PI-Math.PI/2)*spd;mz+=Math.cos(player.yaw+Math.PI-Math.PI/2)*spd;}
-  const nx=player.x+mx,nz=player.z+mz;
-  if(!isWall(nx+(mx>0?.4:-.4),player.z))player.x=nx;
-  if(!isWall(player.x,nz+(mz>0?.4:-.4)))player.z=nz;
-
-  camera.position.set(player.x,1.2,player.z);
-  camera.rotation.order='YXZ';camera.rotation.y=player.yaw;camera.rotation.x=player.pitch;
-
-  player.mp=Math.min(player.maxMp,player.mp+dt*2);
-  updateEnemies(dt);updateProjectiles();checkTerminal();checkItems();checkStair();updateCDs(dt);updateTorches(ts/1000);
-
-  // Animate terminal
-  if(terminalMesh&&!cipherSolved){
-    terminalMesh.children.forEach((c,i)=>{if(i>=3)return;c.position.y=1.5+Math.sin(ts/1000*2+i*2)*.2;c.rotation.y+=dt*(1+i*.5);c.rotation.x+=dt*.5;});
-    if(terminalGlow)terminalGlow.scale.setScalar(1+Math.sin(ts/500)*.3);
-    if(terminalLight)terminalLight.intensity=3+Math.sin(ts/400)*.8;
-  }
-  if(stairMesh)stairMesh.rotation.y+=dt;
-
-  // Approach indicator
-  const ai=document.getElementById('approach-indicator'),at=document.getElementById('approach-text');
-  if(approachTarget&&!battleActive&&!cipherActive){
-    ai.classList.add('show');
-    if(approachTarget==='terminal'){at.textContent='🔓 DECRYPT!';document.querySelector('.approach-ring').style.borderColor='rgba(0,255,65,.8)';}
-    else{at.textContent='⚔ BATTLE!';document.querySelector('.approach-ring').style.borderColor='rgba(255,100,0,.8)';}
-  }else ai.classList.remove('show');
-
-  const t=ts/1000;
-  for(const it of items)if(!it.collected&&it.mesh){it.mesh.position.y=.4+Math.sin(t*2+it.x)*.15;it.mesh.rotation.y+=dt;}
-  updateHUD();drawMinimap();
-  pCtx.clearRect(0,0,W,H);drawParticles();
-  renderer.render(scene,camera);
-}
-
-document.addEventListener('keydown',e=>{
-  keys[e.code]=true;
-  if(gameState==='playing'){if(e.code==='Digit2')useSkill(0);if(e.code==='Digit3')useSkill(1);if(e.code==='Digit4')useSkill(2);}
-  if(gameState!=='battle'&&gameState!=='cipher')e.preventDefault();
-});
-document.addEventListener('keyup',e=>keys[e.code]=false);
-document.addEventListener('mousemove',e=>{if(!pointerLocked||gameState!=='playing')return;mouse.dx+=e.movementX;mouse.dy+=e.movementY;});
-canvas.addEventListener('click',()=>{if(gameState==='playing')canvas.requestPointerLock();});
-document.addEventListener('pointerlockchange',()=>pointerLocked=document.pointerLockElement===canvas);
-
-function startGame(){
-  startTime=Date.now();
-  document.getElementById('title-screen').style.opacity='0';
-  setTimeout(()=>{
-    document.getElementById('title-screen').style.display='none';
-    gameState='playing';canvas.requestPointerLock();
-    showMessage('暗号の迷宮へようこそ！','#88ffaa');
-    showMessage('敵を倒しつつ、緑の光で暗号を解読せよ！','#00ff41');
-  },1000);
-}
-
-function resetToTitle(){
-  // Close any open modals
-  document.getElementById('battle-modal').classList.remove('open');
-  document.getElementById('cipher-modal').classList.remove('open');
-  document.getElementById('overlay-screen').classList.remove('show');
-  battleActive=false;cipherActive=false;
-  clearInterval(battleTimerInt);clearInterval(cipherTimerInt);
-  if(agentLockoutTimer)clearInterval(agentLockoutTimer);
-  document.exitPointerLock();
-  // Reset state
-  floor=1;currentCipherStage=0;cipherSolved=false;totalStreak=0;battleCooldown=0;
-  player=mkPlayer();agentWrongCount=0;agentLockoutEnd=0;
-  dungeon=genDungeon();buildScene();updateHUD();
-  // Show title
-  const ts=document.getElementById('title-screen');
-  ts.style.display='flex';ts.style.opacity='1';
-  gameState='title';
-}
-
-function restartGame(){
-  document.getElementById('overlay-screen').classList.remove('show');
-  floor=1;currentCipherStage=0;cipherSolved=false;totalStreak=0;battleCooldown=0;
-  player=mkPlayer();startTime=Date.now();
-  dungeon=genDungeon();buildScene();gameState='playing';canvas.requestPointerLock();
-  updateHUD();showMessage('再挑戦！','#88ffaa');
-}
-
-window.addEventListener('resize',()=>{
-  W=window.innerWidth;H=window.innerHeight;
-  renderer.setSize(W,H);camera.aspect=W/H;camera.updateProjectionMatrix();
-  canvas.width=W;canvas.height=H;pCanvas.width=W;pCanvas.height=H;
-});
-
-dungeon=genDungeon();buildScene();updateHUD();
-requestAnimationFrame(loop);
-</script>
+<script src="js/util.js"></script>
+<script src="js/questions.js"></script>
+<script src="js/stages.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/themes.js"></script>
+<script src="js/dungeon.js"></script>
+<script src="js/scene.js"></script>
+<script src="js/entities.js"></script>
+<script src="js/player.js"></script>
+<script src="js/challenge.js"></script>
+<script src="js/battle.js"></script>
+<script src="js/cipher.js"></script>
+<script src="js/score.js"></script>
+<script src="js/death.js"></script>
+<script src="js/sound.js"></script>
+<script src="js/save.js"></script>
+<script src="js/gameloop.js"></script>
+<script src="js/flow.js"></script>
 </body>
 </html>
+
+

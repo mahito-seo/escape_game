@@ -1,50 +1,50 @@
 """
 ==============================================
-  Stage 4 — XOR暗号の壁（むずい）
+  Stage 4 — 文字列パズル（むずい）
 ==============================================
-  暗号方式: XOR暗号
-  目標: XOR復号でパスフレーズを得る
+  暗号方式: 文字列の分割・フィルタリング
+  目標: split, 条件分岐, join を組み合わせて解読する
 ==============================================
 """
 from verify import check
 
-# 暗号データ（XOR暗号化されたバイト列）
-encrypted_data = [121, 98, 107, 110, 101, 125]
-
-# XOR鍵
-XOR_KEY = 42
+# 暗号データ（ダミー文字 'x' が混ざった文字列）
+encoded = "S-x-H-x-A-x-D-x-O-x-W"
 
 
-def decode(data, key):
+def decode(encoded):
     """
-    XOR暗号を復号する関数
+    ダミー文字が混ざった暗号文字列からパスフレーズを取り出す関数
 
     【やること】
-    1. データの各バイト（数値）に対してXOR演算を行う
-    2. 復号したバイト列を文字列に変換する
+    1. encoded を '-' で分割してリストにする
+    2. リストから 'x' を除外する
+    3. 残った文字をつなげて返す
 
     【ヒント】
-    - XOR演算は ^ 演算子を使います
-      例: 100 ^ 42 → 78
-    - bytes([数値のリスト]) でバイト列を作れます
-    - .decode('utf-8') でバイト列を文字列に変換できます
+    - "A-B-C".split("-") → ["A", "B", "C"]
+    - リスト内包表記: [item for item in list if 条件]
+    - "".join(リスト) でリストの要素を結合できます
     """
 
     # ===== ここを埋めてください =====
-    decrypted_bytes = []
-    for byte in data:
-        decrypted_bytes.append(byte)  # ← この行を修正！ XOR演算を追加
+    # Step 1: '-' で分割
+    parts = []  # ← split() を使う
+
+    # Step 2: 'x' を除外
+    filtered = []  # ← リスト内包表記 or for文で 'x' でないものだけ残す
+
+    # Step 3: 結合
+    result = ""  # ← join() で結合
     # ================================
 
-    result = bytes(decrypted_bytes).decode('utf-8')
     return result
 
 
 # 実行
 if __name__ == "__main__":
-    answer = decode(encrypted_data, XOR_KEY)
-    print(f"暗号データ: {encrypted_data}")
-    print(f"XOR鍵: {XOR_KEY}")
+    answer = decode(encoded)
+    print(f"暗号データ: {encoded}")
     print(f"復号結果: {answer}")
     print()
 

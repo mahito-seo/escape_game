@@ -1,40 +1,50 @@
 """
 ==============================================
-  Stage 1 — 逆さまの世界（超簡単）
+  Stage 1 — リストの暗号（簡単）
 ==============================================
-  暗号方式: 文字列の逆順
-  目標: 逆順になった文字列を元に戻してパスフレーズを得る
+  暗号方式: アルファベットのインデックス配列
+  目標: リストとfor文を使って暗号を解読する
 ==============================================
 """
 from verify import check
 
-# 暗号データ
-encrypted = "NOCLAF"
+# 暗号データ（アルファベットの位置番号）
+indices = [5, 0, 11, 2, 14, 13]
+
+# アルファベット表
+alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 
-def decode(text):
+def decode(indices, alphabet):
     """
-    文字列を逆順にして元に戻す関数
+    インデックス配列からパスフレーズを組み立てる関数
 
     【やること】
-    - text を逆順にした文字列を返す
+    1. indices の各数字を alphabet のインデックスとして使う
+    2. 対応する文字を取り出す
+    3. すべての文字をつなげて返す
 
     【ヒント】
-    - Pythonのスライス記法 [::-1] を使うと文字列を逆順にできます
-    - 例: "ABC"[::-1] → "CBA"
+    - alphabet[0] → 'A', alphabet[1] → 'B', ...
+    - for文でリストの各要素を処理しましょう
+    - 文字列の結合は + でできます
     """
 
-    # ===== ここを埋めてください =====
-    result = "FALCON"  # ← この行を修正！
-    # ================================
+    result = ""
+
+    for idx in indices:
+        # ===== ここを埋めてください =====
+        pass  # ← alphabet から idx 番目の文字を取り出して result に追加
+        # ================================
 
     return result
 
 
 # 実行
 if __name__ == "__main__":
-    answer = decode(encrypted)
-    print(f"暗号文: {encrypted}")
+    answer = decode(indices, alphabet)
+    print(f"暗号データ: {indices}")
+    print(f"アルファベット: {alphabet}")
     print(f"復号結果: {answer}")
     print()
 
