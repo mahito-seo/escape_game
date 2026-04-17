@@ -9,9 +9,15 @@ function miniPyEval(code){
   try{
     // Strip Python comments first (# ...)
     let js=code.split('\n').map(line=>{
-      // Remove # comments (but not inside strings)
-      const idx=line.search(/(?<!['"\\])#/);
-      return idx>=0?line.substring(0,idx):line;
+      // Remove # comments (skip if inside string)
+      var inQ=false,qc='';
+      for(var ci=0;ci<line.length;ci++){
+        var ch=line[ci];
+        if(inQ){if(ch===qc&&line[ci-1]!=='\\')inQ=false;}
+        else if(ch==='"'||ch==="'"){inQ=true;qc=ch;}
+        else if(ch==='#')return line.substring(0,ci);
+      }
+      return line;
     }).join('\n');
     // Convert common Python to JS
     js=js
@@ -35,7 +41,7 @@ function miniPyEval(code){
       .replace(/\.lower\(\)/g,'.toLowerCase()')
       .replace(/\.count\((.+?)\)/g,'.split($1).length-1')
       .replace(/\.sort\(\)/g,'.sort((a,b)=>a>b?1:a<b?-1:0)')
-      .replace(/\.replace\((.+?),\s*(.+?)\)/g,'.replaceAll($1,$2)')
+      .replace(/\.replace\((.+?),\s*(.+?)\)/g,'.split($1).join($2)')
       .replace(/\.split\((.+?)\)/g,'.split($1)')
       .replace(/\.join\((.+?)\)/g,'($1).join(this)')
       .replace(/"([^"]*)"\.join/g,'((s)=>(x)=>x.join(s))("$1")')
