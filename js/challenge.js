@@ -10,15 +10,8 @@ function miniPyEval(code){
     // Strip Python comments first (# ...)
     let js=code.split('\n').map(line=>{
       // Remove # comments (but not inside strings)
-      // Simple comment strip: find # not inside quotes
-      let inStr=false,strCh='';
-      for(let j=0;j<line.length;j++){
-        const c=line[j];
-        if(inStr){if(c===strCh)inStr=false;}
-        else if(c==="'"||c==='"'){inStr=true;strCh=c;}
-        else if(c==='#')return line.substring(0,j);
-      }
-      return line;
+      const idx=line.search(/(?<!['"\\])#/);
+      return idx>=0?line.substring(0,idx):line;
     }).join('\n');
     // Convert common Python to JS
     js=js
