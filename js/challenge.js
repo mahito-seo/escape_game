@@ -208,9 +208,11 @@ function spawnChallengeTerminal(rm){
 
 function checkChallengeTerminals(){
   if(challengeActive||cipherActive||battleActive)return;
-  for(const ct of challengeTerminals){
+  if(Date.now()<challengeCooldownEnd)return; // cooldown after closing
+  for(var ci=0;ci<challengeTerminals.length;ci++){
+    var ct=challengeTerminals[ci];
     if(ct.solved)continue;
-    const dx=ct.x-player.x,dz=ct.z-player.z;
+    var dx=ct.x-player.x,dz=ct.z-player.z;
     if(Math.sqrt(dx*dx+dz*dz)<2.0){
       openCodingChallenge(ct);return;
     }
@@ -308,6 +310,8 @@ function openCodingChallenge(ct){
   setTimeout(()=>editor.focus(),100);
 }
 
+var challengeCooldownEnd=0; // timestamp when challenge can re-trigger
+
 function closeChallengeModal(){
   clearInterval(cipherTimerInt);
   challengeActive=false;currentChallenge=null;
@@ -317,10 +321,12 @@ function closeChallengeModal(){
   document.getElementById('cm-data').style.display='';
   document.getElementById('cipher-close-btn').style.display='none';
   // Restore original cipher handlers
-  document.getElementById('c-submit').onclick=()=>submitCipherAnswer();
-  document.getElementById('c-input').onkeydown=(e)=>{if(e.key==='Enter')submitCipherAnswer();};
+  document.getElementById('c-submit').onclick=function(){submitCipherAnswer();};
+  document.getElementById('c-input').onkeydown=function(e){if(e.key==='Enter')submitCipherAnswer();};
   gameState='playing';unmuteBGM();
-  setTimeout(()=>canvas.requestPointerLock(),350);
+  battleCooldown=3; // 3s enemy cooldown after challenge
+  challengeCooldownEnd=Date.now()+5000; // 5s challenge cooldown
+  setTimeout(function(){canvas.requestPointerLock();},350);
 }
 
 // ═══════════════════════════════════

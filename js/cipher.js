@@ -298,7 +298,9 @@ function closeCipherModal(){
   document.getElementById('code-editor-wrap').classList.remove('show');
   document.getElementById('code-output-wrap').classList.remove('show');
   document.getElementById('cm-data').style.display='';
-  gameState='playing';setTimeout(()=>canvas.requestPointerLock(),350);
+  gameState='playing';
+  battleCooldown=3; // 3s enemy cooldown after cipher
+  setTimeout(function(){canvas.requestPointerLock();},350);
   unmuteBGM();
 }
 document.getElementById('c-input').addEventListener('keydown',e=>{if(e.key==='Enter')submitCipherAnswer();});

@@ -197,7 +197,9 @@ function battleSkip(){
 function closeBattle(){
   battleActive=false;battleEnemy=null;
   document.getElementById('battle-modal').classList.remove('open');
-  gameState='playing';setTimeout(()=>canvas.requestPointerLock(),350);
+  gameState='playing';
+  battleCooldown=3; // 3s cooldown after battle
+  setTimeout(function(){canvas.requestPointerLock();},350);
   unmuteBGM();
 }
 
