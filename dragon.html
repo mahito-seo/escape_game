@@ -375,44 +375,81 @@
     <div class="tutorial-section">
       <h3>🎮 操作方法</h3>
       <p><span class="key">W</span> 前進　<span class="key">S</span> 後退　<span class="key">A</span> 右移動　<span class="key">D</span> 左移動<br>
-      <span class="key">マウス</span> 視点移動　<span class="key">ESC</span> ポーズ<br>
-      <span class="key">2</span> 🔥火球　<span class="key">3</span> ⚡雷撃　<span class="key">4</span> 💊回復　<span class="key">5</span> 🗺️マップ(5秒/MP30)</p>
+      <span class="key">マウス</span> 視点移動　<span class="key">ESC</span> ポーズ<br><br>
+      <strong>スキル:</strong><br>
+      <span class="key">2</span> 🔥火球（MP15）— 敵に直接ダメージ<br>
+      <span class="key">3</span> ⚡雷撃（MP25）— <span style="color:#ff8844;">Lv.3で解放</span>。高威力<br>
+      <span class="key">4</span> 💊回復（MP20）— HP30%回復<br>
+      <span class="key">5</span> 🗺️マップ（MP30）— 5秒間だけ表示。<span style="color:#ff8844;">使用後1分間クールダウン</span></p>
     </div>
 
     <div class="tutorial-section">
       <h3>⚔ セキュリティプログラム（敵）</h3>
       <p>施設内のセキュリティプログラムが暴走している。<br>
-      接触するとPythonクイズで<span style="color:#ff8844;">認証バトル</span>が始まる。<br>
-      正解で無力化（ダメージ）、不正解で反撃を受ける。<br>
-      倒すと<span style="color:#44ff44;">XP</span>と<span style="color:#ff6666;">HP回復</span>を獲得。スキルで直接攻撃も可能。</p>
+      接触するとPythonクイズバトル（3問）が始まる。<br>
+      正解で敵にダメージ、不正解や時間切れで自分にダメージ。<br>
+      <span style="color:#ff8844;">階層が上がるほど問題が難しくなり、コード記述問題も出現する。</span><br>
+      <span style="color:#ff8844;">5階以上では敵が逃げなくなる（倒すまで追加問題）。</span><br><br>
+      敵を倒すと <span style="color:#44ff44;">XP獲得</span> + <span style="color:#ff6666;">HP自動回復</span>（強い敵ほど多い）。<br>
+      ドロップアイテム: <span style="color:#4444ff;">MP回復</span> / <span style="color:#44ff44;">XPボーナス</span><br><br>
+      <span style="color:#888;">💨 逃走は各階層2回まで。HP-25%＋XP減のペナルティあり。</span></p>
     </div>
 
     <div class="tutorial-section">
       <h3>📈 セキュリティクリアランス（レベル）</h3>
-      <p>XPを貯めるとクリアランスレベルが上がる。HP/MP/攻撃力/移動速度UP。<br>
-      <span style="color:#ff8844;">各階層の暗号ターミナルはクリアランスレベルが必要。</span><br>
-      2階 → Lv.2以上、3階 → Lv.3以上… レベルが足りなければ敵を倒せ！</p>
+      <p>XPを貯めるとクリアランスレベルが上がる。<br>
+      レベルアップで: HP/MP増加、攻撃力UP、<span style="color:#44aaff;">移動速度UP</span><br><br>
+      <span style="color:#ff8844;">各階層の暗号ターミナルは、階層番号以上のレベルが必要。</span><br>
+      例: 2階 → Lv.2以上、5階 → Lv.5以上<br>
+      レベルが足りなければ敵を倒してXPを稼ごう！</p>
     </div>
 
     <div class="tutorial-section">
       <h3>🔐 暗号解読（2フェーズ制）</h3>
-      <p><strong style="color:#00ff41;">Phase 1:</strong> Pythonファイルのコードを完成させてパスフレーズを入力<br>
-      <strong style="color:#ff6600;">Phase 2:</strong> 復号した機密データをAIエージェントに渡し、推論で答えを導く<br>
-      <span style="color:#888;">※ 3回間違え→2分見直し / 制限時間切れ→3分見直し</span></p>
+      <p><strong style="color:#00ff41;">Phase 1: Pythonで暗号解読</strong><br>
+      ゲーム内のPythonエディタでコードの穴埋め（_____）を完成させる。<br>
+      「▶ 実行」ボタンでその場で実行 → 正しい結果が出たらパスフレーズを入力。<br>
+      <span style="color:#888;">※ コードを実行するまでパスフレーズは入力できません。</span><br><br>
+      <strong style="color:#ff6600;">Phase 2: AIエージェントで推論</strong><br>
+      復号した機密データをCopilot Agentに渡し、質問に答える。<br>
+      <span style="color:#ffcc00;">前のステージのデータも保持させることが重要！</span><br><br>
+      <span style="color:#888;">3回間違え → 2分間の見直し休憩<br>
+      制限時間切れ → 3分間の見直し休憩</span></p>
     </div>
 
     <div class="tutorial-section">
-      <h3>⭐ コーディングチャレンジ</h3>
-      <p>施設内に<span style="color:#ffcc00;">金色に光る端末（⭐）</span>が隠されている。<br>
-      近づくとPythonの穴埋め問題が出題される。<br>
-      コードの「_____」を正しく埋めて実行 → 正解なら<span style="color:#44ff44;">大量XP獲得</span>！<br>
-      制限時間は5分。タイムアップすると端末は消滅する。スキップも可。</p>
+      <h3>⭐ コーディングチャレンジ（オプション）</h3>
+      <p>施設内に<span style="color:#ffcc00;">金色に光る端末（⭐）</span>が点在している。<br>
+      近づくとPythonの穴埋め問題がゲーム内エディタで出題される。<br>
+      コードを完成させて実行 → 正しい結果が出れば自動クリア！<br><br>
+      <strong>報酬:</strong><br>
+      ・<span style="color:#44ff44;">大量XP</span>（Easy: 60-70 / Normal: 100-110 / Hard: 250-300）<br>
+      ・<span style="color:#ff6666;">HP 20%回復</span><br>
+      ・<span style="color:#44aaff;">移動速度1.5倍バフ（30秒間）</span><br><br>
+      <span style="color:#888;">制限時間5分。タイムアップで端末は消滅。スキップ可（ペナルティなし）。</span></p>
+    </div>
+
+    <div class="tutorial-section">
+      <h3>☠ HP0 = 強制休憩</h3>
+      <p>HPが0になると<span style="color:#ff4444;">5分間の強制休憩</span>が発生する。<br>
+      復活後はスポーン地点に戻される。XP -20%のペナルティ。<br>
+      <span style="color:#888;">休憩中の時間はスコアに影響しません。</span></p>
     </div>
 
     <div class="tutorial-section">
       <h3>👥 モブプログラミング（3人1組）</h3>
-      <p>5分ごとにドライバー交代。交代中はゲーム一時停止。<br>
-      チームで役割を分担しよう：操作担当・コード担当・Agent担当</p>
+      <p>5分ごとにドライバー交代の通知が表示される。<br>
+      交代時・ポーズ中はゲームが完全停止（スコアタイマーも停止）。<br>
+      <span style="color:#ffcc00;">役割分担例: 操作担当 / コード記述担当 / Agent担当</span></p>
+    </div>
+
+    <div class="tutorial-section">
+      <h3>🏆 スコア（RANK S〜E）</h3>
+      <p>クリア時にスコアとランクが表示される。<br>
+      ・タイムスコア（30分以内で満点、ポーズ中は非カウント）<br>
+      ・戦闘XPスコア（レベル × 35 + 撃破数 × 8）<br>
+      ・連続正解ボーナス<br>
+      <span style="color:#888;">ランク: S(750+) / A(600+) / B(450+) / C(300+) / D(150+) / E</span></p>
     </div>
 
     <button class="tutorial-start-btn" onclick="closeTutorial()">▶ ミッション開始</button>
