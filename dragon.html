@@ -1850,19 +1850,19 @@ const CODE_CHALLENGES=[
    template:'words = ["apple", "banana", "cherry"]\nresult = _____  # ← "-" で結合するには？\nprint(result)',
    hint:'"-".join(リスト)'},
   // Hard: 複数箇所を埋める / ロジックを書く
-  {diff:'hard',xp:150,answer:'55',
+  {diff:'hard',xp:250,answer:'55',
    q:'_____ を埋めて各要素の二乗の合計を出力せよ',
    template:'nums = [1, 2, 3, 4, 5]\nsquares = [_____ for x in nums]  # ← x の二乗は？\nprint(sum(squares))',
    hint:'x**2'},
-  {diff:'hard',xp:150,answer:'P,y,t,h,o,n',
+  {diff:'hard',xp:250,answer:'P,y,t,h,o,n',
    q:'_____ を埋めて文字列の各文字をカンマで結合して出力せよ',
    template:'text = "Python"\nresult = _____.join(_____)  # ← 区切り文字.join(対象)\nprint(result)',
    hint:'",".join(text)'},
-  {diff:'hard',xp:170,answer:'2',
+  {diff:'hard',xp:280,answer:'2',
    q:'_____ を埋めて1〜30で15の倍数の個数を出力せよ',
    template:'fizz = [x for x in range(1, 31) if _____]  # ← 15の倍数の条件は？\nprint(len(fizz))',
    hint:'x % 15 == 0'},
-  {diff:'hard',xp:160,answer:'720',
+  {diff:'hard',xp:300,answer:'720',
    q:'_____ を埋めて階乗関数を完成させ、6! を出力せよ',
    template:'def factorial(n):\n    if n <= 1:\n        return 1\n    return _____  # ← n と factorial を使った再帰は？\nprint(factorial(6))',
    hint:'n * factorial(n - 1)'},
@@ -2549,7 +2549,9 @@ function checkBoss(){
 
 function openBossBattle(){
   if(gameState!=='playing'||!bossEntity)return;
-  gameState='cipher';document.exitPointerLock();muteBGM();
+  gameState='cipher';document.exitPointerLock();
+  // Switch to boss battle BGM (bgm6 = intense)
+  stopBGM();startBGM(6);
   var ch=BOSS_CHALLENGES[bossQIdx];
   var modal=document.getElementById('cipher-modal');
   document.getElementById('cm-avatar').textContent='👹';
@@ -2636,7 +2638,9 @@ function closeBossModal(){
   document.getElementById('cipher-close-btn').style.display='none';
   document.getElementById('c-submit').onclick=function(){submitCipherAnswer();};
   document.getElementById('c-input').onkeydown=function(e){if(e.key==='Enter')submitCipherAnswer();};
-  gameState='playing';unmuteBGM();
+  gameState='playing';
+  // Restore floor BGM (boss BGM was bgm6)
+  stopBGM();startBGM(floor);
   setTimeout(function(){canvas.requestPointerLock();},350);
 }
 
