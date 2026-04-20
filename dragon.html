@@ -1712,9 +1712,15 @@ function miniPyEval(code){
       }
       return line;
     }).join('\n');
+    // Strip import lines
+    js=js.replace(/^\s*import\s+.+$/gm,'');
+    js=js.replace(/^\s*from\s+.+\s+import\s+.+$/gm,'');
     // Convert common Python to JS
     js=js
       .replace(/print\((.+)\)/g,'__out.push(String($1))')
+      .replace(/base64\.b64decode\((.+?)\)\.decode\(\)/g,'atob($1)')
+      .replace(/base64\.b64decode\((.+?)\)/g,'atob($1)')
+      .replace(/\benumerate\((.+?)\)/g,'($1).map(function(v,i){return[i,v];})')
       .replace(/\bTrue\b/g,'true').replace(/\bFalse\b/g,'false').replace(/\bNone\b/g,'null')
       .replace(/\blen\((.+?)\)/g,'($1).length')
       .replace(/\bstr\((.+?)\)/g,'String($1)')
@@ -2571,7 +2577,8 @@ function openBossBattle(){
   document.getElementById('c-continue-btn').style.display='none';
   document.getElementById('secret-reveal').classList.remove('show');
   document.getElementById('agent-phase').classList.remove('show');
-  document.getElementById('cipher-close-btn').style.display='inline-block';
+  document.getElementById('cipher-close-btn').style.display='none'; // no close button for boss
+  // ESC to temporarily close (handled by gameloop ESC → closeBossModal)
   // Run button = auto check
   document.getElementById('code-run-btn').onclick=function(){
     try{
@@ -3158,6 +3165,10 @@ function togglePause(){
 document.addEventListener('keydown',e=>{
   keys[e.code]=true;
   if(e.code==='Escape'){
+    // Boss battle: ESC closes modal temporarily
+    if(bossEntity&&!bossEntity.defeated&&gameState==='cipher'){
+      closeBossModal();battleCooldown=3;e.preventDefault();return;
+    }
     if(gameState==='playing'||gameState==='paused'){togglePause();e.preventDefault();return;}
   }
   // DEBUG: Ctrl+Shift+L = skip floor / instant win in battle (TODO: remove later)
