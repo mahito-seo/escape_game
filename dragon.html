@@ -1777,11 +1777,12 @@ function miniPyEval(code){
     js=js.replace(/^\s*from\s+.+\s+import\s+.+$/gm,'');
     // Convert common Python to JS
     js=js
-      .replace(/print\((.+)\)/g,'__out.push(String($1))')
+      .replace(/print\((.+)\)/g,'__out.push((function(v){return Array.isArray(v)?"["+v.join(", ")+"]":String(v);})($1))')
       .replace(/base64\.b64decode\((.+?)\)\.decode\(\)/g,'atob($1)')
       .replace(/base64\.b64decode\((.+?)\)/g,'atob($1)')
       .replace(/\benumerate\((.+?)\)/g,'($1).map(function(v,i){return[i,v];})')
       .replace(/\bTrue\b/g,'true').replace(/\bFalse\b/g,'false').replace(/\bNone\b/g,'null')
+      .replace(/\band\b/g,'&&').replace(/\bor\b/g,'||').replace(/\bnot\b/g,'!')
       .replace(/\blen\((.+?)\)/g,'($1).length')
       .replace(/\bstr\((.+?)\)/g,'String($1)')
       .replace(/\bint\((.+?)\)/g,'parseInt($1)')
