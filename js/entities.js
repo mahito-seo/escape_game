@@ -22,7 +22,7 @@ function checkLevelUp(){
   }
 }
 
-function spawnParticles(x3,z3,color,n=10){
+function spawnParticles(x3,z3,color,n){
   if(pParticles.length>80)return; // cap total particles for perf
   const v=new THREE.Vector3(x3,1.2,z3);v.project(camera);if(v.z>1)return;
   const px=(v.x+1)/2*W,py=(1-v.y)/2*H;
