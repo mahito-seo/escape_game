@@ -2623,30 +2623,94 @@ function spawnBoss(){
   showMessage('近づいてコーディングバトルで倒せ！','#ff8844');
 }
 
+var bossProjectiles=[];
+var bossShootTimer=0;
+
 function checkBoss(){
   if(!bossEntity||bossEntity.defeated)return;
-  var dx=bossEntity.x-player.x,dz=bossEntity.z-player.z;
-  var dist=Math.sqrt(dx*dx+dz*dz);
+  if(cipherActive||challengeActive||battleActive)return; // frozen during modal
   var b=bossEntity;
+  var dx=player.x-b.x,dz=player.z-b.z;
+  var dist=Math.sqrt(dx*dx+dz*dz);
   b.phase+=.02;
-  // Idle animation: breathe, sway, face player
+
+  // Face player
   b.mesh.rotation.y=Math.atan2(-dx,-dz);
+
+  // Animations
   if(b.aura)b.aura.scale.setScalar(1+Math.sin(b.phase*2)*.1);
   if(b.aura2)b.aura2.rotation.y+=.005;
-  if(b.arm1){b.arm1.rotation.x=Math.sin(b.phase*1.5)*.3;b.arm2.rotation.x=-Math.sin(b.phase*1.5)*.3;}
-  if(b.head)b.head.position.y=1.5*3.4+Math.sin(b.phase)*.05;
   if(b.fp1){b.fp1.scale.y=1+Math.sin(b.phase*4)*.4;b.fp2.scale.y=1+Math.cos(b.phase*4)*.4;}
-  if(b.l1){b.l1.rotation.x=Math.sin(b.phase)*.1;b.l2.rotation.x=-Math.sin(b.phase)*.1;}
-  // Hover/bob
   b.mesh.position.y=Math.sin(b.phase*.8)*.15;
-  if(dist<3.5){openBossBattle();}
+
+  // Movement: chase player (slower than player, avoids walls)
+  var bossSpeed=.03;
+  if(dist>4&&dist<30){
+    var ndx=dx/dist,ndz=dz/dist;
+    var nx=b.x+ndx*bossSpeed,nz=b.z+ndz*bossSpeed;
+    if(!isWall(nx,b.z))b.x=nx;
+    if(!isWall(b.x,nz))b.z=nz;
+    b.mesh.position.x=b.x;b.mesh.position.z=b.z;
+    // Walk animation
+    if(b.l1){b.l1.rotation.x=Math.sin(b.phase*3)*.3;b.l2.rotation.x=-Math.sin(b.phase*3)*.3;}
+    if(b.arm1){b.arm1.rotation.x=-Math.sin(b.phase*3)*.4;b.arm2.rotation.x=Math.sin(b.phase*3)*.4;}
+  }else{
+    // Idle sway
+    if(b.arm1){b.arm1.rotation.x=Math.sin(b.phase*1.5)*.2;b.arm2.rotation.x=-Math.sin(b.phase*1.5)*.2;}
+    if(b.l1){b.l1.rotation.x=Math.sin(b.phase)*.1;b.l2.rotation.x=-Math.sin(b.phase)*.1;}
+  }
+
+  // Ranged attack: shoot fireball every 4-6 seconds
+  bossShootTimer-=.016;
+  if(bossShootTimer<=0&&dist<25&&dist>3){
+    bossShootTimer=4+Math.random()*2;
+    bossShootFireball(b,dx,dz,dist);
+  }
+
+  // Contact = battle
+  if(dist<2.5&&battleCooldown<=0){openBossBattle();}
+}
+
+function bossShootFireball(b,dx,dz,dist){
+  var ndx=dx/dist,ndz=dz/dist;
+  var projMat=new THREE.MeshStandardMaterial({color:0xff2200,emissive:0xff0000,emissiveIntensity:3,transparent:true,opacity:.8});
+  var proj=new THREE.Mesh(new THREE.BoxGeometry(.3,.3,.3),projMat);
+  proj.position.set(b.x,1.5,b.z);
+  scene.add(proj);
+  bossProjectiles.push({mesh:proj,x:b.x,z:b.z,dx:ndx*.15,dz:ndz*.15,life:120}); // ~2 sec
+  playSound('hit');
+}
+
+function updateBossProjectiles(){
+  for(var i=bossProjectiles.length-1;i>=0;i--){
+    var p=bossProjectiles[i];
+    p.x+=p.dx;p.z+=p.dz;p.life--;
+    p.mesh.position.set(p.x,1.5+Math.sin(p.life*.2)*.1,p.z);
+    p.mesh.rotation.x+=.15;p.mesh.rotation.y+=.1;
+    // Hit player?
+    var pdx=p.x-player.x,pdz=p.z-player.z;
+    if(pdx*pdx+pdz*pdz<.8){
+      // Hit!
+      var dmg=15+~~(Math.random()*10);
+      player.hp=Math.max(0,player.hp-dmg);
+      showMessage('🔥 ボスの攻撃！ -'+dmg+'HP','#ff4444');
+      playSound('wrong');
+      scene.remove(p.mesh);bossProjectiles.splice(i,1);
+      updateHUD();
+      if(player.hp<=0){gameOver();}
+      continue;
+    }
+    // Hit wall or expired?
+    if(p.life<=0||isWall(p.x,p.z)){
+      scene.remove(p.mesh);bossProjectiles.splice(i,1);
+    }
+  }
 }
 
 function openBossBattle(){
   if(gameState!=='playing'||!bossEntity)return;
   gameState='cipher';document.exitPointerLock();
-  // Switch to boss battle BGM (bgm6 = intense)
-  stopBGM();startBGM(6);
+  // Boss battle BGM (don't stop - already playing from spawn)
   var ch=BOSS_CHALLENGES[bossQIdx];
   var modal=document.getElementById('cipher-modal');
   document.getElementById('cm-avatar').textContent='👹';
@@ -2685,6 +2749,9 @@ function openBossBattle(){
         if(bossEntity.hp<=0){
           document.getElementById('cr-msg').innerHTML='<strong>ボス撃破！！</strong>';
           bossEntity.defeated=true;scene.remove(bossEntity.mesh);
+          // Clean boss projectiles
+          for(var pi=0;pi<bossProjectiles.length;pi++)scene.remove(bossProjectiles[pi].mesh);
+          bossProjectiles=[];
           playSound('clear');
           setTimeout(function(){
             closeBossModal();
@@ -2735,8 +2802,9 @@ function closeBossModal(){
   document.getElementById('c-submit').onclick=function(){submitCipherAnswer();};
   document.getElementById('c-input').onkeydown=function(e){if(e.key==='Enter')submitCipherAnswer();};
   gameState='playing';
-  // Restore floor BGM (boss BGM was bgm6)
-  stopBGM();startBGM(floor);
+  // Keep boss BGM if boss still alive, else restore floor
+  if(bossEntity&&!bossEntity.defeated){startBossBGM();}
+  else{stopBGM();startBGM(floor);}
   setTimeout(function(){canvas.requestPointerLock();},350);
 }
 
@@ -2772,6 +2840,7 @@ function agentComplete(){
   if(currentCipherStage>=5){
     spawnBoss();
     playSound('battle');
+    startBossBGM();
     return;
   }
 
@@ -3079,6 +3148,13 @@ function stopBGM(){
   bgmCurrentFloor=-1;
 }
 
+function startBossBGM(){
+  stopBGM();bgmCurrentFloor=-99;
+  var a=new Audio('audio/bgm_boss.mp3');
+  a.loop=true;a.volume=BGM_VOL*1.5; // louder for boss
+  a.play().then(function(){bgmAudio=a;bgmPlaying=true;}).catch(function(){});
+}
+
 function setBGMVolume(vol){
   if(bgmAudio) bgmAudio.volume=vol;
 }
@@ -3168,7 +3244,7 @@ function loop(ts){
   camera.rotation.order='YXZ';camera.rotation.y=player.yaw;camera.rotation.x=player.pitch;
 
   player.mp=Math.min(player.maxMp,player.mp+dt*2);
-  updateEnemies(dt);updateProjectiles();checkTerminal();checkChallengeTerminals();checkBoss();checkItems();checkStair();updateCDs(dt);
+  updateEnemies(dt);updateProjectiles();checkTerminal();checkChallengeTerminals();checkBoss();updateBossProjectiles();checkItems();checkStair();updateCDs(dt);
 
   // Animate torches every other frame
   if(ts%2<1)updateTorches(ts/1000);
