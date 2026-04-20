@@ -4,31 +4,30 @@ function buildScene(){
   torches=[];items=[];enemies=[];projectiles=[];challengeTerminals=[];decoBlocks=[];
   // Apply floor theme
   const theme=FLOOR_THEMES[(floor-1)%FLOOR_THEMES.length];
-  // Richer materials with emissive tint for depth
-  const wallEmit=new THREE.Color(theme.wall).multiplyScalar(.08);
-  const floorEmit=new THREE.Color(theme.floor).multiplyScalar(.05);
-  wallMat=new THREE.MeshStandardMaterial({color:theme.wall,emissive:wallEmit,roughness:.75,metalness:.15,bumpScale:.3});
+  // Materials
+  var wallEmit=new THREE.Color(theme.wall).multiplyScalar(.08);
+  var floorEmit=new THREE.Color(theme.floor).multiplyScalar(.05);
+  wallMat=new THREE.MeshStandardMaterial({color:theme.wall,emissive:wallEmit,roughness:.75,metalness:.15});
   floorMat=new THREE.MeshStandardMaterial({color:theme.floor,emissive:floorEmit,roughness:.9,metalness:.05});
   ceilMat=new THREE.MeshStandardMaterial({color:theme.ceil,emissive:floorEmit,roughness:.95});
   scene.fog=new THREE.Fog(theme.fog,theme.fogNear,theme.fogFar);
-  const{map,rooms,stairX,stairY,termX,termY}=dungeon;
-  const dummy=new THREE.Object3D();
-  const fgeo=new THREE.PlaneGeometry(TILE,TILE),wgeo=new THREE.BoxGeometry(TILE,TILE*1.2,TILE);
-  const fi=new THREE.InstancedMesh(fgeo,floorMat,MAP_W*MAP_H);
-  const ci=new THREE.InstancedMesh(fgeo,ceilMat,MAP_W*MAP_H);
-  const wi=new THREE.InstancedMesh(wgeo,wallMat,MAP_W*MAP_H);
-  // shadows disabled for perf
-  let fc=0,cc=0,wc=0;
-  for(let y=0;y<MAP_H;y++)for(let x=0;x<MAP_W;x++){
-    const wx=x*TILE,wz=y*TILE;
+  var{map,rooms,stairX,stairY,termX,termY}=dungeon;
+  // Build terrain using individual merged geometry (InstancedMesh compat issue on some GPUs)
+  var fgeo=new THREE.PlaneGeometry(TILE,TILE);
+  var wgeo=new THREE.BoxGeometry(TILE,TILE*1.2,TILE);
+  var floorGroup=new THREE.Group();
+  var ceilGroup=new THREE.Group();
+  var wallGroup=new THREE.Group();
+  for(var y=0;y<MAP_H;y++)for(var x=0;x<MAP_W;x++){
+    var wx=x*TILE,wz=y*TILE;
     if(map[y][x]===0){
-      dummy.position.set(wx,0,wz);dummy.rotation.x=-Math.PI/2;dummy.updateMatrix();fi.setMatrixAt(fc++,dummy.matrix);
-      dummy.position.set(wx,TILE*1.2,wz);dummy.rotation.x=Math.PI/2;dummy.updateMatrix();ci.setMatrixAt(cc++,dummy.matrix);
+      var fm=new THREE.Mesh(fgeo,floorMat);fm.position.set(wx,0,wz);fm.rotation.x=-Math.PI/2;floorGroup.add(fm);
+      var cm=new THREE.Mesh(fgeo,ceilMat);cm.position.set(wx,TILE*1.2,wz);cm.rotation.x=Math.PI/2;ceilGroup.add(cm);
     }else{
-      dummy.position.set(wx,TILE*.6,wz);dummy.rotation.set(0,0,0);dummy.updateMatrix();wi.setMatrixAt(wc++,dummy.matrix);
+      var wm=new THREE.Mesh(wgeo,wallMat);wm.position.set(wx,TILE*.6,wz);wallGroup.add(wm);
     }
   }
-  fi.count=fc;ci.count=cc;wi.count=wc;scene.add(fi,ci,wi);
+  scene.add(floorGroup,ceilGroup,wallGroup);
 
   // ── Exit Portal (epic) ──
   const sx=stairX*TILE,sz=stairY*TILE;
