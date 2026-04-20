@@ -1057,8 +1057,8 @@ function buildScene(){
   }
   scene.add(floorGroup,ceilGroup,wallGroup);
 
-  // ── Exit Portal (epic) ── hidden in Extra Stage until boss defeated
-  if(currentCipherStage>=5&&!(bossEntity&&bossEntity.defeated)){
+  // ── Exit Portal ── hidden only on Extra Stage floor (6+) until boss defeated
+  if(floor>=6&&currentCipherStage>=5&&!(bossEntity&&bossEntity.defeated)){
     stairMesh=null;stairLight=null;
   }else{
   var sx=stairX*TILE,sz=stairY*TILE;
@@ -2889,8 +2889,8 @@ function agentComplete(){
   if(terminalLight){scene.remove(terminalLight);terminalLight=null;}
   if(terminalGlow){scene.remove(terminalGlow);terminalGlow=null;}
 
-  // Stage 6 (Extra): spawn boss instead of opening portal
-  if(currentCipherStage>=5){
+  // Stage 6 (Extra, floor 6+): spawn boss instead of opening portal
+  if(currentCipherStage>=5&&floor>=6){
     spawnBoss();
     playSound('battle');
     startBossBGM();
@@ -2976,6 +2976,7 @@ function calcScore(forceS){
 
 function gameComplete(){
   gameState='complete';document.exitPointerLock();stopBGM();
+  clearSave(); // clear save data on game complete
   const isExtra=currentCipherStage>=6;
   const sc=calcScore(isExtra); // Extra clear = forced S rank
   const min=~~(sc.elapsed/60),sec=sc.elapsed%60;
