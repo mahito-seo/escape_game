@@ -2660,6 +2660,14 @@ function checkBoss(){
     if(!isWall(nx,b.z))b.x=nx;
     if(!isWall(b.x,nz))b.z=nz;
     b.mesh.position.x=b.x;b.mesh.position.z=b.z;
+    // Crush any mobs the boss walks into
+    for(var ei=0;ei<enemies.length;ei++){
+      var en=enemies[ei];if(en.hp<=0)continue;
+      var edx=en.x-b.x,edz=en.z-b.z;
+      if(edx*edx+edz*edz<2.5){
+        killEnemy(en);showMessage('👹 ボスがモブを踏み潰した！','#ff8844');
+      }
+    }
     // Walk animation
     if(b.l1){b.l1.rotation.x=Math.sin(b.phase*3)*.3;b.l2.rotation.x=-Math.sin(b.phase*3)*.3;}
     if(b.arm1){b.arm1.rotation.x=-Math.sin(b.phase*3)*.4;b.arm2.rotation.x=Math.sin(b.phase*3)*.4;}
