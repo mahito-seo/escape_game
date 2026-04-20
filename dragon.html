@@ -1029,7 +1029,7 @@ function genDungeon(){
 // Scene Building - Terrain, Portal, Terminal, Enemies, Torches, Items
 function buildScene(){
   scene.children.slice().forEach(c=>{if(c.isMesh||c.isGroup||c.isPointLight)scene.remove(c);});
-  torches=[];items=[];enemies=[];projectiles=[];challengeTerminals=[];decoBlocks=[];
+  torches=[];items=[];enemies=[];projectiles=[];challengeTerminals=[];decoBlocks=[];bossEntity=null;bossProjectiles=[];
   // Apply floor theme
   const theme=FLOOR_THEMES[(floor-1)%FLOOR_THEMES.length];
   // Materials
