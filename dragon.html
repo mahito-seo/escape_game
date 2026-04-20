@@ -1963,11 +1963,17 @@ function openCodingChallenge(ct){
         const r=document.getElementById('c-result');
         r.style.display='flex';r.className='correct-res';
         document.getElementById('cr-icon').textContent='⭐';
-        document.getElementById('cr-msg').innerHTML=`<strong>正解！ XP +${ch.xp}</strong>`;
+        var hpBonus=~~(player.maxHp*.2);
+        player.hp=Math.min(player.maxHp,player.hp+hpBonus);
+        document.getElementById('cr-msg').innerHTML='<strong>正解！ XP +'+ch.xp+' ❤️HP +'+hpBonus+' ⚡速度UP 30秒</strong>';
         player.xp+=ch.xp;checkLevelUp();updateHUD();
         ct.solved=true;scene.remove(ct.mesh);
-        playSound('correct');spawnParticles(player.x,player.z,'#ffdd44',20);
+        playSound('correct');spawnParticles(player.x,player.z,'#ffdd44',5);
         editor.disabled=true;
+        // Speed buff 30s
+        var origSpeed=player.speed;
+        player.speed=origSpeed*1.5;
+        setTimeout(function(){player.speed=origSpeed;showMessage('⚡ 速度バフ終了','#888888');},30000);
         // Auto-close after 2 seconds
         setTimeout(()=>closeChallengeModal(),2000);
       }else if(result.startsWith('Error')){
@@ -2484,15 +2490,15 @@ document.getElementById('agent-input').addEventListener('keydown',e=>{if(e.key==
 var bossEntity=null; // {mesh,x,z,hp,maxHp,defeated}
 var bossQIdx=0;
 var BOSS_CHALLENGES=[
-  {q:'【要件】引数のリストから偶数だけを返す関数を書け\n\ndef filter_even(nums):\n    # nums: 整数のリスト\n    # 戻り値: 偶数だけのリスト\n    # 例: filter_even([1,2,3,4,5]) → [2,4]',
-   template:'def filter_even(nums):\n    return _____\n\nprint(filter_even([1,2,3,4,5,6,7,8]))',
-   answer:'[2, 4, 6, 8]',hint:'リスト内包表記 + if x%2==0'},
-  {q:'【要件】文字列の各単語の頭文字を大文字にする関数を書け\n\ndef capitalize_words(s):\n    # s: 文字列\n    # 戻り値: 各単語の先頭が大文字の文字列\n    # 例: capitalize_words("hello world") → "Hello World"',
-   template:'def capitalize_words(s):\n    words = s.split(" ")\n    result = []\n    for w in words:\n        result.append(_____)\n    return " ".join(result)\n\nprint(capitalize_words("hello world python"))',
-   answer:'Hello World Python',hint:'w[0].upper() + w[1:]'},
-  {q:'【要件】フィボナッチ数列のn番目を返す関数を書け\n\ndef fib(n):\n    # n: 0以上の整数\n    # 戻り値: n番目のフィボナッチ数\n    # fib(0)=0, fib(1)=1, fib(5)=5, fib(10)=55',
-   template:'def fib(n):\n    if n <= 0:\n        return 0\n    if n == 1:\n        return 1\n    a = 0\n    b = 1\n    for i in range(2, n + 1):\n        a, b = b, _____\n    return b\n\nprint(fib(10))',
-   answer:'55',hint:'a + b (フィボナッチの漸化式)'},
+  {q:'【要件定義】成績処理関数\n\n引数: 点数のリスト scores\n処理:\n  1. 50点未満の不合格者を除外\n  2. 合格者の点数を昇順ソート\n  3. ソート済みリストを返す\n\n例: process([30,85,42,90,55]) → [55, 85, 90]',
+   template:'def process(scores):\n    passed = [s for s in scores if _____]\n    passed.sort()\n    return passed\n\nprint(process([30, 85, 42, 90, 55, 10, 78, 63]))',
+   answer:'[55, 63, 78, 85, 90]',hint:'s >= 50 でフィルタ'},
+  {q:'【要件定義】暗号変換関数\n\n引数: 文字列 text, シフト数 n\n処理:\n  1. 各文字のASCIIコードに n を加算\n  2. 変換後の文字を結合して返す\n  3. アルファベット以外はそのまま\n\n例: encode("ABC", 3) → "DEF"\n     encode("XYZ", 3) → "ABC" (巡回する)',
+   template:'def encode(text, n):\n    result = ""\n    for ch in text:\n        if ch >= "A" and ch <= "Z":\n            code = ord(ch) - ord("A")\n            new_code = _____ % 26\n            result += chr(new_code + ord("A"))\n        else:\n            result += ch\n    return result\n\nprint(encode("HELLO WORLD", 7))',
+   answer:'OLSSV DVYSK',hint:'(code + n) % 26 で巡回シフト'},
+  {q:'【要件定義】データ集計関数\n\n引数: 名前と点数のペアのリスト\n処理:\n  1. 各名前の合計点を計算\n  2. 合計点が最も高い人の名前を返す\n\n例: top_scorer([["A",80],["B",90],["A",70]]) → "A" (150点)',
+   template:'names = [["Alice",80],["Bob",90],["Alice",70],["Bob",60],["Alice",50]]\ntotals = {}\nfor pair in names:\n    name = pair[0]\n    score = pair[1]\n    if name in totals:\n        totals[name] += score\n    else:\n        totals[name] = score\nbest = ""\nbest_score = 0\nfor name in totals:\n    if totals[name] > _____:\n        best = name\n        best_score = totals[name]\nprint(best)',
+   answer:'Alice',hint:'best_score と比較して最大を更新'},
 ];
 
 function spawnBoss(){
@@ -2581,7 +2587,7 @@ function openBossBattle(){
         if(bossEntity.hp<=0){
           document.getElementById('cr-msg').innerHTML='<strong>ボス撃破！！</strong>';
           bossEntity.defeated=true;scene.remove(bossEntity.mesh);
-          playSound('truefanfare');
+          playSound('clear');
           setTimeout(function(){
             closeBossModal();
             // Now spawn portal
