@@ -1057,8 +1057,11 @@ function buildScene(){
   }
   scene.add(floorGroup,ceilGroup,wallGroup);
 
-  // ── Exit Portal (epic) ──
-  const sx=stairX*TILE,sz=stairY*TILE;
+  // ── Exit Portal (epic) ── hidden in Extra Stage until boss defeated
+  if(currentCipherStage>=5&&!(bossEntity&&bossEntity.defeated)){
+    stairMesh=null;stairLight=null;
+  }else{
+  var sx=stairX*TILE,sz=stairY*TILE;
   const portalGroup=new THREE.Group();
   // Base platform (stone ring)
   const baseMat=new THREE.MeshStandardMaterial({color:cipherSolved?0x3a6a3a:0x3a2a2a,roughness:.6,metalness:.3});
@@ -1089,6 +1092,7 @@ function buildScene(){
   stairMesh=portalGroup;
   stairLight=new THREE.PointLight(cipherSolved?0x44ff44:0x442222,cipherSolved?4:1,cipherSolved?12:5);
   stairLight.position.set(sx,2.5,sz);scene.add(stairLight);
+  } // end portal if-else
 
   // Cipher Terminal
   terminalX=termX*TILE;terminalZ=termY*TILE;
@@ -1596,7 +1600,10 @@ function drawMinimap(){
   for(const e of enemies)if(e.hp>0){mmCtx.fillStyle=e.inBattle?'#ff8800':'#ff3333';mmCtx.fillRect(e.x/TILE*cw-1,e.z/TILE*ch-1,3,3);}
   for(const it of items)if(!it.collected){mmCtx.fillStyle=it.type==='hp'?'#ff6666':it.type==='mp'?'#6666ff':'#44ff44';mmCtx.fillRect(it.x/TILE*cw-1,it.z/TILE*ch-1,3,3);}
   if(!cipherSolved){mmCtx.fillStyle='#00ff41';mmCtx.fillRect(terminalX/TILE*cw-2,terminalZ/TILE*ch-2,5,5);}
-  mmCtx.fillStyle=cipherSolved?'#44ff44':'#442222';mmCtx.fillRect(dungeon.stairX*cw-2,dungeon.stairY*ch-2,5,5);
+  // Boss on minimap (large magenta dot)
+  if(bossEntity&&!bossEntity.defeated){mmCtx.fillStyle='#ff00ff';mmCtx.beginPath();mmCtx.arc(bossEntity.x/TILE*cw,bossEntity.z/TILE*ch,5,0,Math.PI*2);mmCtx.fill();}
+  // Portal (only show if exists)
+  if(stairMesh){mmCtx.fillStyle=cipherSolved?'#44ff44':'#442222';mmCtx.fillRect(dungeon.stairX*cw-2,dungeon.stairY*ch-2,5,5);}
   const ppx=player.x/TILE*cw,ppz=player.z/TILE*ch;
   mmCtx.fillStyle='#fff';mmCtx.beginPath();mmCtx.arc(ppx,ppz,3,0,Math.PI*2);mmCtx.fill();
   mmCtx.strokeStyle='#fff';mmCtx.lineWidth=1;mmCtx.beginPath();mmCtx.moveTo(ppx,ppz);mmCtx.lineTo(ppx+Math.sin(player.yaw+Math.PI)*8,ppz+Math.cos(player.yaw+Math.PI)*8);mmCtx.stroke();
@@ -1717,9 +1724,11 @@ function checkItems(){
 
 function checkStair(){
   if(!stairMesh)return;
-  const dx=dungeon.stairX*TILE-player.x,dz=dungeon.stairY*TILE-player.z;
+  var dx=dungeon.stairX*TILE-player.x,dz=dungeon.stairY*TILE-player.z;
   if(Math.sqrt(dx*dx+dz*dz)<1.5){
     if(!cipherSolved){showMessage('暗号を解読してから来い！','#ff8844');return;}
+    // Extra stage: boss must be defeated
+    if(bossEntity&&!bossEntity.defeated){showMessage('ボスを倒さなければ脱出できない！','#ff4444');return;}
     currentCipherStage++;
     // Stage 5 clear (index 5) = normal ending, Stage 6 clear (index 6+) = extra ending
     if(currentCipherStage>=5){gameComplete();return;}
@@ -2691,7 +2700,7 @@ function updateBossProjectiles(){
     var pdx=p.x-player.x,pdz=p.z-player.z;
     if(pdx*pdx+pdz*pdz<.8){
       // Hit!
-      var dmg=15+~~(Math.random()*10);
+      var dmg=30+~~(Math.random()*20);
       player.hp=Math.max(0,player.hp-dmg);
       showMessage('🔥 ボスの攻撃！ -'+dmg+'HP','#ff4444');
       playSound('wrong');
@@ -2813,16 +2822,59 @@ function unlockPortal(){
   if(stairMesh){scene.remove(stairMesh);if(stairLight)scene.remove(stairLight);}
   var sx=dungeon.stairX*TILE,sz=dungeon.stairY*TILE;
   var pg=new THREE.Group();
-  var bm=new THREE.MeshStandardMaterial({color:0x3a6a3a,roughness:.6,metalness:.3});
-  var ring=new THREE.Mesh(new THREE.TorusGeometry(1.2,.15,8,16),bm);ring.rotation.x=-Math.PI/2;ring.position.y=.05;pg.add(ring);
-  var plat=new THREE.Mesh(new THREE.CylinderGeometry(1.0,1.2,.12,12),bm);plat.position.y=.06;pg.add(plat);
-  var pm=new THREE.MeshStandardMaterial({color:0x446644,emissive:0x1a3a1a,emissiveIntensity:.4,roughness:.5,metalness:.2});
-  for(var i=0;i<4;i++){var a=i*Math.PI/2;var p=new THREE.Mesh(new THREE.BoxGeometry(.18,2.2,.18),pm);p.position.set(Math.cos(a)*1.0,1.1,Math.sin(a)*1.0);pg.add(p);var orb=new THREE.Mesh(new THREE.SphereGeometry(.12,8,8),new THREE.MeshStandardMaterial({color:0x44ff44,emissive:0x22ff22,emissiveIntensity:3,transparent:true,opacity:.8}));orb.position.set(Math.cos(a)*1.0,2.3,Math.sin(a)*1.0);pg.add(orb);}
-  var beamMat=new THREE.MeshStandardMaterial({color:0x44ff88,emissive:0x22ff44,emissiveIntensity:3,transparent:true,opacity:.3});
-  pg.add(new THREE.Mesh(new THREE.CylinderGeometry(.15,.15,3,8),beamMat));pg.children[pg.children.length-1].position.y=1.5;
-  var bm2=beamMat.clone();bm2.opacity=.1;pg.add(new THREE.Mesh(new THREE.CylinderGeometry(.4,.4,2.5,8),bm2));pg.children[pg.children.length-1].position.y=1.5;
-  pg.position.set(sx,0,sz);scene.add(pg);stairMesh=pg;
-  stairLight=new THREE.PointLight(0x44ff44,4,12);stairLight.position.set(sx,2.5,sz);scene.add(stairLight);
+  var isFinal=(currentCipherStage>=5); // Extra stage = final portal
+
+  if(isFinal){
+    // ═══ FINAL PORTAL: massive golden gate ═══
+    var H=TILE*1.2;
+    var goldM=new THREE.MeshStandardMaterial({color:0xddaa22,emissive:0xaa7700,emissiveIntensity:1,roughness:.3,metalness:.6});
+    var whiteM=new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xffffaa,emissiveIntensity:2,transparent:true,opacity:.3});
+    // Large platform
+    var plat=new THREE.Mesh(new THREE.CylinderGeometry(2.5,3.0,.2,12),goldM);plat.position.y=.1;pg.add(plat);
+    // Inner ring
+    var ring=new THREE.Mesh(new THREE.TorusGeometry(2.0,.12,8,20),goldM);ring.rotation.x=-Math.PI/2;ring.position.y=.25;pg.add(ring);
+    // 8 pillars in circle
+    for(var i=0;i<8;i++){
+      var a=i*Math.PI/4;
+      var pil=new THREE.Mesh(new THREE.BoxGeometry(.25,H,.25),goldM);
+      pil.position.set(Math.cos(a)*2.2,H/2,Math.sin(a)*2.2);pg.add(pil);
+      // Orb on each pillar
+      var orb=new THREE.Mesh(new THREE.SphereGeometry(.15,6,6),new THREE.MeshStandardMaterial({
+        color:i%2===0?0xffdd44:0x44ffaa,emissive:i%2===0?0xffaa00:0x22ff88,emissiveIntensity:4,transparent:true,opacity:.8}));
+      orb.position.set(Math.cos(a)*2.2,H+.2,Math.sin(a)*2.2);pg.add(orb);
+    }
+    // Archway top
+    var arch=new THREE.Mesh(new THREE.TorusGeometry(2.2,.15,8,20),goldM);
+    arch.rotation.x=-Math.PI/2;arch.position.y=H;pg.add(arch);
+    // Central beam (massive, bright)
+    var beamM=new THREE.MeshStandardMaterial({color:0xffffaa,emissive:0xffff44,emissiveIntensity:4,transparent:true,opacity:.4});
+    var beam=new THREE.Mesh(new THREE.CylinderGeometry(.3,.3,H*1.5,8),beamM);beam.position.y=H*.75;pg.add(beam);
+    // Outer glow
+    var glowM=new THREE.MeshStandardMaterial({color:0xffdd44,emissive:0xffaa00,emissiveIntensity:2,transparent:true,opacity:.1});
+    var glow=new THREE.Mesh(new THREE.CylinderGeometry(1.5,1.5,H*1.2,8),glowM);glow.position.y=H*.6;pg.add(glow);
+    // Floating particles (small golden cubes)
+    for(var j=0;j<6;j++){
+      var pc=new THREE.Mesh(new THREE.BoxGeometry(.1,.1,.1),new THREE.MeshStandardMaterial({
+        color:0xffdd44,emissive:0xffaa00,emissiveIntensity:3,transparent:true,opacity:.7}));
+      pc.position.set((Math.random()-.5)*2,1+Math.random()*H,(Math.random()-.5)*2);pg.add(pc);
+    }
+    pg.position.set(sx,0,sz);scene.add(pg);stairMesh=pg;
+    stairLight=new THREE.PointLight(0xffdd44,6,20);stairLight.position.set(sx,H,sz);scene.add(stairLight);
+    // Second light for drama
+    var sl2=new THREE.PointLight(0xffffaa,3,15);sl2.position.set(sx,1,sz);scene.add(sl2);
+  }else{
+    // ═══ Normal portal ═══
+    var bm=new THREE.MeshStandardMaterial({color:0x3a6a3a,roughness:.6,metalness:.3});
+    var ring2=new THREE.Mesh(new THREE.TorusGeometry(1.2,.15,8,16),bm);ring2.rotation.x=-Math.PI/2;ring2.position.y=.05;pg.add(ring2);
+    var plat2=new THREE.Mesh(new THREE.CylinderGeometry(1.0,1.2,.12,12),bm);plat2.position.y=.06;pg.add(plat2);
+    var pm=new THREE.MeshStandardMaterial({color:0x446644,emissive:0x1a3a1a,emissiveIntensity:.4,roughness:.5,metalness:.2});
+    for(var i=0;i<4;i++){var a=i*Math.PI/2;var p=new THREE.Mesh(new THREE.BoxGeometry(.18,2.2,.18),pm);p.position.set(Math.cos(a)*1.0,1.1,Math.sin(a)*1.0);pg.add(p);var orb=new THREE.Mesh(new THREE.SphereGeometry(.12,8,8),new THREE.MeshStandardMaterial({color:0x44ff44,emissive:0x22ff22,emissiveIntensity:3,transparent:true,opacity:.8}));orb.position.set(Math.cos(a)*1.0,2.3,Math.sin(a)*1.0);pg.add(orb);}
+    var beamMat=new THREE.MeshStandardMaterial({color:0x44ff88,emissive:0x22ff44,emissiveIntensity:3,transparent:true,opacity:.3});
+    pg.add(new THREE.Mesh(new THREE.CylinderGeometry(.15,.15,3,8),beamMat));pg.children[pg.children.length-1].position.y=1.5;
+    var bm2=beamMat.clone();bm2.opacity=.1;pg.add(new THREE.Mesh(new THREE.CylinderGeometry(.4,.4,2.5,8),bm2));pg.children[pg.children.length-1].position.y=1.5;
+    pg.position.set(sx,0,sz);scene.add(pg);stairMesh=pg;
+    stairLight=new THREE.PointLight(0x44ff44,4,12);stairLight.position.set(sx,2.5,sz);scene.add(stairLight);
+  }
   updateHUD();saveProgress();
 }
 
@@ -3365,12 +3417,22 @@ document.addEventListener('keydown',e=>{
       return;
     }
     if(gameState==='playing'){
+      // Extra stage: skip cipher + spawn boss directly
+      if(currentCipherStage>=5&&!(bossEntity&&!bossEntity.defeated)){
+        cipherSolved=true;
+        if(terminalMesh){scene.remove(terminalMesh);terminalMesh=null;}
+        if(terminalLight){scene.remove(terminalLight);terminalLight=null;}
+        if(terminalGlow){scene.remove(terminalGlow);terminalGlow=null;}
+        spawnBoss();startBossBGM();
+        showMessage('⏩ DEBUG: 暗号スキップ→ボス出現','#ff00ff');
+        return;
+      }
       currentCipherStage++;
       if(currentCipherStage>=CIPHER_STAGES.length){gameComplete();return;}
       floor++;cipherSolved=false;escapeCount=0;
       dungeon=genDungeon();buildScene();
       player.hp=player.maxHp;player.mp=player.maxMp;
-      updateHUD();showMessage(`⏩ DEBUG: Floor ${floor} へスキップ`,'#ff00ff');
+      updateHUD();showMessage('⏩ DEBUG: Floor '+floor+' へスキップ','#ff00ff');
       startBGM(floor);saveProgress();
       return;
     }
