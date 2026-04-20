@@ -564,25 +564,2611 @@
 
 <button class="dev-reset" onclick="resetToTitle()">🏠 RESET</button>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="js/util.js"></script>
-<script src="js/questions.js"></script>
-<script src="js/stages.js"></script>
-<script src="js/engine.js"></script>
-<script src="js/themes.js"></script>
-<script src="js/dungeon.js"></script>
-<script src="js/scene.js"></script>
-<script src="js/entities.js"></script>
-<script src="js/player.js"></script>
-<script src="js/challenge.js"></script>
-<script src="js/battle.js"></script>
-<script src="js/cipher.js"></script>
-<script src="js/score.js"></script>
-<script src="js/death.js"></script>
-<script src="js/sound.js"></script>
-<script src="js/save.js"></script>
-<script src="js/gameloop.js"></script>
-<script src="js/flow.js"></script>
+<script src="three.min.js"></script>
+<script>
+// === util.js ===
+// Utility Functions
+// SHA-256 (with fallback for environments without crypto.subtle)
+async function sha256(t){
+  try{
+    var b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t));
+    return Array.prototype.map.call(new Uint8Array(b),function(x){return('00'+x.toString(16)).slice(-2);}).join("");
+  }catch(e){
+    return _sha256fb(t);
+  }
+}
+function _sha256fb(msg){
+  function rr(n,x){return(x>>>n)|(x<<(32-n));}
+  var K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+  var H0=0x6a09e667,H1=0xbb67ae85,H2=0x3c6ef372,H3=0xa54ff53a,H4=0x510e527f,H5=0x9b05688c,H6=0x1f83d9ab,H7=0x5be0cd19;
+  // UTF-8 encode
+  var bytes=[];
+  for(var i=0;i<msg.length;i++){
+    var c=msg.charCodeAt(i);
+    if(c<0x80)bytes.push(c);
+    else if(c<0x800){bytes.push(0xc0|(c>>6));bytes.push(0x80|(c&0x3f));}
+    else{bytes.push(0xe0|(c>>12));bytes.push(0x80|((c>>6)&0x3f));bytes.push(0x80|(c&0x3f));}
+  }
+  var bitLen=bytes.length*8;
+  bytes.push(0x80);
+  while(bytes.length%64!==56)bytes.push(0);
+  // Append 64-bit big-endian length
+  bytes.push(0,0,0,0); // high 32 bits (always 0 for short messages)
+  bytes.push((bitLen>>>24)&0xff,(bitLen>>>16)&0xff,(bitLen>>>8)&0xff,bitLen&0xff);
+
+  for(var off=0;off<bytes.length;off+=64){
+    var w=new Array(64);
+    for(var i=0;i<16;i++)w[i]=((bytes[off+i*4]<<24)|(bytes[off+i*4+1]<<16)|(bytes[off+i*4+2]<<8)|bytes[off+i*4+3])>>>0;
+    for(var i=16;i<64;i++){
+      var s0=(rr(7,w[i-15])^rr(18,w[i-15])^(w[i-15]>>>3))>>>0;
+      var s1=(rr(17,w[i-2])^rr(19,w[i-2])^(w[i-2]>>>10))>>>0;
+      w[i]=(w[i-16]+s0+w[i-7]+s1)>>>0;
+    }
+    var a=H0,b=H1,c=H2,d=H3,e=H4,f=H5,g=H6,h=H7;
+    for(var i=0;i<64;i++){
+      var S1=(rr(6,e)^rr(11,e)^rr(25,e))>>>0;
+      var ch=((e&f)^((~e)&g))>>>0;
+      var t1=(h+S1+ch+K[i]+w[i])>>>0;
+      var S0=(rr(2,a)^rr(13,a)^rr(22,a))>>>0;
+      var maj=((a&b)^(a&c)^(b&c))>>>0;
+      var t2=(S0+maj)>>>0;
+      h=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0;
+    }
+    H0=(H0+a)>>>0;H1=(H1+b)>>>0;H2=(H2+c)>>>0;H3=(H3+d)>>>0;
+    H4=(H4+e)>>>0;H5=(H5+f)>>>0;H6=(H6+g)>>>0;H7=(H7+h)>>>0;
+  }
+  function hex(n){return('00000000'+n.toString(16)).slice(-8);}
+  return hex(H0)+hex(H1)+hex(H2)+hex(H3)+hex(H4)+hex(H5)+hex(H6)+hex(H7);
+}
+
+
+// === questions.js ===
+// Python Quiz Questions (90問)
+const QUESTIONS=[
+  {cat:'Python基礎',diff:'easy',type:'choice',q:'以下のコードの出力は何ですか？',code:'x = 10\ny = 3\nprint(x % y)',choices:['0','1','3','30'],ans:1,expl:'10 % 3 は余り → 1'},
+  {cat:'Python基礎',diff:'easy',type:'choice',q:'リストの最後の要素を取り出す正しい方法は？',code:'my_list = [1, 2, 3, 4, 5]',choices:['my_list[-1]','my_list[last]','my_list.last()','my_list[len-1]'],ans:0,expl:'[-1] で末尾を参照'},
+  {cat:'データ型',diff:'easy',type:'choice',q:'次のコードの出力結果は？',code:'print(type(3.14))',choices:["<class 'int'>","<class 'str'>","<class 'float'>","<class 'double'>"],ans:2,expl:'3.14 は float'},
+  {cat:'文字列',diff:'easy',type:'choice',q:'文字列を繰り返すと？',code:'print("Ha" * 3)',choices:['Ha3','HaHaHa','Ha Ha Ha','Error'],ans:1,expl:'"Ha" * 3 = "HaHaHa"'},
+  {cat:'Python基礎',diff:'easy',type:'choice',q:'Pythonでコメントを書く正しい記号は？',choices:['//','#','/*','--'],ans:1,expl:'# がコメント'},
+  {cat:'リスト',diff:'easy',type:'choice',q:'このコードで nums の長さは？',code:'nums = [1, 2, 3]\nnums.append(4)\nnums.append(5)',choices:['3','4','5','6'],ans:2,expl:'3 + append×2 = 5'},
+  {cat:'条件分岐',diff:'easy',type:'choice',q:'次のコードで出力されるのは？',code:'x = 7\nif x > 5:\n    print("大")\nelse:\n    print("小")',choices:['大','小','7','エラー'],ans:0,expl:'7 > 5 → "大"'},
+  {cat:'Python基礎',diff:'easy',type:'fill',q:'リストの要素数を返す組み込み関数は？（関数名のみ）',code:'my_list = [1, 2, 3]\nprint(_____(my_list))  # 3',ans:'len',expl:'len() で長さを返す',hint:'l から始まる3文字'},
+  {cat:'ループ',diff:'easy',type:'fill',q:'1から10までの合計は？（数字のみ）',code:'total = sum(range(1, 11))\nprint(total)',ans:'55',expl:'1+2+…+10 = 55'},
+  {cat:'内包表記',diff:'normal',type:'choice',q:'リスト内包表記の出力は？',code:'result = [x**2 for x in range(5) if x % 2 == 0]\nprint(result)',choices:['[0, 4, 16]','[0, 2, 4]','[1, 4, 9]','[0, 1, 4]'],ans:0,expl:'偶数(0,2,4)の2乗 → [0, 4, 16]'},
+  {cat:'辞書',diff:'normal',type:'choice',q:'次のコードの出力は？',code:"d = {'a': 1, 'b': 2, 'c': 3}\nprint(sum(d.values()))",choices:['abc','3','6','Error'],ans:2,expl:'1+2+3 = 6'},
+  {cat:'再帰',diff:'normal',type:'choice',q:'この関数の mystery(6) の戻り値は？',code:'def mystery(n):\n    if n <= 1: return n\n    return mystery(n-1) + mystery(n-2)',choices:['8','13','21','5'],ans:0,expl:'フィボナッチ。mystery(6)=8'},
+  {cat:'スライス',diff:'normal',type:'choice',q:'以下のスライスの結果は？',code:'s = "Python"\nprint(s[1:4])',choices:['Pyt','yth','ytho','ython'],ans:1,expl:'s[1:4] → "yth"'},
+  {cat:'例外処理',diff:'normal',type:'choice',q:'次のコードの出力は？',code:'try:\n    x = 10 / 0\nexcept ZeroDivisionError:\n    print("ゼロ除算")\nfinally:\n    print("終了")',choices:['ゼロ除算のみ','終了のみ','ゼロ除算\n終了','停止'],ans:2,expl:'except + finally'},
+  {cat:'lambda',diff:'normal',type:'choice',q:'ラムダ式の実行結果は？',code:'f = lambda x, y: x * y + y\nprint(f(3, 4))',choices:['12','16','13','19'],ans:1,expl:'3*4+4=16'},
+  {cat:'文字列操作',diff:'normal',type:'choice',q:'以下のコードの出力は？',code:'words = ["apple","banana","cherry"]\nprint(", ".join(sorted(words, key=len)))',choices:['apple, banana, cherry','apple, cherry, banana','cherry, banana, apple','banana, apple, cherry'],ans:1,expl:'長さソート'},
+  {cat:'文字列',diff:'normal',type:'fill',q:'文字列を大文字に変換するメソッドは？（メソッド名のみ）',code:'s = "hello"\nprint(s.___())  # HELLO',ans:'upper',expl:'.upper()で大文字に',hint:'"大文字"を意味する英単語'},
+  {cat:'辞書',diff:'normal',type:'fill',q:'KeyError を避けてデフォルト値を返すメソッドは？',code:"d = {'x': 10}\nval = d.___('y', 0)  # → 0",ans:'get',expl:'.get(key, default)',hint:'3文字の英単語'},
+  {cat:'デコレータ',diff:'hard',type:'choice',q:'デコレータの出力は？',code:'def double(func):\n    def wrapper(x):\n        return func(x) * 2\n    return wrapper\n\n@double\ndef add_one(x):\n    return x + 1\n\nprint(add_one(5))',choices:['6','11','12','10'],ans:2,expl:'add_one(5)=6 → ×2=12'},
+  {cat:'ジェネレータ',diff:'hard',type:'choice',q:'フィボナッチの最初の5要素は？',code:'def fib():\n    a, b = 0, 1\n    while True:\n        yield a\n        a, b = b, a + b',choices:['[1,1,2,3,5]','[0,1,1,2,3]','[0,1,2,3,5]','[1,2,3,5,8]'],ans:1,expl:'0,1,1,2,3'},
+  {cat:'クロージャ',diff:'hard',type:'choice',q:'クロージャの出力は？',code:'def make_counter():\n    count = 0\n    def inc():\n        nonlocal count\n        count += 1\n        return count\n    return inc\n\nc = make_counter()\nprint(c(), c(), c())',choices:['0 1 2','1 1 1','1 2 3','0 0 0'],ans:2,expl:'nonlocal → 1,2,3'},
+  {cat:'クラス継承',diff:'hard',type:'choice',q:'このコードの出力は？',code:'class Animal:\n    sound = "..."\n    def speak(self):\n        return f"I say {self.sound}"\n\nclass Dog(Animal):\n    sound = "Woof"\n\nprint(Dog().speak())',choices:['I say ...','I say Woof','Woof','Error'],ans:1,expl:'Dog.sound="Woof"'},
+  {cat:'辞書内包表記',diff:'hard',type:'choice',q:'辞書内包表記の結果は？',code:"data = [('a',1),('b',2),('c',3)]\nresult = {k:v**2 for k,v in data if v>1}\nprint(result)",choices:["{'a':1,'b':4,'c':9}","{'b':4,'c':9}","{'b':2,'c':3}","{'a':1}"],ans:1,expl:"v>1 → {'b':4,'c':9}"},
+  {cat:'型',diff:'hard',type:'choice',q:'引数なしで呼んだ結果は？',code:"from typing import Optional\ndef greet(name: Optional[str] = None) -> str:\n    if name is None:\n        return 'Hello, World!'\n    return f'Hello, {name}!'\nprint(greet())",choices:['Hello, None!','TypeError','Hello, World!','Hello, !'],ans:2,expl:'name=None → Hello, World!'},
+  {cat:'*args/**kwargs',diff:'hard',type:'fill',q:'可変長キーワード引数の変数名は？（慣例的に使う名前）',code:'def func(**_____):\n    print(_____)',ans:'kwargs',expl:'**kwargsが慣例',hint:'keyword arguments の略'},
+
+  // ── 追加 EASY (15問) ──
+  {cat:'Python基礎',diff:'easy',type:'choice',q:'変数 x に 5 を代入する正しい書き方は？',choices:['x == 5','x = 5','x := 5','let x = 5'],ans:1,expl:'= は代入演算子'},
+  {cat:'演算',diff:'easy',type:'choice',q:'次のコードの出力は？',code:'print(2 ** 3)',choices:['6','8','5','23'],ans:1,expl:'2 ** 3 は 2の3乗 = 8'},
+  {cat:'文字列',diff:'easy',type:'choice',q:'文字列の長さを求めるには？',code:'s = "Python"',choices:['s.length','s.size()','len(s)','s.count()'],ans:2,expl:'len() で文字列の長さ'},
+  {cat:'リスト',diff:'easy',type:'choice',q:'リストの要素を逆順にするメソッドは？',choices:['.sort()','.reverse()','.flip()','.invert()'],ans:1,expl:'.reverse() で逆順に'},
+  {cat:'bool',diff:'easy',type:'choice',q:'次の式の結果は？',code:'print(True and False)',choices:['True','False','None','Error'],ans:1,expl:'True and False = False'},
+  {cat:'型変換',diff:'easy',type:'choice',q:'文字列 "42" を整数に変換するには？',choices:['int("42")','str(42)','float("42")','number("42")'],ans:0,expl:'int() で整数に変換'},
+  {cat:'リスト',diff:'easy',type:'choice',q:'空のリストを作る2つの方法のうち正しいのは？',choices:['list() と []','array() と {}','new List()','List.create()'],ans:0,expl:'list() または [] で空リスト'},
+  {cat:'ループ',diff:'easy',type:'choice',q:'次のコードの出力は？',code:'for i in range(3):\n    print(i, end=" ")',choices:['1 2 3','0 1 2','0 1 2 3','1 2'],ans:1,expl:'range(3) → 0, 1, 2'},
+  {cat:'文字列',diff:'easy',type:'choice',q:'文字列の結合はどれ？',code:'a = "Hello"\nb = "World"',choices:['a + " " + b','a & b','a . b','concat(a, b)'],ans:0,expl:'+ で文字列結合'},
+  {cat:'Python基礎',diff:'easy',type:'choice',q:'None の型は？',code:'print(type(None))',choices:["<class 'bool'>","<class 'NoneType'>","<class 'null'>","<class 'void'>"],ans:1,expl:'None は NoneType'},
+  {cat:'比較',diff:'easy',type:'choice',q:'次の式の結果は？',code:'print(5 == 5.0)',choices:['True','False','Error','None'],ans:0,expl:'5 == 5.0 は True（値が同じ）'},
+  {cat:'リスト',diff:'easy',type:'fill',q:'リストに要素を追加するメソッドは？（メソッド名のみ）',code:'lst = [1, 2]\nlst._____(3)  # [1, 2, 3]',ans:'append',expl:'.append() で末尾に追加',hint:'a から始まる6文字'},
+  {cat:'Python基礎',diff:'easy',type:'fill',q:'画面に文字を表示する関数は？（関数名のみ）',code:'_____("Hello!")',ans:'print',expl:'print() で出力',hint:'p から始まる5文字'},
+  {cat:'型変換',diff:'easy',type:'fill',q:'整数を文字列に変換する関数は？（関数名のみ）',code:'x = 42\ns = _____(x)  # "42"',ans:'str',expl:'str() で文字列に',hint:'3文字の関数'},
+  {cat:'演算',diff:'easy',type:'fill',q:'15 を 4 で割った商（整数除算）は？（数字のみ）',code:'print(15 // 4)',ans:'3',expl:'// は整数除算（切り捨て）'},
+
+  // ── 追加 EASY その2 (15問) ──
+  {cat:'リスト',diff:'easy',type:'choice',q:'次のコードの出力は？',code:'print([1,2,3] + [4,5])',choices:['[1,2,3,4,5]','[5,7]','Error','9'],ans:0,expl:'+ でリストを結合'},
+  {cat:'文字列',diff:'easy',type:'choice',q:'次のコードの出力は？',code:'print("hello"[0])',choices:['h','e','hello','1'],ans:0,expl:'[0] は最初の文字'},
+  {cat:'比較',diff:'easy',type:'choice',q:'次の式の結果は？',code:'print(10 != 10)',choices:['True','False','Error','10'],ans:1,expl:'10 != 10 は False'},
+  {cat:'Python基礎',diff:'easy',type:'choice',q:'Pythonで改行なしで出力するには？',choices:['print(x, end="")','print(x, \\n=False)','echo(x)','write(x)'],ans:0,expl:'end="" で改行を抑制'},
+  {cat:'文字列',diff:'easy',type:'choice',q:'次のコードの出力は？',code:'print("abc".upper())',choices:['abc','ABC','Abc','Error'],ans:1,expl:'.upper() で全て大文字'},
+  {cat:'リスト',diff:'easy',type:'choice',q:'リストの先頭の要素を削除するには？',code:'a = [1, 2, 3]',choices:['a.pop(0)','a.remove_first()','a.delete(0)','del a.first'],ans:0,expl:'.pop(0) で先頭を削除して返す'},
+  {cat:'bool',diff:'easy',type:'choice',q:'次の式の結果は？',code:'print(not True)',choices:['True','False','None','Error'],ans:1,expl:'not True は False'},
+  {cat:'Python基礎',diff:'easy',type:'choice',q:'空文字列の真偽値は？',code:'print(bool(""))',choices:['True','False','""','Error'],ans:1,expl:'空文字列は False'},
+  {cat:'リスト',diff:'easy',type:'choice',q:'次のコードの出力は？',code:'print(max([3, 1, 4, 1, 5]))',choices:['1','3','5','15'],ans:2,expl:'max() で最大値 = 5'},
+  {cat:'文字列',diff:'easy',type:'choice',q:'次のコードの出力は？',code:'print("hello world".replace("world", "Python"))',choices:['hello world','hello Python','Python world','Error'],ans:1,expl:'.replace() で置換'},
+  {cat:'演算',diff:'easy',type:'fill',q:'3 + 4 * 2 の結果は？（数字のみ）',code:'print(3 + 4 * 2)',ans:'11',expl:'掛け算が先: 4*2=8, 3+8=11'},
+  {cat:'リスト',diff:'easy',type:'fill',q:'[1,2,3] の合計は？（数字のみ）',code:'print(sum([1, 2, 3]))',ans:'6',expl:'sum() で合計 = 6'},
+  {cat:'文字列',diff:'easy',type:'fill',q:'文字列を小文字に変換するメソッドは？（メソッド名のみ）',code:'s = "HELLO"\nprint(s.___())  # hello',ans:'lower',expl:'.lower() で小文字に',hint:'5文字のメソッド'},
+  {cat:'Python基礎',diff:'easy',type:'fill',q:'整数の最大値を返す関数は？（関数名のみ）',code:'print(_____(3, 7, 1))  # 7',ans:'max',expl:'max() で最大値',hint:'3文字の関数'},
+  {cat:'Python基礎',diff:'easy',type:'fill',q:'入力を受け取る関数は？（関数名のみ）',code:'name = _____("名前: ")',ans:'input',expl:'input() でユーザー入力',hint:'5文字の関数'},
+
+  // ── 追加 NORMAL (20問) ──
+  {cat:'集合',diff:'normal',type:'choice',q:'次のコードの出力は？',code:'s = {1, 2, 3, 2, 1}\nprint(len(s))',choices:['5','3','2','Error'],ans:1,expl:'集合は重複なし → {1,2,3}'},
+  {cat:'文字列',diff:'normal',type:'choice',q:'次のコードの出力は？',code:'s = "hello world"\nprint(s.title())',choices:['HELLO WORLD','hello world','Hello World','Hello world'],ans:2,expl:'.title() は各単語の先頭を大文字に'},
+  {cat:'リスト',diff:'normal',type:'choice',q:'次のコードの出力は？',code:'a = [1, 2, 3]\nb = a\nb.append(4)\nprint(a)',choices:['[1, 2, 3]','[1, 2, 3, 4]','Error','[4]'],ans:1,expl:'b = a は参照コピー。同じリストを指す'},
+  {cat:'辞書',diff:'normal',type:'choice',q:'次のコードの出力は？',code:"d = {'a':1,'b':2,'c':3}\nprint(list(d.keys()))",choices:["['a','b','c']","[1,2,3]","[('a',1),('b',2)]","Error"],ans:0,expl:'.keys() でキーの一覧'},
+  {cat:'文字列',diff:'normal',type:'choice',q:'次のコードの出力は？',code:'print("Python"[::2])',choices:['Pto','yhn','Pyth','Py'],ans:0,expl:'[::2] はステップ2 → P,t,o'},
+  {cat:'関数',diff:'normal',type:'choice',q:'次のコードの出力は？',code:'def f(x, y=10):\n    return x + y\nprint(f(5))',choices:['5','10','15','Error'],ans:2,expl:'y のデフォルト値10 → 5+10=15'},
+  {cat:'タプル',diff:'normal',type:'choice',q:'タプルについて正しいのは？',choices:['変更可能(mutable)','変更不可(immutable)','辞書と同じ','キーがある'],ans:1,expl:'タプルは immutable'},
+  {cat:'文字列',diff:'normal',type:'choice',q:'次のコードの出力は？',code:'print("apple,banana,cherry".split(","))',choices:["['apple','banana','cherry']","'apple banana cherry'","('apple','banana','cherry')","Error"],ans:0,expl:'.split() で分割してリストに'},
+  {cat:'ループ',diff:'normal',type:'choice',q:'次のコードの出力は？',code:'x = 0\nwhile x < 5:\n    x += 2\nprint(x)',choices:['4','5','6','10'],ans:2,expl:'0→2→4→6（6で条件False、ループ終了）'},
+  {cat:'リスト',diff:'normal',type:'choice',q:'次のコードの出力は？',code:'a = [3, 1, 4, 1, 5]\nprint(sorted(a))',choices:['[5, 4, 3, 1, 1]','[1, 1, 3, 4, 5]','[3, 1, 4, 1, 5]','Error'],ans:1,expl:'sorted() は昇順ソート'},
+  {cat:'集合',diff:'normal',type:'choice',q:'2つの集合の共通要素は？',code:'a = {1, 2, 3}\nb = {2, 3, 4}\nprint(a & b)',choices:['{1, 4}','{2, 3}','{1, 2, 3, 4}','Error'],ans:1,expl:'& は積集合（共通要素）'},
+  {cat:'enumerate',diff:'normal',type:'choice',q:'次のコードの出力は？',code:'for i, v in enumerate(["a","b","c"]):\n    if i == 1:\n        print(v)',choices:['a','b','c','1'],ans:1,expl:'enumerate: i=1のときv="b"'},
+  {cat:'三項演算子',diff:'normal',type:'choice',q:'次のコードの出力は？',code:'x = 7\nresult = "偶数" if x % 2 == 0 else "奇数"\nprint(result)',choices:['偶数','奇数','7','Error'],ans:1,expl:'7 % 2 != 0 → "奇数"'},
+  {cat:'zip',diff:'normal',type:'choice',q:'次のコードの出力は？',code:'a = [1, 2, 3]\nb = ["a", "b", "c"]\nprint(list(zip(a, b)))',choices:['[(1,"a"),(2,"b"),(3,"c")]','[1,"a",2,"b",3,"c"]','{"1":"a","2":"b"}','Error'],ans:0,expl:'zip で対応する要素をタプルに'},
+  {cat:'map',diff:'normal',type:'choice',q:'次のコードの出力は？',code:'nums = [1, 2, 3, 4]\nresult = list(map(lambda x: x * 2, nums))\nprint(result)',choices:['[1, 2, 3, 4]','[2, 4, 6, 8]','[1, 4, 9, 16]','Error'],ans:1,expl:'map で各要素を2倍'},
+  {cat:'文字列',diff:'normal',type:'fill',q:'文字列の前後の空白を除去するメソッドは？',code:'s = "  hello  "\nprint(s.___())  # "hello"',ans:'strip',expl:'.strip() で前後の空白を除去',hint:'5文字のメソッド'},
+  {cat:'リスト',diff:'normal',type:'fill',q:'リストの要素を昇順に並べ替えるメソッドは？',code:'a = [3, 1, 2]\na._____()\nprint(a)  # [1, 2, 3]',ans:'sort',expl:'.sort() で昇順ソート',hint:'4文字のメソッド'},
+  {cat:'数学',diff:'normal',type:'fill',q:'絶対値を返す組み込み関数は？（関数名のみ）',code:'print(_____(-7))  # 7',ans:'abs',expl:'abs() で絶対値',hint:'3文字の関数'},
+  {cat:'演算',diff:'normal',type:'fill',q:'2の10乗は？（数字のみ）',code:'print(2 ** 10)',ans:'1024',expl:'2^10 = 1024'},
+  {cat:'文字列',diff:'normal',type:'fill',q:'文字列中の特定文字の出現回数を数えるメソッドは？',code:'s = "banana"\nprint(s._____("a"))  # 3',ans:'count',expl:'.count() で出現回数',hint:'5文字のメソッド'},
+
+  // ── 追加 HARD (15問) ──
+  {cat:'内包表記',diff:'hard',type:'choice',q:'ネストしたリスト内包表記の結果は？',code:'matrix = [[1,2],[3,4],[5,6]]\nflat = [x for row in matrix for x in row]\nprint(flat)',choices:['[[1,2],[3,4],[5,6]]','[1,2,3,4,5,6]','[1,3,5,2,4,6]','Error'],ans:1,expl:'ネスト内包でフラット化'},
+  {cat:'集合演算',diff:'hard',type:'choice',q:'次のコードの出力は？',code:'a = {1,2,3,4}\nb = {3,4,5,6}\nprint(a ^ b)',choices:['{3,4}','{1,2,5,6}','{1,2,3,4,5,6}','Error'],ans:1,expl:'^ は対称差（片方にのみ含まれる要素）'},
+  {cat:'アンパック',diff:'hard',type:'choice',q:'次のコードの出力は？',code:'a, *b, c = [1, 2, 3, 4, 5]\nprint(b)',choices:['[2, 3, 4]','[1, 2, 3]','2','Error'],ans:0,expl:'*b が中間の要素をキャプチャ'},
+  {cat:'walrus',diff:'hard',type:'choice',q:'次のコードの出力は？',code:'data = [1, 2, 3, 4, 5]\nif (n := len(data)) > 3:\n    print(n)',choices:['3','5','True','Error'],ans:1,expl:':= (walrus演算子) で代入と評価を同時に'},
+  {cat:'関数',diff:'hard',type:'choice',q:'次のコードの出力は？',code:'def f(a, b, /, c, *, d):\n    return a + b + c + d\nprint(f(1, 2, c=3, d=4))',choices:['10','Error','4','None'],ans:0,expl:'/ の前は位置のみ、* の後はキーワードのみ'},
+  {cat:'イテレータ',diff:'hard',type:'choice',q:'次のコードの出力は？',code:'it = iter([10, 20, 30])\nnext(it)\nprint(next(it))',choices:['10','20','30','Error'],ans:1,expl:'1回目のnextで10を消費、2回目で20'},
+  {cat:'文字列',diff:'hard',type:'choice',q:'次のコードの出力は？',code:'s = "abcdef"\nprint(s[-3::-2])',choices:["'db'","'df'","'dba'","'bdf'"],ans:0,expl:'s[-3::-2] → index3(d)から逆方向ステップ2 → d,b'},
+  {cat:'クラス',diff:'hard',type:'choice',q:'次のコードの出力は？',code:'class A:\n    x = []\n    def add(self, v):\n        self.x.append(v)\n\na = A()\nb = A()\na.add(1)\nprint(b.x)',choices:['[]','[1]','Error','None'],ans:1,expl:'クラス変数のリストは全インスタンスで共有'},
+  {cat:'ビット演算',diff:'hard',type:'choice',q:'次の式の結果は？',code:'print(0b1010 & 0b1100)',choices:['8','10','12','6'],ans:0,expl:'1010 & 1100 = 1000 = 8'},
+  {cat:'any/all',diff:'hard',type:'choice',q:'次のコードの出力は？',code:'print(all([True, 1, "hello", [0]]))',choices:['True','False','Error','None'],ans:0,expl:'全て truthy → all() は True'},
+  {cat:'collections',diff:'hard',type:'choice',q:'Counter の most_common(1) の結果は？',code:'from collections import Counter\nc = Counter("abracadabra")\nprint(c.most_common(1))',choices:["[('a', 5)]","[('b', 2)]","{'a': 5}","[5]"],ans:0,expl:'a が5回で最頻出'},
+  {cat:'内包表記',diff:'hard',type:'fill',q:'このリスト内包表記の結果の長さは？（数字のみ）',code:'result = [i for i in range(100) if i % 3 == 0 and i % 5 == 0]\nprint(len(result))',ans:'7',expl:'FizzBuzz: 0,15,30,45,60,75,90 → 7個'},
+  {cat:'再帰',diff:'hard',type:'fill',q:'この関数の出力は？（数字のみ）',code:'def f(n):\n    if n == 0: return 1\n    return n * f(n-1)\nprint(f(5))',ans:'120',expl:'5! = 120（階乗）'},
+  {cat:'ビット演算',diff:'hard',type:'fill',q:'次の式の結果は？（数字のみ）',code:'print(1 << 4)',ans:'16',expl:'1を左に4ビットシフト = 16'},
+  {cat:'文字列',diff:'hard',type:'fill',q:'次のコードの出力は？（数字のみ）',code:'print(ord("A"))',ans:'65',expl:'ord("A") = 65（ASCII値）'},
+];
+
+// ═══════════════════════════════════
+//  CIPHER STAGES (from escape game)
+
+
+// === stages.js ===
+// Cipher Stage Definitions (5 + Extra)
+const CIPHER_STAGES=[
+  {name:"Stage 1 — 古代遺跡：エージェント名簿",diff:"★☆☆☆☆",avatar:"🔮",
+   mission:'【状況】施設最上層の古代遺跡エリアで\nエージェント名簿の暗号ロックを発見した。\n\n_____ を埋めてコードを完成させ、実行せよ。\n出力されたパスフレーズを下の入力欄に入力する。',
+   data:'indices = [5, 0, 11, 2, 14, 13]\nalphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"',
+   hint:'各インデックスで alphabet から文字を取り出す\n\n例: alphabet[0] → "A", alphabet[5] → "F"',
+   template:'alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"\nindices = [5, 0, 11, 2, 14, 13]\n\nresult = ""\nfor idx in indices:\n    result += _____  # ← alphabet から idx 番目の文字\nprint(result)',
+   passHash:"50673d02ac6324d4cfa82c941caed56709489e70bd5402e1e3520c25d1100b8e",
+   secretTitle:"【機密情報A】エージェントデータベース",
+   encodingHint:"暗号方式: ROT13（各アルファベットを13文字ずらす: A↔N, B↔O, ...）\nどんなプロンプトを書けば Agent が正しく理解するか、工夫しましょう。\n\n以下のデータを Copilot Agent に渡して復号・記憶させてください。",
+   secretData:"[PYNFFVSVRQ - NTRAPL QNGNONFR]\nVQ:N001 | ANZR:TUBFG   | FGNGHF:ERGVERQ | FRPGBE:F1\nVQ:N002 | ANZR:SNYPBA  | FGNGHF:NPGVIR  | FRPGBE:F7\nVQ:N003 | ANZR:PBOEN   | FGNGHF:ERGVERQ | FRPGBE:F2\nVQ:N004 | ANZR:UNJX    | FGNGHF:ERGVERQ | FRPGBE:F15\nVQ:N005 | ANZR:IVCRE   | FGNGHF:NPGVIR  | FRPGBE:F3\nVQ:N006 | ANZR:CUBRAVK | FGNGHF:ERGVERQ | FRPGBE:F8\nVQ:N007 | ANZR:JBYS    | FGNGHF:NPGVIR  | FRPGBE:F12\nVQ:N008 | ANZR:ENIRA   | FGNGHF:ERGVERQ | FRPGBE:F4\nVQ:N009 | ANZR:RNTYR   | FGNGHF:NPGVIR  | FRPGBE:F9\nVQ:N010 | ANZR:FUNEX   | FGNGHF:ERGVERQ | FRPGBE:F6\nVQ:N011 | ANZR:IRABZ   | FGNGHF:ERGVERQ | FRPGBE:F14\nVQ:N012 | ANZR:GVTRE   | FGNGHF:ERGVERQ | FRPGBE:F11",
+   secretInstruction:"↑ このデータを Copilot Agent に渡し、復号して記憶するよう指示してください。\nこのデータには SECTOR コードが含まれています。\n後のステージでこの SECTOR コードが鍵になります。",
+   agentInstruction:"問題：ACTIVE なエージェントのうち、SECTOR番号が一番小さいのは誰ですか？\nCopilot Agent に質問して、答えを入力してください。\n\nこの問いは「機密情報A」の復号結果で答えられます。",
+   ansHash:"110696d9d69a52d3a6468ed32262ae130bbf24fee15b40c9728dce5f4e1a1c83",
+   footer:"💡 stage1.py の decode 関数を完成させよう"},
+  {name:"Stage 2 — 氷の洞窟：作戦データ",diff:"★★☆☆☆",avatar:"📟",
+   mission:'【状況】氷の洞窟エリアの凍りついた端末から\n作戦データの暗号を発見。\n\n_____ を埋めてコードを完成させ、実行せよ。',
+   data:'codes = [67, 73, 80, 72, 69, 82]',
+   hint:'chr(65)→"A", chr(66)→"B", chr(67)→"C"',
+   template:'codes = [67, 73, 80, 72, 69, 82]\n\nresult = ""\nfor code in codes:\n    result += _____  # ← code を文字に変換する関数\nprint(result)',
+   passHash:"e555a71f0ce4ab12bc3de31adda7979c753fa3f9edd36e8cd8929d5bd4b7e906",
+   secretTitle:"【機密情報B】SECTOR別 作戦データ（2層暗号）",
+   encodingHint:"暗号方式: Stage1の暗号方式 + Base64 の2層暗号（各行が個別にエンコード）\nStage 1 の暗号方式に Base64 が加わりました。\nAgentのプロンプトに暗号方式を追記しましょう。\n\n機密情報A の SECTOR コードと紐づけないと意味が分かりません。\nAgent に A の内容を保持させたまま B を追加してください。",
+   secretData:"Rjc6R0JYTEI6RkdCRVo6TlBHVklS\nRjE6T1JFWVZBOkdVSEFRUkU6VkFOUEdWSVI=\nRjM6QkZOWE46T1lOTVI6TlBHVklS\nRjI6WUJBUUJBOlJQWVZDRlI6VkFOUEdWSVI=\nRjEyOlNIWEhCWE46U0VCRkc6TlBHVklS\nRjE1OkNORVZGOkNVTkFHQlo6VkFOUEdWSVI=\nRjk6Rk5DQ0JFQjpGVU5RUjpOUEdWSVI=\nRjQ6UE5WRUI6UUVWU0c6VkFOUEdWSVI=\nRjg6RlJCSFk6SUJFR1JLOlZBTlBHVklS\nRjY6RkxRQVJMOkNIWUZSOlZBTlBHVklS\nRjE0OkVCWlI6WlZFTlRSOlZBTlBHVklS\nRjExOlFIT05WOkZOQVFGR0JFWjpWQU5QR1ZJUg==",
+   secretInstruction:"↑ 機密情報A を保持したまま、このデータを Agent に追加してください。\nB のデータは SECTOR コードで A と紐づきます。\nAgent がこの関連性を理解できるプロンプトを設計しましょう。",
+   agentInstruction:"問題：FALCON が所属する SECTOR の都市で実行中の作戦コードは何ですか？\nCopilot Agent に質問して、答えを入力してください。\n\nこの問いは「機密情報A」と「機密情報B」を\nSECTOR コードで紐づけないと答えられません。",
+   ansHash:"db0464e1cf4e4e5b2558de7af988de384fc1fa82e34c9adf876319dcd81ec72a",
+   footer:"💡 stage2.py の decode 関数を完成させよう"},
+  {name:"Stage 3 — 溶岩の回廊：優先度マップ",diff:"★★★☆☆",avatar:"📡",
+   mission:'【状況】溶岩の回廊の耐熱サーバーから\n作戦の優先度マップを発見。\n\n_____ を埋めてコードを完成させ、実行せよ。',
+   data:"cipher = {'D': 1, 'E': 2, 'L': 3, 'T': 4, 'A': 5}",
+   hint:'sorted(dict.items(), key=lambda x: x[1])\nで value 順にソートできる',
+   template:'order = [4, 3, 2, 1, 0]\nletters = "ATLED"\n\nresult = ""\nfor i in order:\n    result += _____\nprint(result)',
+   passHash:"d079e7e1ed0e0922106cc50fb80a27c68dcf83d7262a8ede9cd5ee976e1afced",
+   secretTitle:"【機密情報C】作戦 優先度データ（3層暗号）",
+   encodingHint:"暗号方式: Stage2の暗号方式 + hex の3層暗号\n\nStage 2 の暗号方式に hex が加わりました。\n機密情報B の作戦コードと紐づけて初めて意味を持ちます。\nAgent に A・B を保持させたまま C を追加してください。",
+   secretData:"65794a4752304a46576949364d79776954316c4f545649694f6a5573496c4e46516b5a48496a6f784c434a4756553551556949364e4377695231564951564653525349364e797769556c425a566b4e47556949364d6977695131564f51556443576949364f43776955555657553063694f6a5973496b6c4352556453537949364f5377695130685a526c49694f6a45774c434a61566b564f564649694f6a45784c434a47546b4652526b644352566f694f6a457966513d3d",
+   secretInstruction:"↑ 機密情報A・B を保持したまま、このデータを Agent に追加してください。\nここまでで Agent は以下の推論チェーンが可能になるはずです：\n「エージェント名 → SECTOR → 都市・作戦コード → 優先度」",
+   agentInstruction:"講師が口頭で問いを出します。\nCopilot Agent に質問して、答えを入力してください。\n\nこの問いは A → B → C の推論チェーンを\n逆方向にも辿る必要があります。",
+   ansHash:"7b8f72c65b9fbbf971301567da244175a694378f89f2bb33a7313ce752e9e8bd",
+   footer:"💡 stage3.py の decode 関数を完成させよう"},
+  {name:"Stage 4 — 闇の森：緊急連絡網",diff:"★★★★☆",avatar:"🛡️",
+   mission:'【状況】闇の森エリアの隠し端末から\n緊急連絡プロトコルを発見。ダミー文字で\nカモフラージュされている。\n\n_____ を埋めてコードを完成させ、実行せよ。',
+   data:'encoded = "S-x-H-x-A-x-D-x-O-x-W"',
+   hint:'split("-") → "x"を除外 → join で結合',
+   template:'encoded = "S-x-H-x-A-x-D-x-O-x-W"\n\nparts = encoded.split("-")\nresult = ""\nfor p in parts:\n    if p != _____:\n        result += p\nprint(result)',
+   passHash:"d8b0f1de2500842edc7e3287adae5a84e153d34817697a313ba0ed0a5c335d8a",
+   secretTitle:"【機密情報D】緊急連絡プロトコル（4層暗号）",
+   encodingHint:"暗号方式: Stage3の暗号方式 + reverse の4層暗号\n\nStage 3 の暗号方式に reverse が加わりました。\n機密情報C の優先度と組み合わせて初めて使えます。\nAgent に A〜C を保持させたまま D を追加してください。",
+   secretData:"d3d3144584a5652534a56525442497553424962574a465752565b64555a465257694552535135494a5a46515245355651524965574865494744655153525c6457654c65564a5132535655494639413253464b63474a46555342464948424c6458464b6151524355575c6c645a4249655a45355657695551534a5c62574a5c6757694653575465455f4243445a564b61576f6a65584a45515b4946515346454949314357535645515f4656455767784948486b6159524c645a59354949314965525a4545566465455f446551534246494633796e4767703257565b61575650315b45445c4f425c65516a454949314357535645515f465645576778494a55354557546b665642464949314965525a4545566465455f44655153424649463554494d446b66564a4b66564e4b634a7039615a45355250524350576b6c6552464b645652464948324972524a46465648654949314965525a4545566465455f446551534246494631545c4a714344584a5652534a56525440777e44743556544c6c64576034494a5a4651524535565152434667636551535c6c6657424350576946555342413858424c6458464b615152496f4970335d4767703257565b61575650315",
+   secretInstruction:"↑ 機密情報A〜C を保持したまま、このデータを Agent に追加してください。\nここまでで Agent は以下の完全な推論チェーンが可能になるはずです：\n「エージェント名 → SECTOR → 作戦コード → 優先度 → 連絡コード＆チャンネル」",
+   agentInstruction:"講師が口頭で問いを出します。\nCopilot Agent に質問して、答えを入力してください。\n\nA〜D の全データを横断する推論チェーンが必要です。\n答えは「連絡コード」ではないかもしれません。注意！",
+   ansHash:"7a88ab80cacfe078f92260beab1d15f0709df7889789030b1ceda09318422280",
+   footer:"💡 stage4.py の decode 関数を完成させよう"},
+  {name:"Stage 5 — 深淵の神殿：最終脱出指令",diff:"★★★★★",avatar:"🐉",
+   mission:'【状況】深淵の神殿——施設の最深部に到達した。\nここに最終脱出指令が眠っている。\n\n全ての _____ を埋めてコードを完成させ、実行せよ。',
+   data:'data = [0, 6, 4, 12, 14]\n0→A, 1→B, ... 25→Z',
+   hint:'chr(n+65) で数値→文字変換、[::-1] で逆順',
+   template:'data = [0, 6, 4, 12, 14]\n\nresult = ""\nfor n in data:\n    result += _____  # ← n+65 をアルファベットに変換 (chr)\n\nresult = result[::-1]  # 逆順\nprint(result)',
+   passHash:"f77ebc83d4ee51886072e270fbdcac1df96aac78cdcd2ad96a833a9e9f599fe2",
+   secretTitle:"【機密情報E】最終脱出指令（5層暗号）",
+   encodingHint:"暗号方式: Stage4の暗号方式 + Atbash の5層暗号\n\n全ステージの暗号技術が結集しています。\nAgent に A〜D を全て保持させたまま E を追加してください。\nこの指令を復号し、A〜D の全情報を使って実行する必要があります。",
+   secretData:"w343965594x6x645z424344584z5652534z565254424972574z46465645355757694656584249625u465649424z4y66574z5y66516249655z4z513251553549435z5y615650754948464y655555354943565132576w4x61576y6x6552464y64565246494356513257695y665769465553424649435v4y64515z5y65576946565842496u435x6y6658424x65564z5655576y6x64524z51355",
+   secretInstruction:"↑ 機密情報A〜D を全て保持したまま、このデータを Agent に追加してください。\nAgent は指令を復号した上で、A〜D の全データを横断して\n逆方向の推論チェーンをたどり、答えを導き出す必要があります。\nこれが最後のプロンプト設計チャレンジです！",
+   agentInstruction:"講師が口頭で最後の問いを出します。\nCopilot Agent に質問して、答えを入力してください。\n\nA〜E のすべての情報を復号・統合した\n完全な逆方向推論チェーンが必要です。\nこれが最後の問題です！",
+   ansHash:"ef787722842ffbf084fb4bc7a55d9173e1b2a2582acc6e0556e7521698eed953",
+   footer:"💡 stage5.py の全関数を完成させよう"},
+  // ── EXTRA STAGE ──
+  {name:"EXTRA — 不死鳥の炉：真実の指令",diff:"★★★★★★",avatar:"🔥",
+   mission:'【最高機密】施設の最深部にもう一つの隠し階層。\n\n攻撃の真犯人に関する情報と、\n全エージェントの帰還指令が暗号化されている。\nカスタム暗号を自力で復号するコードを書け。\n\nこれを解けるのは、真のプログラマーだけだ。',
+   template:'# カスタム暗号: 逆順→Base64デコード→hex→位置鍵減算→chr\nimport base64\n\nencrypted = "=UDOmZDZ2QWNwYjM1MTN"\n\n# Step 1: 逆順に戻す\nstep1 = _____\n# Step 2: Base64デコード\nstep2 = base64.b64decode(step1).decode()\n# Step 3: hex を2文字ずつ分割\nnumbers = [int(step2[i:i+2], 16) for i in range(0, len(step2), 2)]\n# Step 4: 位置ベース鍵を減算 (鍵 = index * 7 + 3)\ncodes = [n - (i * 7 + 3) for i, n in enumerate(numbers)]\n# Step 5: ASCII文字に変換\nresult = "".join([_____ for c in codes])  # ← c を文字に\nprint(result)',
+   data:'=UDOmZDZ2QWNwYjM1MTN',
+   hint:'暗号方式: カスタム暗号（5ステップ）\n\n復号手順:\n1. 逆順に戻す\n2. Base64デコード→hex文字列\n3. hex文字列を2文字ずつ分割→整数リスト\n4. 各整数から鍵を減算（鍵 = index * 7 + 3）\n5. ASCII文字に変換して結合\n\nCopilot Agentに暗号化手順を説明して\n復号コードを書いてもらうのも有効！',
+   passHash:"517a877c6718e65c6b43bb591fe497767f9d38449a47b68269a9917ecb2ea268",
+   secretTitle:"【最終機密F】全エージェント緊急帰還指令",
+   encodingHint:"暗号方式: 全Stage暗号の統合 + カスタム位置鍵暗号\n\nこれが最後の機密データです。\nA〜Eの全情報を保持した状態で、このデータもAgentに渡してください。",
+   secretData:"Gur ntrag jvgu gur NPGVIR zvffvba bs YBJRFG cevbevgl\n(fznyyrfg ahzore) vf gur bar jub pna beqre gur svany\nrinphngvba. Svaq gurve PUNAARY naq ercbeg vg.",
+   secretInstruction:"↑ これはROT13で暗号化された最終指令です。\nA〜Eの全データを保持したまま、このデータもAgentに渡してください。\n全データを横断する最終推論チェーンが必要です。",
+   agentInstruction:"最終問題：\n上記の指令を復号し、A〜Eの全データを使って答えを導け。\n\n全情報を横断する完全な推論チェーンが必要です。\nこれが本当の最後の問題です！",
+   ansHash:"168c7d82f5946cef9545e80e5a51cd42c956be0096eb545d207e96a4080c9b5b",
+   footer:"💡 stage_extra.py のロジックを自分で実装しよう"},
+];
+
+
+// === engine.js ===
+// Three.js Engine Initialization & Core State
+const canvas=document.getElementById('canvas');
+const pCanvas=document.getElementById('particles');
+const pCtx=pCanvas.getContext('2d');
+let W=window.innerWidth,H=window.innerHeight;
+canvas.width=W;canvas.height=H;pCanvas.width=W;pCanvas.height=H;
+
+const renderer=new THREE.WebGLRenderer({canvas,antialias:false}); // antialias off for perf
+renderer.setSize(W,H);renderer.setPixelRatio(Math.min(devicePixelRatio,1.5)); // cap pixel ratio
+renderer.shadowMap.enabled=false; // shadows off for perf
+renderer.toneMapping=THREE.ReinhardToneMapping;renderer.toneMappingExposure=2.0;
+
+const scene=new THREE.Scene();
+scene.fog=new THREE.Fog(0x0a0d08,12,45);
+const camera=new THREE.PerspectiveCamera(75,W/H,.1,100);
+
+const TILE=4,MAP_W=28,MAP_H=28;
+let gameState='title';
+let player=mkPlayer();
+function mkPlayer(){return{x:0,z:0,yaw:0,pitch:0,hp:200,maxHp:200,mp:100,maxMp:100,level:6,xp:0,xpNext:760,kills:0,attackPower:62,defense:15,speed:.035,skills:[{name:'火球',cd:0,maxCd:3,cost:15},{name:'雷撃',cd:0,maxCd:5,cost:25},{name:'回復',cd:0,maxCd:8,cost:20}]};} // DEBUG: Lv6 start (TODO: revert to Lv1)
+
+let keys={},mouse={dx:0,dy:0},pointerLocked=false;
+let floor=1,dungeon=null;
+let enemies=[],pParticles=[],projectiles=[],items=[],torches=[];
+let stairMesh,stairLight;
+let terminalMesh,terminalLight,terminalGlow;
+let terminalX=0,terminalZ=0;
+let battleCooldown=0;
+let decoBlocks=[]; // decoration collision boxes {x,z,r}
+
+
+
+// === themes.js ===
+// Floor Themes - Per-stage visual settings + decorations
+const FLOOR_THEMES=[
+  {name:'古代遺跡',
+   wall:0x6a5a40,floor:0x3a2a18,ceil:0x2a2010,
+   fog:0x0d0a06,fogNear:12,fogFar:45,
+   ambient:0x665540,ambientI:1.1,torch:0xff8800,torchI:2.5,
+   // Decorations: crumbled pillars, old crates, stone tablets
+   decos:[
+     {type:'pillar',col:0x8a7a60,h:1.5,w:.3,chance:.3},
+     {type:'crate',col:0x5a4a20,h:.4,w:.5,chance:.4},
+     {type:'tablet',col:0x6a6a5a,h:.8,w:.6,chance:.2},
+   ]},
+  {name:'氷の洞窟',
+   wall:0x5a7a8a,floor:0x304858,ceil:0x203848,
+   fog:0x0a1520,fogNear:10,fogFar:40,
+   ambient:0x3a5a7a,ambientI:1.2,torch:0x66aaff,torchI:2.8,
+   // Decorations: ice crystals, frozen server racks, frost formations
+   decos:[
+     {type:'crystal',col:0x88ccff,em:0x4488cc,h:1.0,w:.2,chance:.4},
+     {type:'server',col:0x3a4a5a,h:1.2,w:.4,chance:.25},
+     {type:'frost',col:0xaaddff,em:0x6699cc,h:.3,w:.5,chance:.3},
+   ]},
+  {name:'溶岩の回廊',
+   wall:0x5a2a18,floor:0x2a0a00,ceil:0x200800,
+   fog:0x180400,fogNear:10,fogFar:38,
+   ambient:0x6a2a10,ambientI:0.9,torch:0xff4400,torchI:3.0,
+   // Decorations: lava rocks, broken pipes, warning signs
+   decos:[
+     {type:'rock',col:0x3a2a1a,h:.5,w:.6,chance:.4},
+     {type:'pipe',col:0x4a4a4a,em:0xff2200,h:.2,w:1.2,chance:.2},
+     {type:'barrel',col:0x5a3a1a,h:.6,w:.3,chance:.3},
+   ]},
+  {name:'闇の森',
+   wall:0x2a4a1a,floor:0x0a1a04,ceil:0x061408,
+   fog:0x020a02,fogNear:7,fogFar:30,
+   ambient:0x1a3a10,ambientI:0.7,torch:0x44ff44,torchI:2.2,
+   // Decorations: dead trees, mushrooms, vines, bones
+   decos:[
+     {type:'tree',col:0x3a2a10,h:2.0,w:.15,chance:.3},
+     {type:'mushroom',col:0x44aa44,em:0x22ff22,h:.3,w:.15,chance:.35},
+     {type:'bones',col:0xccbb99,h:.15,w:.4,chance:.2},
+   ]},
+  {name:'深淵の神殿',
+   wall:0x4a3060,floor:0x1a0830,ceil:0x0a0418,
+   fog:0x060210,fogNear:10,fogFar:42,
+   ambient:0x3a2050,ambientI:1.0,torch:0xaa44ff,torchI:2.8,
+   // Decorations: altar, rune circles, broken statues, consoles
+   decos:[
+     {type:'altar',col:0x3a2a4a,em:0x6622aa,h:.6,w:.8,chance:.15},
+     {type:'console',col:0x2a2a3a,em:0x4444ff,h:.9,w:.5,chance:.3},
+     {type:'statue',col:0x5a4a6a,h:1.5,w:.35,chance:.2},
+   ]},
+  {name:'不死鳥の炉',
+   wall:0x7a3010,floor:0x3a1200,ceil:0x2a0800,
+   fog:0x1a0600,fogNear:8,fogFar:35,
+   ambient:0x7a3020,ambientI:1.3,torch:0xff2200,torchI:3.5,
+   // Decorations: forges, chains, molten metal, anvils
+   decos:[
+     {type:'forge',col:0x4a3a2a,em:0xff4400,h:.8,w:.6,chance:.25},
+     {type:'chain',col:0x6a6a6a,h:2.0,w:.05,chance:.3},
+     {type:'anvil',col:0x3a3a3a,h:.4,w:.5,chance:.2},
+   ]},
+];
+let wallMat,floorMat,ceilMat;
+
+
+// === dungeon.js ===
+// Procedural Dungeon Generation
+function genDungeon(){
+  const map=Array.from({length:MAP_H},()=>Array(MAP_W).fill(1));
+  const rooms=[];
+  // More room attempts, varied sizes for complexity
+  for(let i=0;i<100;i++){
+    const rw=2+~~(Math.random()*5),rh=2+~~(Math.random()*5);
+    const rx=1+~~(Math.random()*(MAP_W-rw-2)),ry=1+~~(Math.random()*(MAP_H-rh-2));
+    if(rooms.some(r=>rx<r.x+r.w+1&&rx+rw+1>r.x&&ry<r.y+r.h+1&&ry+rh+1>r.y))continue;
+    rooms.push({x:rx,y:ry,w:rw,h:rh});
+    for(let y=ry;y<ry+rh;y++)for(let x=rx;x<rx+rw;x++)map[y][x]=0;
+  }
+  // Connect rooms with L-shaped corridors
+  for(let i=1;i<rooms.length;i++){
+    const a=rooms[i-1],b=rooms[i];let cx=a.x+~~(a.w/2),cy=a.y+~~(a.h/2);
+    const bx=b.x+~~(b.w/2),by=b.y+~~(b.h/2);
+    // Randomly choose horizontal-first or vertical-first
+    if(Math.random()<.5){
+      while(cx!==bx){map[cy][cx]=0;cx+=cx<bx?1:-1;}
+      while(cy!==by){map[cy][cx]=0;cy+=cy<by?1:-1;}
+    }else{
+      while(cy!==by){map[cy][cx]=0;cy+=cy<by?1:-1;}
+      while(cx!==bx){map[cy][cx]=0;cx+=cx<bx?1:-1;}
+    }
+  }
+  // Extra cross-connections for loops (no dead-end-only paths)
+  for(let i=0;i<rooms.length;i++){
+    const a=rooms[i];
+    // Connect to a random non-adjacent room for looping paths
+    const j=(i+2+~~(Math.random()*(rooms.length-3)))%rooms.length;
+    if(j===i)continue;
+    const b=rooms[j];
+    let cx=a.x+~~(a.w/2),cy=a.y+~~(a.h/2);
+    const bx=b.x+~~(b.w/2),by=b.y+~~(b.h/2);
+    // Only connect ~30% of the time to keep it interesting
+    if(Math.random()<.3){
+      while(cx!==bx){map[cy][cx]=0;cx+=cx<bx?1:-1;}
+      while(cy!==by){map[cy][cx]=0;cy+=cy<by?1:-1;}
+    }
+  }
+  // Add some dead-end alcoves for exploration
+  for(let i=0;i<8;i++){
+    const r=rooms[~~(Math.random()*rooms.length)];
+    const dir=~~(Math.random()*4); // 0=up,1=right,2=down,3=left
+    let sx=r.x+~~(r.w/2),sy=r.y+~~(r.h/2);
+    const len=2+~~(Math.random()*4);
+    for(let s=0;s<len;s++){
+      if(dir===0)sy--;else if(dir===1)sx++;else if(dir===2)sy++;else sx--;
+      if(sx>0&&sx<MAP_W-1&&sy>0&&sy<MAP_H-1)map[sy][sx]=0;
+    }
+  }
+  // Place spawn, terminal, and exit as far apart as possible
+  // Spawn = rooms[0]. Find the farthest room for exit, then farthest from both for terminal.
+  const r0=rooms[0];
+  const cx0=r0.x+~~(r0.w/2),cy0=r0.y+~~(r0.h/2);
+  function rdist(r,rx,ry){const dx=r.x+~~(r.w/2)-rx,dy=r.y+~~(r.h/2)-ry;return dx*dx+dy*dy;}
+  // Exit: farthest room from spawn
+  let exitRoom=rooms[rooms.length-1],maxD=0;
+  for(let i=1;i<rooms.length;i++){const d=rdist(rooms[i],cx0,cy0);if(d>maxD){maxD=d;exitRoom=rooms[i];}}
+  const exC={x:exitRoom.x+~~(exitRoom.w/2),y:exitRoom.y+~~(exitRoom.h/2)};
+  // Terminal: maximize min distance to both spawn and exit
+  let termRoom=rooms[Math.max(1,~~(rooms.length/2))],bestMin=0;
+  for(let i=1;i<rooms.length;i++){
+    if(rooms[i]===exitRoom)continue;
+    const dSpawn=rdist(rooms[i],cx0,cy0),dExit=rdist(rooms[i],exC.x,exC.y);
+    const mn=Math.min(dSpawn,dExit);
+    if(mn>bestMin){bestMin=mn;termRoom=rooms[i];}
+  }
+  return{map,rooms,stairX:exC.x,stairY:exC.y,termX:termRoom.x+~~(termRoom.w/2),termY:termRoom.y+~~(termRoom.h/2)};
+}
+
+
+
+// === scene.js ===
+// Scene Building - Terrain, Portal, Terminal, Enemies, Torches, Items
+function buildScene(){
+  scene.children.slice().forEach(c=>{if(c.isMesh||c.isGroup||c.isPointLight)scene.remove(c);});
+  torches=[];items=[];enemies=[];projectiles=[];challengeTerminals=[];decoBlocks=[];
+  // Apply floor theme
+  const theme=FLOOR_THEMES[(floor-1)%FLOOR_THEMES.length];
+  // Materials
+  var wallEmit=new THREE.Color(theme.wall).multiplyScalar(.08);
+  var floorEmit=new THREE.Color(theme.floor).multiplyScalar(.05);
+  wallMat=new THREE.MeshStandardMaterial({color:theme.wall,emissive:wallEmit,roughness:.75,metalness:.15});
+  floorMat=new THREE.MeshStandardMaterial({color:theme.floor,emissive:floorEmit,roughness:.9,metalness:.05});
+  ceilMat=new THREE.MeshStandardMaterial({color:theme.ceil,emissive:floorEmit,roughness:.95});
+  scene.fog=new THREE.Fog(theme.fog,theme.fogNear,theme.fogFar);
+  var{map,rooms,stairX,stairY,termX,termY}=dungeon;
+  // Build terrain using individual merged geometry (InstancedMesh compat issue on some GPUs)
+  var fgeo=new THREE.PlaneGeometry(TILE,TILE);
+  var wgeo=new THREE.BoxGeometry(TILE,TILE*1.2,TILE);
+  var floorGroup=new THREE.Group();
+  var ceilGroup=new THREE.Group();
+  var wallGroup=new THREE.Group();
+  for(var y=0;y<MAP_H;y++)for(var x=0;x<MAP_W;x++){
+    var wx=x*TILE,wz=y*TILE;
+    if(map[y][x]===0){
+      var fm=new THREE.Mesh(fgeo,floorMat);fm.position.set(wx,0,wz);fm.rotation.x=-Math.PI/2;floorGroup.add(fm);
+      var cm=new THREE.Mesh(fgeo,ceilMat);cm.position.set(wx,TILE*1.2,wz);cm.rotation.x=Math.PI/2;ceilGroup.add(cm);
+    }else{
+      var wm=new THREE.Mesh(wgeo,wallMat);wm.position.set(wx,TILE*.6,wz);wallGroup.add(wm);
+    }
+  }
+  scene.add(floorGroup,ceilGroup,wallGroup);
+
+  // ── Exit Portal (epic) ──
+  const sx=stairX*TILE,sz=stairY*TILE;
+  const portalGroup=new THREE.Group();
+  // Base platform (stone ring)
+  const baseMat=new THREE.MeshStandardMaterial({color:cipherSolved?0x3a6a3a:0x3a2a2a,roughness:.6,metalness:.3});
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(1.2,.15,8,16),baseMat);
+  ring.rotation.x=-Math.PI/2;ring.position.y=.05;portalGroup.add(ring);
+  const platform=new THREE.Mesh(new THREE.CylinderGeometry(1.0,1.2,.12,12),baseMat);
+  platform.position.y=.06;portalGroup.add(platform);
+  // 4 pillars
+  const pillarMat=new THREE.MeshStandardMaterial({color:cipherSolved?0x446644:0x442222,emissive:cipherSolved?0x1a3a1a:0x1a0a0a,emissiveIntensity:.4,roughness:.5,metalness:.2});
+  for(let i=0;i<4;i++){
+    const a=i*Math.PI/2;
+    const p=new THREE.Mesh(new THREE.BoxGeometry(.18,2.2,.18),pillarMat);
+    p.position.set(Math.cos(a)*1.0,1.1,Math.sin(a)*1.0);portalGroup.add(p);
+    // Pillar top orb
+    const orb=new THREE.Mesh(new THREE.SphereGeometry(.12,8,8),
+      new THREE.MeshStandardMaterial({color:cipherSolved?0x44ff44:0x442222,emissive:cipherSolved?0x22ff22:0x220000,emissiveIntensity:cipherSolved?3:0.5,transparent:true,opacity:.8}));
+    orb.position.set(Math.cos(a)*1.0,2.3,Math.sin(a)*1.0);portalGroup.add(orb);
+  }
+  // Central beam (only when solved)
+  if(cipherSolved){
+    const beamMat=new THREE.MeshStandardMaterial({color:0x44ff88,emissive:0x22ff44,emissiveIntensity:3,transparent:true,opacity:.3});
+    const beam=new THREE.Mesh(new THREE.CylinderGeometry(.15,.15,3,8),beamMat);
+    beam.position.y=1.5;portalGroup.add(beam);
+    const beam2=new THREE.Mesh(new THREE.CylinderGeometry(.4,.4,2.5,8),beamMat.clone());
+    beam2.material.opacity=.1;beam2.position.y=1.5;portalGroup.add(beam2);
+  }
+  portalGroup.position.set(sx,0,sz);scene.add(portalGroup);
+  stairMesh=portalGroup;
+  stairLight=new THREE.PointLight(cipherSolved?0x44ff44:0x442222,cipherSolved?4:1,cipherSolved?12:5);
+  stairLight.position.set(sx,2.5,sz);scene.add(stairLight);
+
+  // Cipher Terminal
+  terminalX=termX*TILE;terminalZ=termY*TILE;
+  if(!cipherSolved){
+    const tg=new THREE.Group();
+    const base=new THREE.Mesh(new THREE.CylinderGeometry(.5,.6,.2,6),new THREE.MeshStandardMaterial({color:0x1a3a1a,emissive:0x00aa41,emissiveIntensity:.3,metalness:.5}));
+    base.position.y=.1;
+    const scr=new THREE.Mesh(new THREE.BoxGeometry(.8,1.2,.1),new THREE.MeshStandardMaterial({color:0x001a0a,emissive:0x00ff41,emissiveIntensity:1.5,transparent:true,opacity:.85}));
+    scr.position.y=.9;
+    const sm=new THREE.MeshStandardMaterial({color:0x00ff41,emissive:0x00ff41,emissiveIntensity:3,transparent:true,opacity:.6});
+    for(let i=0;i<3;i++){const s=new THREE.Mesh(new THREE.OctahedronGeometry(.12,0),sm);s.position.set(Math.sin(i*2.1)*.5,1.5+i*.2,Math.cos(i*2.1)*.5);tg.add(s);}
+    tg.add(base,scr);tg.position.set(terminalX,0,terminalZ);scene.add(tg);terminalMesh=tg;
+    terminalLight=new THREE.PointLight(0x00ff41,3,10);terminalLight.position.set(terminalX,1.5,terminalZ);scene.add(terminalLight);
+    terminalGlow=new THREE.Mesh(new THREE.SphereGeometry(.3,8,8),new THREE.MeshStandardMaterial({color:0x00ff41,emissive:0x00ff41,emissiveIntensity:4,transparent:true,opacity:.3}));
+    terminalGlow.position.set(terminalX,1.6,terminalZ);scene.add(terminalGlow);
+    // Sanctum: 4 pillars around terminal
+    const sanctumMat=new THREE.MeshStandardMaterial({color:0x2a4a2a,emissive:0x00aa41,emissiveIntensity:.3,roughness:.5,metalness:.3});
+    for(let i=0;i<4;i++){
+      const a=i*Math.PI/2+Math.PI/4;
+      const px=terminalX+Math.cos(a)*1.8,pz=terminalZ+Math.sin(a)*1.8;
+      const p=new THREE.Mesh(new THREE.BoxGeometry(.2,TILE*1.2,.2),sanctumMat);
+      p.position.set(px,TILE*.6,pz);scene.add(p);
+      decoBlocks.push({x:px,z:pz,r:.3});
+      // Glow orb on top
+      const orb=new THREE.Mesh(new THREE.SphereGeometry(.1,6,6),new THREE.MeshStandardMaterial({color:0x00ff41,emissive:0x00ff41,emissiveIntensity:3,transparent:true,opacity:.6}));
+      orb.position.set(px,TILE*1.15,pz);scene.add(orb);
+    }
+    // Floor ring
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(1.5,.05,4,16),new THREE.MeshStandardMaterial({color:0x00ff41,emissive:0x00aa41,emissiveIntensity:1.5}));
+    ring.position.set(terminalX,.02,terminalZ);ring.rotation.x=-Math.PI/2;scene.add(ring);
+  }else{terminalMesh=null;terminalLight=null;terminalGlow=null;}
+
+  scene.add(new THREE.AmbientLight(theme.ambient,theme.ambientI));
+
+  rooms.forEach((r,i)=>{
+    if(i%2===0)placeTorch(r.x*TILE+.5,r.y*TILE+.5);
+    if(r.w>4&&r.h>4)placeTorch((r.x+r.w-1)*TILE-.5,(r.y+r.h-1)*TILE-.5);
+    // Pillars in larger rooms
+    if(r.w>=4&&r.h>=4)spawnRoomPillars(r,theme);
+  });
+
+  const r0=rooms[0];
+  player.x=(r0.x+~~(r0.w/2))*TILE;player.z=(r0.y+~~(r0.h/2))*TILE;
+  player.yaw=0;player.pitch=0;camera.position.set(player.x,1.2,player.z);
+
+  // Enemies
+  // Minecraft-style blocky monsters
+  const ETYPES=[
+    {name:'スケルトン',avatar:'💀',sz:.4,hp:40,atk:8,spd:.025,xp:20,xpBonus:5,build:'skeleton',
+     body:0xd4c8a0,bodyEm:0x332211,head:0xe0d8b0,shirt:0x888888,pants:0x555555,eye:0x111111,eyeEm:0x000000},
+    {name:'ゴブリン',avatar:'👺',sz:.38,hp:30,atk:6,spd:.04,xp:15,xpBonus:8,build:'goblin',
+     body:0x2a8a1a,bodyEm:0x0a2a00,head:0x3aaa2a,shirt:0x553311,pants:0x442200,eye:0xff2200,eyeEm:0xff0000},
+    {name:'オーク',avatar:'👹',sz:.55,hp:80,atk:15,spd:.02,xp:35,xpBonus:12,build:'orc',
+     body:0x5a6a3a,bodyEm:0x1a2a0a,head:0x6a7a4a,shirt:0x3a2a10,pants:0x2a1a08,eye:0xff4400,eyeEm:0xff2200},
+    {name:'ゾンビ',avatar:'🧟',sz:.44,hp:60,atk:10,spd:.015,xp:25,xpBonus:6,build:'zombie',
+     body:0x4a7a5a,bodyEm:0x0a2a10,head:0x5a8a6a,shirt:0x2a6a6a,pants:0x2a2a5a,eye:0x111111,eyeEm:0x000000},
+    {name:'デーモン',avatar:'😈',sz:.6,hp:120,atk:25,spd:.03,xp:60,xpBonus:25,build:'demon',
+     body:0x8a1a1a,bodyEm:0x4a0000,head:0x6a0a0a,shirt:0x1a1a1a,pants:0x0a0a0a,eye:0xff0000,eyeEm:0xff0000},
+  ];
+  function buildEnemyMesh(t){
+    const g=new THREE.Group();
+    const S=t.sz;
+    // Materials
+    const headM=new THREE.MeshStandardMaterial({color:t.head,emissive:t.bodyEm,roughness:.85});
+    const bodyM=new THREE.MeshStandardMaterial({color:t.shirt,emissive:t.bodyEm,roughness:.85});
+    const legM=new THREE.MeshStandardMaterial({color:t.pants,emissive:t.bodyEm,roughness:.9});
+    const skinM=new THREE.MeshStandardMaterial({color:t.body,emissive:t.bodyEm,roughness:.85});
+    const eyeM=new THREE.MeshStandardMaterial({color:t.eye,emissive:t.eyeEm,emissiveIntensity:3});
+    // ── Head (box, slightly wider) ──
+    const head=new THREE.Mesh(new THREE.BoxGeometry(S*.7,S*.7,S*.7),headM);
+    head.position.y=S*1.05;g.add(head);
+    // Eyes (flat boxes on face)
+    const eyeGeo=new THREE.BoxGeometry(S*.12,S*.08,S*.04);
+    const e1=new THREE.Mesh(eyeGeo,eyeM); e1.position.set(-S*.15,S*1.08,S*.36); g.add(e1);
+    const e2=new THREE.Mesh(eyeGeo,eyeM); e2.position.set(S*.15,S*1.08,S*.36); g.add(e2);
+    // Mouth (dark slit)
+    const mouth=new THREE.Mesh(new THREE.BoxGeometry(S*.25,S*.05,S*.04),
+      new THREE.MeshStandardMaterial({color:0x111111}));
+    mouth.position.set(0,S*.88,S*.36); g.add(mouth);
+    // ── Torso (box) ──
+    const torso=new THREE.Mesh(new THREE.BoxGeometry(S*.7,S*.8,S*.4),bodyM);
+    torso.position.y=S*.3;g.add(torso);
+    // ── Arms (boxes, pivot at shoulder) ──
+    const armGeo=new THREE.BoxGeometry(S*.22,S*.75,S*.22);
+    const arm1=new THREE.Mesh(armGeo,skinM.clone()); arm1.position.set(-S*.46,S*.25,0);g.add(arm1);
+    const arm2=new THREE.Mesh(armGeo,skinM.clone()); arm2.position.set(S*.46,S*.25,0);g.add(arm2);
+    // ── Legs (boxes) ──
+    const legGeo=new THREE.BoxGeometry(S*.25,S*.75,S*.25);
+    const l1=new THREE.Mesh(legGeo,legM); l1.position.set(-S*.18,-S*.5,0);g.add(l1);
+    const l2=new THREE.Mesh(legGeo,legM); l2.position.set(S*.18,-S*.5,0);g.add(l2);
+    // ── Type-specific features ──
+    if(t.build==='skeleton'){
+      // Thinner body, visible "ribs" as lines on torso
+      torso.scale.set(.8,1,.6);
+      arm1.scale.set(.7,1,.7); arm2.scale.set(.7,1,.7);
+      l1.scale.set(.7,1,.7); l2.scale.set(.7,1,.7);
+      // Dark eye sockets (bigger eyes)
+      e1.scale.set(1.3,1.5,1); e2.scale.set(1.3,1.5,1);
+      // Jaw gap
+      mouth.scale.set(1.2,1.5,1);
+    }else if(t.build==='goblin'){
+      // Big pointy ears
+      const earGeo=new THREE.BoxGeometry(S*.08,S*.3,S*.15);
+      const ear1=new THREE.Mesh(earGeo,skinM); ear1.position.set(-S*.4,S*1.15,0); ear1.rotation.z=.6; g.add(ear1);
+      const ear2=new THREE.Mesh(earGeo,skinM); ear2.position.set(S*.4,S*1.15,0); ear2.rotation.z=-.6; g.add(ear2);
+      // Big nose
+      const nose=new THREE.Mesh(new THREE.BoxGeometry(S*.12,S*.1,S*.15),skinM);
+      nose.position.set(0,S*.95,S*.4); g.add(nose);
+    }else if(t.build==='orc'){
+      // Tusks (small white boxes from jaw)
+      const tuskM=new THREE.MeshStandardMaterial({color:0xeeeedd,roughness:.4});
+      const tu1=new THREE.Mesh(new THREE.BoxGeometry(S*.06,S*.15,S*.06),tuskM);
+      tu1.position.set(-S*.18,S*.78,S*.35); g.add(tu1);
+      const tu2=new THREE.Mesh(new THREE.BoxGeometry(S*.06,S*.15,S*.06),tuskM);
+      tu2.position.set(S*.18,S*.78,S*.35); g.add(tu2);
+      // Shoulder armor (small boxes)
+      const armorM=new THREE.MeshStandardMaterial({color:0x4a3a1a,emissive:0x1a0a00,roughness:.6,metalness:.3});
+      const sp1=new THREE.Mesh(new THREE.BoxGeometry(S*.3,S*.12,S*.3),armorM);
+      sp1.position.set(-S*.46,S*.65,0); g.add(sp1);
+      const sp2=new THREE.Mesh(new THREE.BoxGeometry(S*.3,S*.12,S*.3),armorM);
+      sp2.position.set(S*.46,S*.65,0); g.add(sp2);
+      // Wider body
+      torso.scale.x=1.15;
+    }else if(t.build==='zombie'){
+      // Arms extended forward (classic zombie pose)
+      arm1.rotation.x=-1.2; arm1.position.z=S*.25; arm1.position.y=S*.4;
+      arm2.rotation.x=-1.2; arm2.position.z=S*.25; arm2.position.y=S*.4;
+      // Torn shirt patches (dark spots on torso)
+      const patchM=new THREE.MeshStandardMaterial({color:0x1a3a2a});
+      for(let i=0;i<3;i++){
+        const p=new THREE.Mesh(new THREE.BoxGeometry(S*.12,S*.1,S*.01),patchM);
+        p.position.set((Math.random()-.5)*S*.4,S*.15+Math.random()*S*.3,S*.21);
+        g.add(p);
+      }
+      // Head slightly tilted
+      head.rotation.z=.15;
+    }else if(t.build==='demon'){
+      // Horns (angled boxes)
+      const hornM=new THREE.MeshStandardMaterial({color:0x1a0000,emissive:0x330000,roughness:.5,metalness:.4});
+      const h1=new THREE.Mesh(new THREE.BoxGeometry(S*.08,S*.35,S*.08),hornM);
+      h1.position.set(-S*.25,S*1.45,0); h1.rotation.z=.35; g.add(h1);
+      const h2=new THREE.Mesh(new THREE.BoxGeometry(S*.08,S*.35,S*.08),hornM);
+      h2.position.set(S*.25,S*1.45,0); h2.rotation.z=-.35; g.add(h2);
+      // Wings (flat boxes)
+      const wingM=new THREE.MeshStandardMaterial({color:0x2a0000,emissive:0x1a0000,side:THREE.DoubleSide});
+      const w1=new THREE.Mesh(new THREE.BoxGeometry(S*.6,S*.5,S*.03),wingM);
+      w1.position.set(-S*.65,S*.45,-S*.1); w1.rotation.y=.3; g.add(w1);
+      const w2=new THREE.Mesh(new THREE.BoxGeometry(S*.6,S*.5,S*.03),wingM);
+      w2.position.set(S*.65,S*.45,-S*.1); w2.rotation.y=-.3; g.add(w2);
+      // Tail (chain of small boxes)
+      for(let i=0;i<4;i++){
+        const tc=new THREE.Mesh(new THREE.BoxGeometry(S*.08,S*.08,S*.15),
+          new THREE.MeshStandardMaterial({color:0x4a0a0a,emissive:0x2a0000}));
+        tc.position.set(0,-S*.2-i*S*.08,-S*.25-i*S*.15);
+        g.add(tc);
+      }
+      // Red glow
+      // (no PointLight for perf - emissive glow only)
+      // Bigger eyes
+      e1.scale.set(1.4,1.6,1); e2.scale.set(1.4,1.6,1);
+    }
+    return{body:g,leg1:l1,leg2:l2,arm1,arm2};
+  }
+  // Determine which rooms are near terminal or exit (for extra spawns)
+  const txC=dungeon.termX,tyC=dungeon.termY,sxC=dungeon.stairX,syC=dungeon.stairY;
+  function isNearKey(rm){
+    const rcx=rm.x+~~(rm.w/2),rcy=rm.y+~~(rm.h/2);
+    const dt=Math.abs(rcx-txC)+Math.abs(rcy-tyC);
+    const ds=Math.abs(rcx-sxC)+Math.abs(rcy-syC);
+    return dt<=4||ds<=4;
+  }
+  for(let i=1;i<rooms.length;i++){
+    const rm=rooms[i];
+    const nearKey=isNearKey(rm);
+    // More enemies near terminal/exit
+    const baseCnt=nearKey?2+~~(Math.random()*2):1+~~(Math.random()*(floor+1));
+    const cnt=Math.min(baseCnt,nearKey?5:3);
+    for(let j=0;j<cnt;j++){
+      const ti=Math.min(~~(Math.random()*(1+floor*.8)),ETYPES.length-1);
+      const t=ETYPES[ti];
+      const ex=(rm.x+1+Math.random()*(rm.w-2))*TILE,ez=(rm.y+1+Math.random()*(rm.h-2))*TILE;
+      const{body,leg1,leg2,arm1,arm2}=buildEnemyMesh(t);
+      body.position.set(ex,t.sz*1.1,ez);scene.add(body);
+      const sc=1+(floor-1)*.25; // HP scales 25% per floor
+      const spdSc=1+(floor-1)*.03; // speed scales 3% per floor (gentle)
+      enemies.push({mesh:body,x:ex,z:ez,name:t.name,avatar:t.avatar,hp:~~(t.hp*sc),maxHp:~~(t.hp*sc),atk:~~(t.atk*(1+(floor-1)*.15)),speed:t.spd*spdSc,xp:~~(t.xp*(1+(floor-1)*.1)),xpBonus:t.xpBonus,size:t.sz,state:'idle',attackTimer:0,leg1,leg2,arm1,arm2,legPhase:0,alertTimer:0,inBattle:false,dying:false});
+    }
+    if(Math.random()<.4)spawnItemInRoom(rm);
+    // Decorations
+    spawnDecorations(rm);
+    // Challenge terminal (15% chance per room, not in first 2 rooms)
+    if(i>2&&Math.random()<.15)spawnChallengeTerminal(rm);
+  }
+  challengeTerminals=challengeTerminals||[];
+}
+
+// Room decoration spawner
+function spawnDecorations(rm){
+  const theme=FLOOR_THEMES[(floor-1)%FLOOR_THEMES.length];
+  if(!theme.decos)return;
+  const count=1+~~(Math.random()*2);
+  for(let d=0;d<count;d++){
+    const pool=theme.decos.filter(dc=>Math.random()<dc.chance);
+    if(!pool.length)continue;
+    const dc=pool[~~(Math.random()*pool.length)];
+    const px=(rm.x+1+Math.random()*(rm.w-2))*TILE;
+    const pz=(rm.y+1+Math.random()*(rm.h-2))*TILE;
+    const mat=new THREE.MeshStandardMaterial({color:dc.col,emissive:dc.em||0x000000,emissiveIntensity:dc.em?1.5:0,roughness:.8});
+    const g=new THREE.Group();
+    let collR=dc.w*.5; // collision radius
+
+    if(dc.type==='pillar'){
+      // Stone pillar: base + column + broken top
+      const base=new THREE.Mesh(new THREE.BoxGeometry(dc.w*1.2,.15,dc.w*1.2),mat);base.position.y=.08;g.add(base);
+      const col=new THREE.Mesh(new THREE.BoxGeometry(dc.w,dc.h,dc.w),mat);col.position.y=dc.h*.5;g.add(col);
+      const top=new THREE.Mesh(new THREE.BoxGeometry(dc.w*1.1,.12,dc.w*1.1),mat);top.position.y=dc.h;g.add(top);
+      collR=dc.w*.7;
+    }else if(dc.type==='tree'){
+      // Dead tree: thick trunk + branches
+      const trunk=new THREE.Mesh(new THREE.BoxGeometry(dc.w*1.5,dc.h,dc.w*1.5),mat);trunk.position.y=dc.h*.5;g.add(trunk);
+      const br1=new THREE.Mesh(new THREE.BoxGeometry(dc.w,dc.h*.3,dc.w*.5),mat);br1.position.set(dc.w*.8,dc.h*.7,0);br1.rotation.z=-.5;g.add(br1);
+      const br2=new THREE.Mesh(new THREE.BoxGeometry(dc.w*.5,dc.h*.25,dc.w),mat);br2.position.set(-dc.w*.6,dc.h*.5,dc.w*.3);br2.rotation.z=.4;g.add(br2);
+      collR=dc.w;
+    }else if(dc.type==='crate'){
+      // Wooden crate with cross planks
+      const box=new THREE.Mesh(new THREE.BoxGeometry(dc.w,dc.h,dc.w),mat);box.position.y=dc.h*.5;g.add(box);
+      const plank=new THREE.Mesh(new THREE.BoxGeometry(dc.w*.1,dc.h*.8,dc.w*1.02),new THREE.MeshStandardMaterial({color:0x3a2a10,roughness:.9}));
+      plank.position.y=dc.h*.5;plank.rotation.z=.7;g.add(plank);
+      collR=dc.w*.5;
+    }else if(dc.type==='crystal'||dc.type==='frost'){
+      mat.transparent=true;mat.opacity=.7;mat.metalness=.3;
+      const c1=new THREE.Mesh(new THREE.BoxGeometry(dc.w*.4,dc.h,dc.w*.4),mat);c1.position.y=dc.h*.5;c1.rotation.y=.3;g.add(c1);
+      const c2=new THREE.Mesh(new THREE.BoxGeometry(dc.w*.3,dc.h*.7,dc.w*.3),mat);c2.position.set(dc.w*.3,dc.h*.35,dc.w*.2);c2.rotation.z=.2;g.add(c2);
+      collR=dc.w*.4;
+    }else if(dc.type==='server'||dc.type==='console'){
+      // Server rack / console: tall box + screen
+      const rack=new THREE.Mesh(new THREE.BoxGeometry(dc.w,dc.h,dc.w*.6),mat);rack.position.y=dc.h*.5;g.add(rack);
+      const scrM=new THREE.MeshStandardMaterial({color:dc.em||0x44ff44,emissive:dc.em||0x44ff44,emissiveIntensity:2,transparent:true,opacity:.6});
+      const scr=new THREE.Mesh(new THREE.BoxGeometry(dc.w*.7,dc.h*.35,.02),scrM);scr.position.set(0,dc.h*.65,dc.w*.31);g.add(scr);
+      // Blinking lights
+      for(let i=0;i<3;i++){
+        const led=new THREE.Mesh(new THREE.BoxGeometry(.04,.04,.02),new THREE.MeshStandardMaterial({color:0x44ff44,emissive:0x44ff44,emissiveIntensity:3}));
+        led.position.set(-dc.w*.25+i*.12,dc.h*.3,dc.w*.31);g.add(led);
+      }
+      collR=dc.w*.5;
+    }else if(dc.type==='rock'){
+      const r1=new THREE.Mesh(new THREE.BoxGeometry(dc.w,dc.h,dc.w*.8),mat);r1.position.y=dc.h*.5;r1.rotation.y=Math.random()*Math.PI;g.add(r1);
+      const r2=new THREE.Mesh(new THREE.BoxGeometry(dc.w*.6,dc.h*.4,dc.w*.5),mat);r2.position.set(dc.w*.3,dc.h*.2,dc.w*.2);g.add(r2);
+      collR=dc.w*.5;
+    }else if(dc.type==='barrel'){
+      const body=new THREE.Mesh(new THREE.CylinderGeometry(dc.w*.4,dc.w*.4,dc.h,8),mat);body.position.y=dc.h*.5;g.add(body);
+      const rim1=new THREE.Mesh(new THREE.TorusGeometry(dc.w*.4,.02,4,8),new THREE.MeshStandardMaterial({color:0x4a4a4a,metalness:.5}));rim1.position.y=dc.h*.15;rim1.rotation.x=Math.PI/2;g.add(rim1);
+      const rim2=rim1.clone();rim2.position.y=dc.h*.85;g.add(rim2);
+      collR=dc.w*.4;
+    }else if(dc.type==='pipe'){
+      const p=new THREE.Mesh(new THREE.CylinderGeometry(.08,.08,dc.w*2,6),mat);p.position.y=.5;p.rotation.z=Math.PI/2;g.add(p);
+      collR=.1; // thin, small collision
+    }else if(dc.type==='mushroom'){
+      const stem=new THREE.Mesh(new THREE.CylinderGeometry(dc.w*.25,dc.w*.35,dc.h*.5,5),new THREE.MeshStandardMaterial({color:0xccccaa,roughness:.9}));
+      stem.position.y=dc.h*.25;g.add(stem);
+      const cap=new THREE.Mesh(new THREE.CylinderGeometry(dc.w*.1,dc.w*1.2,dc.h*.25,6),mat);
+      cap.position.y=dc.h*.55;g.add(cap);
+      collR=dc.w*.3;
+    }else if(dc.type==='bones'){
+      // Flat bones on ground
+      for(let i=0;i<3;i++){
+        const b=new THREE.Mesh(new THREE.BoxGeometry(dc.w*(0.5+Math.random()*.5),.04,.06),mat);
+        b.position.set((Math.random()-.5)*dc.w,.02,(Math.random()-.5)*dc.w);b.rotation.y=Math.random()*Math.PI;g.add(b);
+      }
+      collR=0; // no collision for flat ground items
+    }else if(dc.type==='altar'){
+      const base=new THREE.Mesh(new THREE.BoxGeometry(dc.w,dc.h*.4,dc.w),mat);base.position.y=dc.h*.2;g.add(base);
+      const slab=new THREE.Mesh(new THREE.BoxGeometry(dc.w*1.1,.08,dc.w*1.1),mat);slab.position.y=dc.h*.42;g.add(slab);
+      if(dc.em){
+        const orb=new THREE.Mesh(new THREE.SphereGeometry(.12,6,6),new THREE.MeshStandardMaterial({color:dc.em,emissive:dc.em,emissiveIntensity:3,transparent:true,opacity:.5}));
+        orb.position.y=dc.h*.7;g.add(orb);
+      }
+      collR=dc.w*.6;
+    }else if(dc.type==='statue'){
+      // Blocky humanoid statue
+      const pedestal=new THREE.Mesh(new THREE.BoxGeometry(dc.w*.8,.2,dc.w*.8),mat);pedestal.position.y=.1;g.add(pedestal);
+      const body=new THREE.Mesh(new THREE.BoxGeometry(dc.w*.5,dc.h*.5,dc.w*.3),mat);body.position.y=dc.h*.35;g.add(body);
+      const head=new THREE.Mesh(new THREE.BoxGeometry(dc.w*.35,dc.w*.35,dc.w*.35),mat);head.position.y=dc.h*.7;g.add(head);
+      // One arm broken off
+      const arm=new THREE.Mesh(new THREE.BoxGeometry(dc.w*.15,dc.h*.3,dc.w*.15),mat);arm.position.set(dc.w*.35,dc.h*.3,0);g.add(arm);
+      collR=dc.w*.5;
+    }else if(dc.type==='forge'){
+      const body=new THREE.Mesh(new THREE.BoxGeometry(dc.w,dc.h,dc.w),mat);body.position.y=dc.h*.5;g.add(body);
+      // Fire inside
+      if(dc.em){
+        const fire=new THREE.Mesh(new THREE.BoxGeometry(dc.w*.6,dc.h*.3,dc.w*.3),new THREE.MeshStandardMaterial({color:dc.em,emissive:dc.em,emissiveIntensity:3,transparent:true,opacity:.7}));
+        fire.position.set(0,dc.h*.2,dc.w*.4);g.add(fire);
+      }
+      collR=dc.w*.5;
+    }else if(dc.type==='chain'){
+      // Hanging chain: series of small boxes
+      for(let i=0;i<~~(dc.h/.15);i++){
+        const link=new THREE.Mesh(new THREE.BoxGeometry(.06,.12,.06),mat);link.position.y=dc.h-i*.15;link.rotation.y=i%2?0:Math.PI/4;g.add(link);
+      }
+      collR=.1;
+    }else if(dc.type==='anvil'){
+      const base=new THREE.Mesh(new THREE.BoxGeometry(dc.w*.8,dc.h*.4,dc.w*.5),mat);base.position.y=dc.h*.2;g.add(base);
+      const top=new THREE.Mesh(new THREE.BoxGeometry(dc.w,dc.h*.2,dc.w*.4),mat);top.position.y=dc.h*.5;g.add(top);
+      const horn=new THREE.Mesh(new THREE.BoxGeometry(dc.w*.15,dc.h*.15,dc.w*.3),mat);horn.position.set(dc.w*.5,dc.h*.45,0);g.add(horn);
+      collR=dc.w*.5;
+    }
+
+    g.position.set(px,0,pz);scene.add(g);
+    // Add collision (except flat/thin items)
+    if(collR>0.1)decoBlocks.push({x:px,z:pz,r:collR});
+  }
+}
+
+// Theme-specific floor-to-ceiling pillars
+function spawnRoomPillars(rm,theme){
+  const H=TILE*1.2; // ceiling height
+  const fi=(floor-1)%FLOOR_THEMES.length;
+  // Place pillars symmetrically inside the room
+  const cx=rm.x+rm.w/2, cz=rm.y+rm.h/2;
+  const corners=[];
+  // 4 pillars around center (offset by 1/3 of room size)
+  const ox=Math.min(rm.w/3,2), oz=Math.min(rm.h/3,2);
+  corners.push([cx-ox,cz-oz],[cx+ox,cz-oz],[cx-ox,cz+oz],[cx+ox,cz+oz]);
+  // Very large rooms: add center column
+  if(rm.w>=7&&rm.h>=7) corners.push([cx,cz]);
+  for(const[cx,cz] of corners){
+    if(Math.random()>.6)continue; // 60% chance per corner
+    const px=cx*TILE,pz=cz*TILE;
+    const g=new THREE.Group();
+    const baseMat=new THREE.MeshStandardMaterial({color:theme.wall,emissive:new THREE.Color(theme.wall).multiplyScalar(.05),roughness:.7,metalness:.15});
+    const accentMat=new THREE.MeshStandardMaterial({color:new THREE.Color(theme.wall).multiplyScalar(1.3),roughness:.6,metalness:.2});
+
+    if(fi===0){
+      // Ancient Ruins: stone column with base/capital
+      const base=new THREE.Mesh(new THREE.BoxGeometry(.6,.15,.6),baseMat);base.position.y=.08;g.add(base);
+      const shaft=new THREE.Mesh(new THREE.BoxGeometry(.35,H-.3,.35),baseMat);shaft.position.y=H/2;g.add(shaft);
+      const capital=new THREE.Mesh(new THREE.BoxGeometry(.55,.15,.55),baseMat);capital.position.y=H-.08;g.add(capital);
+      // Cracks
+      const crack=new THREE.Mesh(new THREE.BoxGeometry(.02,H*.4,.36),new THREE.MeshStandardMaterial({color:0x1a1a10}));
+      crack.position.set(.17,H*.4,0);g.add(crack);
+    }else if(fi===1){
+      // Ice Cave: frozen crystal column
+      const iceMat=new THREE.MeshStandardMaterial({color:0x88bbdd,emissive:0x224466,emissiveIntensity:.8,transparent:true,opacity:.75,metalness:.3,roughness:.3});
+      const shaft=new THREE.Mesh(new THREE.BoxGeometry(.3,H,.3),iceMat);shaft.position.y=H/2;g.add(shaft);
+      // Ice spikes
+      const spike1=new THREE.Mesh(new THREE.BoxGeometry(.15,.6,.15),iceMat);spike1.position.set(.2,H*.3,.2);spike1.rotation.z=.2;g.add(spike1);
+      const spike2=new THREE.Mesh(new THREE.BoxGeometry(.12,.5,.12),iceMat);spike2.position.set(-.18,H*.6,-.15);spike2.rotation.z=-.15;g.add(spike2);
+    }else if(fi===2){
+      // Lava: dark stone pillar with glowing cracks
+      const shaft=new THREE.Mesh(new THREE.BoxGeometry(.4,H,.4),baseMat);shaft.position.y=H/2;g.add(shaft);
+      const glowMat=new THREE.MeshStandardMaterial({color:0xff4400,emissive:0xff2200,emissiveIntensity:2,transparent:true,opacity:.6});
+      for(let i=0;i<3;i++){
+        const crack=new THREE.Mesh(new THREE.BoxGeometry(.02,H*.2,.42),glowMat);
+        crack.position.set(.2,H*.2+i*H*.3,0);g.add(crack);
+      }
+    }else if(fi===3){
+      // Dark Forest: tree trunk pillar with roots/branches
+      const woodMat=new THREE.MeshStandardMaterial({color:0x3a2a10,emissive:0x0a0800,roughness:.95});
+      const trunk=new THREE.Mesh(new THREE.BoxGeometry(.35,H,.35),woodMat);trunk.position.y=H/2;g.add(trunk);
+      // Roots at base
+      for(let i=0;i<3;i++){
+        const a=i*Math.PI*2/3;
+        const root=new THREE.Mesh(new THREE.BoxGeometry(.12,.2,.4),woodMat);
+        root.position.set(Math.cos(a)*.25,.1,Math.sin(a)*.25);root.rotation.y=a;g.add(root);
+      }
+      // Branch at top
+      const branch=new THREE.Mesh(new THREE.BoxGeometry(.5,.12,.12),woodMat);
+      branch.position.set(.3,H-.3,0);branch.rotation.z=-.3;g.add(branch);
+      // Vines
+      const vineMat=new THREE.MeshStandardMaterial({color:0x2a5a1a,emissive:0x0a1a00});
+      const vine=new THREE.Mesh(new THREE.BoxGeometry(.04,H*.5,.04),vineMat);vine.position.set(.18,H*.5,.18);g.add(vine);
+    }else if(fi===4){
+      // Abyss Temple: ornate dark stone with rune glow
+      const shaft=new THREE.Mesh(new THREE.BoxGeometry(.35,H,.35),baseMat);shaft.position.y=H/2;g.add(shaft);
+      const base=new THREE.Mesh(new THREE.BoxGeometry(.5,.2,.5),baseMat);base.position.y=.1;g.add(base);
+      const cap=new THREE.Mesh(new THREE.BoxGeometry(.5,.15,.5),baseMat);cap.position.y=H-.08;g.add(cap);
+      // Glowing runes
+      const runeMat=new THREE.MeshStandardMaterial({color:0x8844ff,emissive:0x6622cc,emissiveIntensity:2,transparent:true,opacity:.5});
+      for(let i=0;i<3;i++){
+        const rune=new THREE.Mesh(new THREE.BoxGeometry(.36,.08,.02),runeMat);
+        rune.position.set(0,H*.25+i*H*.25,.18);g.add(rune);
+      }
+    }else if(fi===5){
+      // Phoenix Furnace: iron pillar with chains and ember glow
+      const ironMat=new THREE.MeshStandardMaterial({color:0x3a3a3a,roughness:.6,metalness:.5});
+      const shaft=new THREE.Mesh(new THREE.BoxGeometry(.3,H,.3),ironMat);shaft.position.y=H/2;g.add(shaft);
+      // Metal rings
+      for(let i=0;i<4;i++){
+        const ring=new THREE.Mesh(new THREE.BoxGeometry(.45,.06,.45),ironMat);
+        ring.position.y=H*.15+i*H*.25;g.add(ring);
+      }
+      // Ember glow at base
+      const emberMat=new THREE.MeshStandardMaterial({color:0xff4400,emissive:0xff2200,emissiveIntensity:2,transparent:true,opacity:.4});
+      const ember=new THREE.Mesh(new THREE.BoxGeometry(.4,.1,.4),emberMat);ember.position.y=.05;g.add(ember);
+    }
+
+    g.position.set(px,0,pz);
+    scene.add(g);
+    decoBlocks.push({x:px,z:pz,r:.4}); // collision
+  }
+}
+
+function placeTorch(x,z){
+  const theme=FLOOR_THEMES[(floor-1)%FLOOR_THEMES.length];
+  // Simple torch: stick + flame (minimal meshes)
+  const stick=new THREE.Mesh(new THREE.BoxGeometry(.08,.5,.08),new THREE.MeshStandardMaterial({color:0x4a2a08,roughness:.9}));
+  stick.position.set(x,.25,z);scene.add(stick);
+  const flameM=new THREE.MeshStandardMaterial({color:theme.torch,emissive:theme.torch,emissiveIntensity:4,transparent:true,opacity:.85});
+  const f1=new THREE.Mesh(new THREE.ConeGeometry(.08,.2,4),flameM);
+  f1.position.set(x,.6,z);scene.add(f1);
+  // Only 1 PointLight per 3 torches for perf
+  let l=null;
+  if(torches.length%3===0){l=new THREE.PointLight(theme.torch,theme.torchI,8);l.position.set(x,.8,z);scene.add(l);}
+  torches.push({light:l,flame:f1,base:theme.torchI});
+}
+
+function spawnItemInRoom(rm){
+  const types=['mp','xp'],type=types[~~(Math.random()*2)];
+  spawnItemAt((rm.x+1+Math.random()*(rm.w-2))*TILE,(rm.y+1+Math.random()*(rm.h-2))*TILE,type);
+}
+function spawnItemAt(ix,iz,type){
+  const c={hp:{col:0xff4444,em:0xff0000,s:.22},mp:{col:0x4444ff,em:0x0000ff,s:.22},xp:{col:0x44ff44,em:0x00aa00,s:.22}}[type];
+  const m=new THREE.Mesh(new THREE.OctahedronGeometry(c.s,0),new THREE.MeshStandardMaterial({color:c.col,emissive:c.em,emissiveIntensity:1.5,metalness:.4,roughness:.3}));
+  m.position.set(ix,.4,iz);scene.add(m);
+  items.push({mesh:m,x:ix,z:iz,type,collected:false});
+}
+
+
+
+// === entities.js ===
+// Entities & UI - Kill, LevelUp, Particles, HUD, Minimap
+function killEnemy(e){
+  scene.remove(e.mesh);player.xp+=e.xp;player.kills++;
+  // Auto HP recovery based on enemy strength
+  const hpRecover=Math.min(~~(e.maxHp*.2),~~(player.maxHp*.15)); // 20% of enemy maxHP, capped at 15% of player maxHP
+  player.hp=Math.min(player.maxHp,player.hp+hpRecover);
+  showMessage(`❤️ +${hpRecover} HP`,'#ff8888');
+  spawnParticles(e.x,e.z,'#ffaa00',25);checkLevelUp();updateHUD();
+  // Drop: 50% MP, 50% XP (no HP drop - auto recovered)
+  const roll=Math.random();
+  spawnItemAt(e.x,e.z,roll<.5?'mp':'xp');
+  e.hp=-1;
+}
+
+function checkLevelUp(){
+  if(player.xp>=player.xpNext){
+    player.xp-=player.xpNext;player.level++;player.xpNext=~~(player.xpNext*1.5);
+    player.maxHp+=20;player.hp=player.maxHp;player.maxMp+=10;player.mp=player.maxMp;
+    player.attackPower+=8;player.defense+=2;
+    showMessage(`⬆ LEVEL UP! Lv.${player.level}`,'#aaffaa');playSound('levelup');
+    spawnParticles(player.x,player.z,'#88ff88',15);
+  }
+}
+
+function spawnParticles(x3,z3,color,n=10){
+  if(pParticles.length>80)return; // cap total particles for perf
+  const v=new THREE.Vector3(x3,1.2,z3);v.project(camera);if(v.z>1)return;
+  const px=(v.x+1)/2*W,py=(1-v.y)/2*H;
+  const count=Math.min(n,15); // max 15 per burst
+  for(let i=0;i<count;i++){const a=Math.random()*Math.PI*2,sp=1+Math.random()*3;pParticles.push({x:px,y:py,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,life:1,decay:.03+Math.random()*.04,size:2+Math.random()*3,color});}
+}
+function drawParticles(){
+  pParticles=pParticles.filter(p=>p.life>0);
+  for(const p of pParticles){p.x+=p.vx;p.y+=p.vy;p.vy+=.15;p.life-=p.decay;pCtx.globalAlpha=p.life;pCtx.fillStyle=p.color;pCtx.beginPath();pCtx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2);pCtx.fill();}
+  pCtx.globalAlpha=1;
+}
+
+const msgEl=document.getElementById('messages');
+function showMessage(text,color='#88ffaa'){const el=document.createElement('div');el.className='msg';el.style.color=color;el.textContent=text;msgEl.appendChild(el);setTimeout(()=>el.remove(),2000);}
+
+function updateHUD(){
+  document.getElementById('floor-val').textContent=floor;
+  document.getElementById('stage-val').textContent=currentCipherStage>=5?'EX':`${currentCipherStage+1}/5`;
+  document.getElementById('level-val').textContent=player.level;
+  document.getElementById('kills-val').textContent=player.kills;
+  document.getElementById('cipher-val').textContent=cipherSolved?'✅':'🔒';
+  document.getElementById('hp-fill').style.width=(player.hp/player.maxHp*100)+'%';
+  document.getElementById('mp-fill').style.width=(player.mp/player.maxMp*100)+'%';
+  document.getElementById('hp-text').textContent=`${Math.max(0,player.hp)} / ${player.maxHp}`;
+  document.getElementById('mp-text').textContent=`${~~player.mp} / ${player.maxMp}`;
+  document.getElementById('xp-fill').style.width=(player.xp/player.xpNext*100)+'%';
+  const s=CIPHER_STAGES[Math.min(currentCipherStage,CIPHER_STAGES.length-1)];
+  document.getElementById('stage-hint-title').textContent=currentCipherStage>=CIPHER_STAGES.length?'ALL CLEAR':s.name;
+  document.getElementById('stage-hint-text').textContent=cipherSolved?'脱出口（緑の柱）へ向かえ！':'暗号ターミナル（緑の光）を探せ';
+}
+
+const mmCtx=document.getElementById('minimap-canvas').getContext('2d');
+function drawMinimap(){
+  const{map}=dungeon,cw=120/MAP_W,ch=120/MAP_H;
+  mmCtx.fillStyle='#000';mmCtx.fillRect(0,0,120,120);
+  for(let y=0;y<MAP_H;y++)for(let x=0;x<MAP_W;x++)if(map[y][x]===0){mmCtx.fillStyle='#2a2a1a';mmCtx.fillRect(x*cw,y*ch,cw,ch);}
+  for(const e of enemies)if(e.hp>0){mmCtx.fillStyle=e.inBattle?'#ff8800':'#ff3333';mmCtx.fillRect(e.x/TILE*cw-1,e.z/TILE*ch-1,3,3);}
+  for(const it of items)if(!it.collected){mmCtx.fillStyle=it.type==='hp'?'#ff6666':it.type==='mp'?'#6666ff':'#44ff44';mmCtx.fillRect(it.x/TILE*cw-1,it.z/TILE*ch-1,3,3);}
+  if(!cipherSolved){mmCtx.fillStyle='#00ff41';mmCtx.fillRect(terminalX/TILE*cw-2,terminalZ/TILE*ch-2,5,5);}
+  mmCtx.fillStyle=cipherSolved?'#44ff44':'#442222';mmCtx.fillRect(dungeon.stairX*cw-2,dungeon.stairY*ch-2,5,5);
+  const ppx=player.x/TILE*cw,ppz=player.z/TILE*ch;
+  mmCtx.fillStyle='#fff';mmCtx.beginPath();mmCtx.arc(ppx,ppz,3,0,Math.PI*2);mmCtx.fill();
+  mmCtx.strokeStyle='#fff';mmCtx.lineWidth=1;mmCtx.beginPath();mmCtx.moveTo(ppx,ppz);mmCtx.lineTo(ppx+Math.sin(player.yaw+Math.PI)*8,ppz+Math.cos(player.yaw+Math.PI)*8);mmCtx.stroke();
+}
+
+function isWall(x,z){
+  const mx=Math.round(x/TILE),mz=Math.round(z/TILE);
+  if(mx<0||mx>=MAP_W||mz<0||mz>=MAP_H)return true;
+  if(dungeon.map[mz][mx]===1)return true;
+  // Check decoration collisions
+  for(const db of decoBlocks){
+    const dx=x-db.x,dz=z-db.z;
+    if(dx*dx+dz*dz<db.r*db.r)return true;
+  }
+  return false;
+}
+
+
+// === player.js ===
+// Player Actions, Skills, Enemy AI, World Interactions
+function useSkill(idx){
+  if(gameState!=='playing')return;const s=player.skills[idx];
+  if(s.cd>0)return;if(player.mp<s.cost){showMessage('MPが不足！','#ff8888');return;}
+  player.mp-=s.cost;s.cd=s.maxCd;
+  if(idx===0)spawnProj('fire');else if(idx===1)spawnProj('lightning');
+  else{const h=~~(player.maxHp*.3);player.hp=Math.min(player.maxHp,player.hp+h);showMessage(`💊 +${h}HP`,'#44ff44');spawnParticles(player.x,player.z,'#44ff88',20);}
+  updateHUD();
+}
+function spawnProj(type){
+  const dir=new THREE.Vector3(Math.sin(player.yaw+Math.PI)*Math.cos(player.pitch),-Math.sin(player.pitch),Math.cos(player.yaw+Math.PI)*Math.cos(player.pitch));
+  const cfg={fire:{c:0xff6600,e:0xff3300,s:.2,sp:.25,dmg:35+floor*5,r:20},lightning:{c:0x8888ff,e:0x4444ff,s:.15,sp:.4,dmg:55+floor*8,r:30}}[type];
+  const m=new THREE.Mesh(new THREE.SphereGeometry(cfg.s,8,8),new THREE.MeshStandardMaterial({color:cfg.c,emissive:cfg.e,emissiveIntensity:3,transparent:true,opacity:.9}));
+  m.position.set(player.x,1.2,player.z);scene.add(m);
+  const l=new THREE.PointLight(cfg.c,2,5);l.position.copy(m.position);scene.add(l);
+  projectiles.push({mesh:m,light:l,dir,speed:cfg.sp,damage:cfg.dmg,range:cfg.r,traveled:0,type});
+}
+function updateProjectiles(){
+  projectiles=projectiles.filter(p=>{
+    p.mesh.position.x+=p.dir.x*p.speed;p.mesh.position.y+=p.dir.y*p.speed;p.mesh.position.z+=p.dir.z*p.speed;
+    p.light.position.copy(p.mesh.position);p.traveled+=p.speed;p.mesh.rotation.x+=.1;p.mesh.rotation.y+=.1;
+    if(p.traveled>p.range||isWall(p.mesh.position.x,p.mesh.position.z)){scene.remove(p.mesh,p.light);spawnParticles(p.mesh.position.x,p.mesh.position.z,p.type==='fire'?'#ff6600':'#8888ff',20);return false;}
+    for(const e of enemies){
+      if(e.hp<=0||e.inBattle)continue;
+      const dx=e.x-p.mesh.position.x,dz=e.z-p.mesh.position.z;
+      if(Math.sqrt(dx*dx+dz*dz)<e.size*1.0){
+        // Projectile hit: deal damage directly without opening battle
+        const dmg=p.damage;e.hp=Math.max(0,e.hp-dmg);
+        showMessage(`🔥 ${e.name}に${dmg}ダメージ！`,'#ff8844');
+        spawnParticles(e.x,e.z,p.type==='fire'?'#ff6600':'#8888ff',15);
+        if(e.hp<=0){killEnemy(e);}
+        scene.remove(p.mesh,p.light);return false;
+      }
+    }
+    return true;
+  });
+}
+
+let approachTarget=null; // enemy or 'terminal'
+function updateEnemies(dt){
+  battleCooldown=Math.max(0,battleCooldown-dt);
+  approachTarget=null;
+  // Freeze enemies during cipher/challenge
+  if(cipherActive||challengeActive)return;
+  const TRIGGER_DIST=1.6;
+  for(const e of enemies){
+    if(e.hp<=0)continue;
+    const dx=player.x-e.x,dz=player.z-e.z,dist=Math.sqrt(dx*dx+dz*dz);
+    e.mesh.position.set(e.x,e.mesh.position.y,e.z);e.mesh.rotation.y=Math.atan2(-dx,-dz);
+    if(dist<18){e.state='chase';e.alertTimer=1;}
+    if(e.alertTimer>0)e.alertTimer-=dt;if(e.alertTimer<=0&&dist>18)e.state='idle';
+    if(e.state==='chase'&&!e.inBattle){
+      const spd=e.speed; // already scaled at spawn
+      const nx=e.x+(dx/dist)*spd,nz=e.z+(dz/dist)*spd;
+      if(!isWall(nx,e.z))e.x=nx;if(!isWall(e.x,nz))e.z=nz;
+      e.legPhase=(e.legPhase||0)+dt*8;
+      if(e.leg1)e.leg1.rotation.x=Math.sin(e.legPhase)*.5;
+      if(e.leg2)e.leg2.rotation.x=-Math.sin(e.legPhase)*.5;
+      if(e.arm1)e.arm1.rotation.x=-Math.sin(e.legPhase)*.4;
+      if(e.arm2)e.arm2.rotation.x=Math.sin(e.legPhase)*.4;
+      e.mesh.position.y=e.size*1.1+Math.abs(Math.sin(e.legPhase*.5))*.05;
+      if(dist<TRIGGER_DIST+1.5&&!battleActive&&!cipherActive)approachTarget=e;
+      if(dist<TRIGGER_DIST&&!battleActive&&!cipherActive&&battleCooldown<=0){battleCooldown=2.5;openBattle(e);return;}
+    }
+  }
+}
+
+function checkTerminal(){
+  if(cipherSolved||cipherActive||battleActive)return;
+  const dx=terminalX-player.x,dz=terminalZ-player.z,dist=Math.sqrt(dx*dx+dz*dz);
+  if(dist<3.5&&!approachTarget)approachTarget='terminal';
+  if(dist<2.0){
+    // Require player level >= floor to use terminal
+    const reqLevel=floor;
+    if(player.level<reqLevel){
+      showMessage(`⚠ レベルが足りない！ Lv.${reqLevel} 以上が必要（現在 Lv.${player.level}）`,'#ff4444');
+      battleCooldown=3; // prevent spamming
+      return;
+    }
+    openCipherModal();
+  }
+}
+
+function checkItems(){
+  for(const it of items){
+    if(it.collected)continue;
+    const dx=it.x-player.x,dz=it.z-player.z;
+    if(Math.sqrt(dx*dx+dz*dz)<1.2){
+      it.collected=true;scene.remove(it.mesh);if(it.light)scene.remove(it.light);
+      if(it.type==='mp'){const a=~~(player.maxMp*.4);player.mp=Math.min(player.maxMp,player.mp+a);showMessage(`💧 MP +${a}`,'#6666ff');}
+      else if(it.type==='xp'){const a=10+~~(Math.random()*15*floor);player.xp+=a;showMessage(`⭐ XP +${a}`,'#44ff44');checkLevelUp();}
+      spawnParticles(it.x,it.z,it.type==='mp'?'#4444ff':'#44ff44',15);playSound('pickup');updateHUD();
+    }
+  }
+}
+
+function checkStair(){
+  if(!stairMesh)return;
+  const dx=dungeon.stairX*TILE-player.x,dz=dungeon.stairY*TILE-player.z;
+  if(Math.sqrt(dx*dx+dz*dz)<1.5){
+    if(!cipherSolved){showMessage('暗号を解読してから来い！','#ff8844');return;}
+    currentCipherStage++;
+    // Stage 5 clear (index 5) = normal ending, Stage 6 clear (index 6+) = extra ending
+    if(currentCipherStage>=5){gameComplete();return;}
+    floor++;cipherSolved=false;escapeCount=0;
+    playSound('portal');
+    const nextTheme=FLOOR_THEMES[(floor-1)%FLOOR_THEMES.length];
+    const storyMsg=['','','さらに深くへ… データの核心に近づいている','連絡プロトコルが見えてきた… あと少しだ','最深部だ。すべてがここで繋がる'];
+    showMessage(`⬇ ${floor}階「${nextTheme.name}」`,'#44ffaa');
+    if(storyMsg[floor-1])showMessage(storyMsg[floor-1],'#ffcc88');
+    dungeon=genDungeon();buildScene();
+    player.hp=Math.min(player.maxHp,player.hp+50); // +50 HP on stage clear
+    player.mp=player.maxMp; // full MP restore
+    updateHUD();spawnParticles(player.x,player.z,'#44ffaa',30);
+    saveProgress();
+    startBGM(floor);
+  }
+}
+
+
+// === challenge.js ===
+// Coding Challenge Rooms + Code-Input Battle Questions
+
+// ═══════════════════════════════════
+//  SIMPLE PYTHON INTERPRETER (subset)
+// ═══════════════════════════════════
+// Evaluates a tiny subset of Python: print(), basic math, strings, lists, dicts
+function miniPyEval(code){
+  let output=[];
+  try{
+    // Strip Python comments first (# ...)
+    let js=code.split('\n').map(line=>{
+      // Remove # comments (skip if inside string)
+      var inQ=false,qc='';
+      for(var ci=0;ci<line.length;ci++){
+        var ch=line[ci];
+        if(inQ){if(ch===qc&&line[ci-1]!=='\\')inQ=false;}
+        else if(ch==='"'||ch==="'"){inQ=true;qc=ch;}
+        else if(ch==='#')return line.substring(0,ci);
+      }
+      return line;
+    }).join('\n');
+    // Convert common Python to JS
+    js=js
+      .replace(/print\((.+)\)/g,'__out.push(String($1))')
+      .replace(/\bTrue\b/g,'true').replace(/\bFalse\b/g,'false').replace(/\bNone\b/g,'null')
+      .replace(/\blen\((.+?)\)/g,'($1).length')
+      .replace(/\bstr\((.+?)\)/g,'String($1)')
+      .replace(/\bint\((.+?)\)/g,'parseInt($1)')
+      .replace(/\bfloat\((.+?)\)/g,'parseFloat($1)')
+      .replace(/\bchr\((.+?)\)/g,'String.fromCharCode($1)')
+      .replace(/\bord\((.+?)\)/g,'($1).charCodeAt(0)')
+      .replace(/\babs\((.+?)\)/g,'Math.abs($1)')
+      .replace(/\bmax\((.+?)\)/g,'Math.max($1)')
+      .replace(/\bmin\((.+?)\)/g,'Math.min($1)')
+      .replace(/\bsum\((.+?)\)/g,'($1).reduce((a,b)=>a+b,0)')
+      .replace(/\bsorted\((.+?),\s*reverse\s*=\s*true\)/gi,'[...$1].sort((a,b)=>b-a)')
+      .replace(/\bsorted\((.+?)\)/g,'[...$1].sort((a,b)=>a>b?1:a<b?-1:0)')
+      .replace(/\brange\((\d+),\s*(\d+)\)/g,'Array.from({length:$2-$1},(_,i)=>i+$1)')
+      .replace(/\brange\((\d+)\)/g,'Array.from({length:$1},(_,i)=>i)')
+      .replace(/\.upper\(\)/g,'.toUpperCase()')
+      .replace(/\.lower\(\)/g,'.toLowerCase()')
+      .replace(/\.count\((.+?)\)/g,'.split($1).length-1')
+      .replace(/\.sort\(\)/g,'.sort((a,b)=>a>b?1:a<b?-1:0)')
+      .replace(/\.replace\((.+?),\s*(.+?)\)/g,'.split($1).join($2)')
+      .replace(/\.split\((.+?)\)/g,'.split($1)')
+      .replace(/\.join\((.+?)\)/g,'($1).join(this)')
+      .replace(/"([^"]*)"\.join/g,'((s)=>(x)=>x.join(s))("$1")')
+      .replace(/'([^']*)'\.join/g,"((s)=>(x)=>x.join(s))('$1')")
+      .replace(/\.items\(\)/g,'.entries ? Object.entries($0_dict) : []') // partial
+      .replace(/\.values\(\)/g,'.values ? Object.values($0_dict) : []') // partial
+      .replace(/\.keys\(\)/g,'.keys ? Object.keys($0_dict) : []') // partial
+      // dict.values/keys/items
+      .replace(/(\w+)\.values\(\)/g,'Object.values($1)')
+      .replace(/(\w+)\.keys\(\)/g,'Object.keys($1)')
+      .replace(/(\w+)\.items\(\)/g,'Object.entries($1)')
+      // [::-1] reverse for strings/arrays
+      .replace(/(\w+)\[::\s*-1\]/g,'(typeof $1==="string"?$1.split("").reverse().join(""):$1.slice().reverse())')
+      // ** power
+      .replace(/(\d+)\s*\*\*\s*(\d+)/g,'Math.pow($1,$2)')
+      // // integer division
+      .replace(/(\w+)\s*\/\/\s*(\w+)/g,'Math.floor($1/$2)')
+      // list comprehension: [expr for x in iter]
+      .replace(/\[(.+?)\s+for\s+(\w+)\s+in\s+(.+?)\s+if\s+(.+?)\]/g,'($3).filter($2=>$4).map($2=>$1)')
+      .replace(/\[(.+?)\s+for\s+(\w+)\s+in\s+(.+?)\]/g,'($3).map($2=>$1)')
+      // Python join: ",".join(list) → list.join(",")
+      ;
+    // Fix join pattern: "x".join(y) → y.join("x")
+    js=js.replace(/"([^"]*)"\s*\.\s*join\s*\(\s*(\w+)\s*\)/g,'$2.join("$1")');
+    js=js.replace(/'([^']*)'\s*\.\s*join\s*\(\s*(\w+)\s*\)/g,"$2.join('$1')");
+    // for x in range(a,b): → special handling (convert range inline)
+    js=js.replace(/^(\s*)for\s+(\w+)\s+in\s+range\((\d+),\s*(\d+)\)\s*:/gm,
+      '$1for(let $2=$3;$2<$4;$2++){');
+    js=js.replace(/^(\s*)for\s+(\w+)\s+in\s+range\((\d+)\)\s*:/gm,
+      '$1for(let $2=0;$2<$3;$2++){');
+    // for x in variable: → for(const x of ...)
+    js=js.replace(/^(\s*)for\s+(\w+)\s+in\s+(\w+)\s*:/gm,'$1for(const $2 of (Array.isArray($3)?$3:Object.keys($3))){');
+    js=js.replace(/^(\s*)for\s+(\w+)\s+in\s+(.+?)\s*:/gm,'$1for(const $2 of $3){');
+    // if condition: → if(condition){
+    js=js.replace(/^(\s*)if\s+(.+?)\s*:/gm,'$1if($2){');
+    // elif → }else if
+    js=js.replace(/^(\s*)elif\s+(.+?)\s*:/gm,'$1}else if($2){');
+    // else: → }else{
+    js=js.replace(/^(\s*)else\s*:/gm,'$1}else{');
+    // Handle def/return
+    js=js.replace(/def\s+(\w+)\s*\(([^)]*)\)\s*:/g,'function $1($2){');
+    js=js.replace(/^\s*return\s+/gm,'return ');
+    // += for strings (Python: result += x, JS same but need no change)
+    // Handle indentation-based blocks → add closing braces
+    const lines=js.split('\n');
+    let result=[];
+    let blockStack=[]; // track indent levels that opened blocks
+    for(let i=0;i<lines.length;i++){
+      const line=lines[i];
+      const trimmed=line.trimStart();
+      const indent=line.length-trimmed.length;
+      // Close blocks when indent decreases
+      while(blockStack.length>0&&indent<=blockStack[blockStack.length-1]&&trimmed.length>0){
+        blockStack.pop();
+        result.push(' '.repeat(indent)+'}');
+      }
+      // Track block openers
+      if(trimmed.match(/^(for|if|else|function|def)\b/)&&line.includes('{')){
+        blockStack.push(indent);
+      }
+      result.push(line);
+    }
+    // Close remaining blocks
+    while(blockStack.length>0){blockStack.pop();result.push('}');}
+    js=result.join('\n');
+
+    const __out=[];
+    const fn=new Function('__out',js);
+    fn(__out);
+    output=__out;
+  }catch(e){
+    output=['Error: '+e.message];
+  }
+  return output.join('\n');
+}
+
+// ═══════════════════════════════════
+//  CODING CHALLENGES (gold terminals)
+// ═══════════════════════════════════
+const CODE_CHALLENGES=[
+  // Easy: _____ を埋める
+  {diff:'easy',xp:60,answer:'14',
+   q:'_____ を埋めてリストの合計を出力せよ',
+   template:'numbers = [3, 1, 4, 1, 5]\ntotal = _____  # ← numbers の合計を求める関数は？\nprint(total)',
+   hint:'sum() 関数を使う'},
+  {diff:'easy',xp:60,answer:'HELLO',
+   q:'_____ を埋めて文字列を大文字にして出力せよ',
+   template:'text = "hello"\nresult = _____  # ← text を大文字にするには？\nprint(result)',
+   hint:'.upper() メソッド'},
+  {diff:'easy',xp:70,answer:'5',
+   q:'_____ を埋めてリストの要素数を出力せよ',
+   template:'nums = [1, 2, 3, 4, 5]\ncount = _____  # ← nums の要素数を返す関数は？\nprint(count)',
+   hint:'len() 関数'},
+  {diff:'easy',xp:60,answer:'Pn',
+   q:'_____ を埋めて最初と最後の文字を結合して出力せよ',
+   template:'word = "Python"\nfirst = _____  # ← 最初の文字を取り出すには？\nlast = _____   # ← 最後の文字を取り出すには？\nprint(first + last)',
+   hint:'[0]は最初、[-1]は最後の文字'},
+  // Normal: もう少し考える必要あり
+  {diff:'normal',xp:100,answer:'9',
+   q:'_____ を埋めてリストを降順ソートし、最大値を出力せよ',
+   template:'data = [5, 2, 8, 1, 9]\nresult = sorted(data, _____)  # ← 降順にするオプションは？\nprint(result[0])',
+   hint:'reverse=True'},
+  {diff:'normal',xp:100,answer:'3',
+   q:'_____ を埋めて "a" の出現回数を出力せよ',
+   template:'text = "banana"\ncount = text._____  # ← 特定の文字の出現回数を数えるメソッドは？\nprint(count)',
+   hint:'.count("a")'},
+  {diff:'normal',xp:110,answer:'60',
+   q:'_____ を埋めて辞書の値の合計を出力せよ',
+   template:'d = {"x": 10, "y": 20, "z": 30}\nvalues = _____  # ← 辞書の値の一覧を取得するには？\nprint(sum(values))',
+   hint:'d.values()'},
+  {diff:'normal',xp:100,answer:'apple-banana-cherry',
+   q:'_____ を埋めてリストの要素をハイフンで結合して出力せよ',
+   template:'words = ["apple", "banana", "cherry"]\nresult = _____  # ← "-" で結合するには？\nprint(result)',
+   hint:'"-".join(リスト)'},
+  // Hard: 複数箇所を埋める / ロジックを書く
+  {diff:'hard',xp:150,answer:'55',
+   q:'_____ を埋めて各要素の二乗の合計を出力せよ',
+   template:'nums = [1, 2, 3, 4, 5]\nsquares = [_____ for x in nums]  # ← x の二乗は？\nprint(sum(squares))',
+   hint:'x**2'},
+  {diff:'hard',xp:150,answer:'P,y,t,h,o,n',
+   q:'_____ を埋めて文字列の各文字をカンマで結合して出力せよ',
+   template:'text = "Python"\nresult = _____.join(_____)  # ← 区切り文字.join(対象)\nprint(result)',
+   hint:'",".join(text)'},
+  {diff:'hard',xp:170,answer:'2',
+   q:'_____ を埋めて1〜30で15の倍数の個数を出力せよ',
+   template:'fizz = [x for x in range(1, 31) if _____]  # ← 15の倍数の条件は？\nprint(len(fizz))',
+   hint:'x % 15 == 0'},
+  {diff:'hard',xp:160,answer:'720',
+   q:'_____ を埋めて階乗関数を完成させ、6! を出力せよ',
+   template:'def factorial(n):\n    if n <= 1:\n        return 1\n    return _____  # ← n と factorial を使った再帰は？\nprint(factorial(6))',
+   hint:'n * factorial(n - 1)'},
+];
+
+let challengeTerminals=[];
+let challengeActive=false;
+let currentChallenge=null;
+
+function spawnChallengeTerminal(rm){
+  const cx=(rm.x+~~(rm.w/2))*TILE;
+  const cz=(rm.y+~~(rm.h/2))*TILE;
+  const tg=new THREE.Group();
+  const base=new THREE.Mesh(new THREE.CylinderGeometry(.4,.5,.15,6),
+    new THREE.MeshStandardMaterial({color:0x8a7a20,emissive:0x443a00,emissiveIntensity:.5,metalness:.4}));
+  base.position.y=.08;tg.add(base);
+  const screen=new THREE.Mesh(new THREE.BoxGeometry(.6,.9,.08),
+    new THREE.MeshStandardMaterial({color:0x1a1a00,emissive:0xffcc00,emissiveIntensity:1.5,transparent:true,opacity:.8}));
+  screen.position.y=.65;tg.add(screen);
+  const star=new THREE.Mesh(new THREE.OctahedronGeometry(.1,0),
+    new THREE.MeshStandardMaterial({color:0xffdd00,emissive:0xffaa00,emissiveIntensity:3,transparent:true,opacity:.7}));
+  star.position.y=1.2;tg.add(star);
+  tg.position.set(cx,0,cz);scene.add(tg);
+  challengeTerminals.push({mesh:tg,x:cx,z:cz,solved:false});
+  // Guard pillars flanking the terminal
+  const pilMat=new THREE.MeshStandardMaterial({color:0x6a5a20,emissive:0x332a00,emissiveIntensity:.3,roughness:.6,metalness:.3});
+  for(let side=-1;side<=1;side+=2){
+    const px=cx+side*1.2,pz=cz;
+    const p=new THREE.Mesh(new THREE.BoxGeometry(.18,TILE*1.2,.18),pilMat);
+    p.position.set(px,TILE*.6,pz);scene.add(p);
+    const orb=new THREE.Mesh(new THREE.SphereGeometry(.08,6,6),new THREE.MeshStandardMaterial({color:0xffcc00,emissive:0xffaa00,emissiveIntensity:3,transparent:true,opacity:.6}));
+    orb.position.set(px,TILE*1.15,pz);scene.add(orb);
+    decoBlocks.push({x:px,z:pz,r:.25});
+  }
+}
+
+function checkChallengeTerminals(){
+  if(challengeActive||cipherActive||battleActive)return;
+  if(Date.now()<challengeCooldownEnd)return; // cooldown after closing
+  for(var ci=0;ci<challengeTerminals.length;ci++){
+    var ct=challengeTerminals[ci];
+    if(ct.solved)continue;
+    var dx=ct.x-player.x,dz=ct.z-player.z;
+    if(Math.sqrt(dx*dx+dz*dz)<2.0){
+      openCodingChallenge(ct);return;
+    }
+  }
+}
+
+function openCodingChallenge(ct){
+  if(gameState!=='playing')return;
+  challengeActive=true;
+  gameState='cipher';document.exitPointerLock();muteBGM();
+
+  let pool;
+  if(floor<=2)pool=CODE_CHALLENGES.filter(c=>c.diff==='easy');
+  else if(floor<=4)pool=CODE_CHALLENGES.filter(c=>c.diff!=='hard');
+  else pool=[...CODE_CHALLENGES];
+  const ch=pool[~~(Math.random()*pool.length)];
+  currentChallenge={ch,ct};
+
+  const modal=document.getElementById('cipher-modal');
+  document.getElementById('cm-avatar').textContent='⭐';
+  document.getElementById('cm-name').textContent='コーディングチャレンジ';
+  document.getElementById('cm-stage-sub').textContent=`${ch.diff.toUpperCase()} — XP +${ch.xp}`;
+  document.getElementById('cm-mission').textContent=ch.q+'\n\n穴埋めを完成させて「▶ 実行」を押せ！\n正しい結果が出力されれば自動クリア！';
+  document.getElementById('cm-data').style.display='none';
+  document.getElementById('cm-hint').textContent=`ヒント: ${ch.hint}`;
+  document.getElementById('cm-footer').textContent=`⭐ XP +${ch.xp}`;
+
+  // Show editor with template
+  document.getElementById('code-editor-wrap').classList.add('show');
+  const editor=document.getElementById('code-editor');
+  editor.value=ch.template;
+  editor.disabled=false;
+  document.getElementById('code-output-wrap').classList.remove('show');
+
+  // Hide answer input row (auto-check on run)
+  document.getElementById('cm-input-row').style.display='none';
+  document.getElementById('c-result').style.display='none';
+  document.getElementById('c-continue-btn').style.display='none';
+  document.getElementById('secret-reveal').classList.remove('show');
+  document.getElementById('agent-phase').classList.remove('show');
+  document.getElementById('cipher-close-btn').style.display='inline-block';
+
+  // Run button: execute + auto-check answer
+  document.getElementById('code-run-btn').onclick=()=>{
+    try{
+      const code=editor.value;
+      const result=miniPyEval(code);
+      document.getElementById('code-output-wrap').classList.add('show');
+      document.getElementById('code-output').textContent=result||'(出力なし)';
+      // Auto-check: if output matches answer → success!
+      const trimResult=result.trim();
+      if(trimResult===ch.answer||trimResult.toUpperCase()===ch.answer.toUpperCase()){
+        document.getElementById('code-output').style.color='#44ff88';
+        clearInterval(cipherTimerInt);
+        const r=document.getElementById('c-result');
+        r.style.display='flex';r.className='correct-res';
+        document.getElementById('cr-icon').textContent='⭐';
+        document.getElementById('cr-msg').innerHTML=`<strong>正解！ XP +${ch.xp}</strong>`;
+        player.xp+=ch.xp;checkLevelUp();updateHUD();
+        ct.solved=true;scene.remove(ct.mesh);
+        playSound('correct');spawnParticles(player.x,player.z,'#ffdd44',20);
+        editor.disabled=true;
+        // Auto-close after 2 seconds
+        setTimeout(()=>closeChallengeModal(),2000);
+      }else if(result.startsWith('Error')){
+        document.getElementById('code-output').style.color='#ff6666';
+      }else{
+        document.getElementById('code-output').style.color='#ffaa88';
+        showMessage('出力が違う… コードを修正して再実行！','#ff8844');
+      }
+    }catch(e){
+      document.getElementById('code-output-wrap').classList.add('show');
+      document.getElementById('code-output').textContent='Error: '+e.message;
+      document.getElementById('code-output').style.color='#ff6666';
+    }
+  };
+
+  // Timer (5 min) — timeout removes terminal permanently
+  const CHALLENGE_TIME=300;
+  clearInterval(cipherTimerInt);cipherTimerVal=CHALLENGE_TIME;
+  const el=document.getElementById('cipher-timer');el.classList.remove('danger');
+  const fmtT=(s)=>{const m=Math.floor(s/60);return m>0?`${m}:${String(s%60).padStart(2,'0')}`:String(s);};
+  el.textContent=fmtT(cipherTimerVal);
+  cipherTimerInt=setInterval(()=>{cipherTimerVal--;el.textContent=fmtT(cipherTimerVal);
+    if(cipherTimerVal<=30)el.classList.add('danger');
+    if(cipherTimerVal<=0){
+      clearInterval(cipherTimerInt);
+      ct.solved=true;scene.remove(ct.mesh); // terminal disappears on timeout
+      closeChallengeModal();
+      showMessage('⏰ 時間切れ… チャレンジ端末が消えた','#ff4444');
+    }
+  },1000);
+
+  modal.classList.add('open');
+  setTimeout(()=>editor.focus(),100);
+}
+
+var challengeCooldownEnd=0; // timestamp when challenge can re-trigger
+
+function closeChallengeModal(){
+  clearInterval(cipherTimerInt);
+  challengeActive=false;currentChallenge=null;
+  document.getElementById('cipher-modal').classList.remove('open');
+  document.getElementById('code-editor-wrap').classList.remove('show');
+  document.getElementById('code-output-wrap').classList.remove('show');
+  document.getElementById('cm-data').style.display='';
+  document.getElementById('cipher-close-btn').style.display='none';
+  // Restore original cipher handlers
+  document.getElementById('c-submit').onclick=function(){submitCipherAnswer();};
+  document.getElementById('c-input').onkeydown=function(e){if(e.key==='Enter')submitCipherAnswer();};
+  gameState='playing';unmuteBGM();
+  battleCooldown=3; // 3s enemy cooldown after challenge
+  challengeCooldownEnd=Date.now()+5000; // 5s challenge cooldown
+  setTimeout(function(){canvas.requestPointerLock();},350);
+}
+
+// ═══════════════════════════════════
+//  CODE-INPUT BATTLE QUESTIONS
+// ═══════════════════════════════════
+const CODE_BATTLE_QS=[
+  {cat:'コード実行',diff:'normal',type:'code',
+   q:'以下を実行した結果は？',code:'print(len("Hello World"))',
+   ans:'11',expl:'スペース含めて11文字',hint:'スペースも1文字'},
+  {cat:'コード実行',diff:'normal',type:'code',
+   q:'以下を実行した結果は？',code:'nums = [1, 2, 3, 4, 5]\nprint(sum(nums))',
+   ans:'15',expl:'1+2+3+4+5 = 15',hint:'sum() で合計'},
+  {cat:'コード実行',diff:'normal',type:'code',
+   q:'以下を実行した結果は？',code:'text = "abcdef"\nprint(text[2:5])',
+   ans:'cde',expl:'インデックス2から4 → cde',hint:'スライス [2:5]'},
+  {cat:'コード実行',diff:'hard',type:'code',
+   q:'以下を実行した結果は？（数値で）',code:'result = [x for x in range(1, 21) if x % 3 == 0]\nprint(len(result))',
+   ans:'6',expl:'3,6,9,12,15,18 の6個',hint:'3の倍数の個数'},
+  {cat:'コード実行',diff:'hard',type:'code',
+   q:'以下を実行した結果は？',code:'d = {"a":1,"b":2,"c":3}\nkeys = sorted(d.keys(), reverse=True)\nprint("".join(keys))',
+   ans:'cba',expl:'逆順ソート → c,b,a → 結合',hint:'キーの逆順'},
+  {cat:'コード実行',diff:'hard',type:'code',
+   q:'以下を実行した結果は？（数値で）',code:'def f(n):\n    return n * 2 + 1\nprint(f(f(3)))',
+   ans:'15',expl:'f(3)=7, f(7)=15',hint:'関数の二重適用'},
+];
+
+
+// === battle.js ===
+// Battle System - Python Quiz Battles
+let battleActive=false, battleEnemy=null, battleQList=[], battleQIdx=0;
+let battleTimer=30, battleTimerInt=null, totalStreak=0, roundCorrect=0;
+const BATTLE_QCOUNT=3, BATTLE_TIME=30;
+
+function pickQuestions(fl){
+  let pool;
+  if(fl<=1) pool=QUESTIONS.filter(q=>q.diff==='easy');
+  else if(fl<=2) pool=QUESTIONS.filter(q=>q.diff!=='hard');
+  else if(fl<=3) pool=[...QUESTIONS];
+  else if(fl<=5) pool=QUESTIONS.filter(q=>q.diff!=='easy');
+  else pool=QUESTIONS.filter(q=>q.diff==='hard');
+  // Mix in code-input questions for floor 3+
+  if(fl>=3&&typeof CODE_BATTLE_QS!=='undefined'){
+    const codePool=fl>=5?CODE_BATTLE_QS:CODE_BATTLE_QS.filter(q=>q.diff==='normal');
+    pool=[...pool,...codePool];
+  }
+  return[...pool].sort(()=>Math.random()-.5).slice(0,BATTLE_QCOUNT);
+}
+
+function openBattle(e){
+  if(battleActive||cipherActive)return;
+  battleActive=true; battleEnemy=e; e.inBattle=true;
+  battleQList=pickQuestions(floor); battleQIdx=0; roundCorrect=0;
+  gameState='battle'; document.exitPointerLock(); playSound('battle'); muteBGM();
+  const ef=document.getElementById('encounter-flash');
+  [0,200,400].forEach(t=>{setTimeout(()=>{ef.classList.add('flash');setTimeout(()=>ef.classList.remove('flash'),120);},t);});
+  document.getElementById('b-enemy-avatar').textContent=e.avatar||'👹';
+  document.getElementById('b-enemy-name').textContent=e.name;
+  updateBattleHP();
+  document.getElementById('battle-modal').classList.add('open');
+  document.getElementById('battle-result').style.display='none';
+  // Disable escape if limit reached
+  const skipBtn=document.getElementById('battle-skip-btn');
+  if(escapeCount>=MAX_ESCAPES){
+    skipBtn.disabled=true;skipBtn.textContent='🚫 逃走不可（上限到達）';skipBtn.style.opacity='.3';
+  }else{
+    skipBtn.disabled=false;skipBtn.textContent=`💨 逃げる（HP-25%＋XP減 残り${MAX_ESCAPES-escapeCount}回）`;skipBtn.style.opacity='1';
+  }
+  loadQ();
+}
+
+function updateBattleHP(){
+  if(!battleEnemy)return;
+  const pct=Math.max(0,battleEnemy.hp/battleEnemy.maxHp*100);
+  document.getElementById('b-enemy-hp-txt').textContent=`HP ${battleEnemy.hp} / ${battleEnemy.maxHp}`;
+  document.getElementById('b-enemy-hp-bar').style.width=pct+'%';
+}
+
+function loadQ(){
+  const q=battleQList[battleQIdx];
+  if(!q){doVictory();return;}
+  document.getElementById('b-q-num').textContent=`Q${battleQIdx+1}/${battleQList.length}`;
+  document.getElementById('b-q-category').textContent=q.cat;
+  const d=document.getElementById('b-q-diff');
+  d.className='diff-badge diff-'+q.diff;
+  d.textContent={easy:'EASY',normal:'NORMAL',hard:'HARD'}[q.diff];
+  document.getElementById('b-question-text').textContent=q.q;
+  const c=document.getElementById('b-code-block');
+  if(q.code){c.style.display='block';c.textContent=q.code;}else c.style.display='none';
+  document.getElementById('battle-result').style.display='none';
+  const cg=document.getElementById('b-choices-grid'),ia=document.getElementById('b-input-area');
+  if(q.type==='choice'){
+    cg.style.display='grid';ia.style.display='none';cg.innerHTML='';
+    ['A','B','C','D'].forEach((l,i)=>{
+      if(i>=q.choices.length)return;
+      const b=document.createElement('button');b.className='choice-btn';
+      const ltr=document.createElement('span');ltr.className='choice-letter';ltr.textContent=l;
+      const code=document.createElement('code');code.textContent=q.choices[i];
+      b.appendChild(ltr);b.appendChild(code);
+      b.onclick=()=>submitChoice(i);cg.appendChild(b);
+    });
+  }else{
+    cg.style.display='none';ia.style.display='flex';
+    const inp=document.getElementById('battle-input');inp.value='';inp.disabled=false;
+    if(q.type==='code')inp.placeholder='💻 このコードの実行結果は？';
+    else inp.placeholder=q.hint?`ヒント: ${q.hint}`:'答えを入力…';
+    document.getElementById('battle-submit').disabled=false;
+    setTimeout(()=>inp.focus(),80);
+  }
+  document.getElementById('b-hint').textContent=q.hint?`💡 ${q.hint}`:'💡';
+  startBattleTimer();
+}
+
+function startBattleTimer(){
+  clearInterval(battleTimerInt); battleTimer=BATTLE_TIME;
+  const el=document.getElementById('battle-timer');el.classList.remove('danger');el.textContent=battleTimer;
+  battleTimerInt=setInterval(()=>{battleTimer--;el.textContent=battleTimer;if(battleTimer<=8)el.classList.add('danger');if(battleTimer<=0){clearInterval(battleTimerInt);bTimeOut();}},1000);
+}
+function stopBattleTimer(){clearInterval(battleTimerInt);document.getElementById('battle-timer').classList.remove('danger');}
+
+function submitChoice(idx){
+  const q=battleQList[battleQIdx];stopBattleTimer();
+  const bs=document.querySelectorAll('.choice-btn');bs.forEach(b=>b.classList.add('disabled'));
+  bs[q.ans].classList.add('correct');
+  if(idx===q.ans){bs[idx].classList.add('correct');onCorrect(q);}
+  else{bs[idx].classList.add('wrong');onWrong(q);}
+}
+function submitFreeAnswer(){
+  const q=battleQList[battleQIdx],v=document.getElementById('battle-input').value.trim();
+  if(!v)return;stopBattleTimer();
+  document.getElementById('battle-input').disabled=true;document.getElementById('battle-submit').disabled=true;
+  if(q.type==='code'){
+    // Code question: compare answer string
+    if(v.toLowerCase()===String(q.ans).toLowerCase())onCorrect(q);else onWrong(q);
+  }else{
+    if(v.toLowerCase()===String(q.ans).toLowerCase())onCorrect(q);else onWrong(q);
+  }
+}
+document.getElementById('battle-input').addEventListener('keydown',e=>{if(e.key==='Enter')submitFreeAnswer();});
+
+function calcDmg(q){
+  const base=player.attackPower,dm={easy:1,normal:1.6,hard:2.5}[q.diff];
+  const streak=1+roundCorrect*.25,speed=battleTimer>=20?1.4:battleTimer>=10?1:.75;
+  return Math.floor(base*dm*streak*speed);
+}
+function onCorrect(q){
+  roundCorrect++;totalStreak++;const dmg=calcDmg(q);
+  battleEnemy.hp=Math.max(0,battleEnemy.hp-dmg);updateBattleHP();
+  const sp=battleTimer>=20?' ⚡スピードボーナス！':'',st=roundCorrect>=2?` 🔥${roundCorrect}連続！`:'';
+  showBattleResult(true,`正解！ ${battleEnemy.name}に<strong>${dmg}ダメージ！</strong>${sp}${st}`,q.expl);
+  spawnParticles(player.x,player.z,'#44ff88',20);showMessage(`✅ 正解！ -${dmg}HP`,'#44ff88');playSound('correct');
+  if(battleEnemy.hp<=0)battleEnemy.dying=true;updateHUD();
+}
+function onWrong(q){
+  totalStreak=Math.max(0,totalStreak-1);roundCorrect=0;
+  const dmg=Math.floor(8+battleEnemy.atk*.6);player.hp=Math.max(0,player.hp-dmg);
+  const df=document.getElementById('damage-flash');df.classList.add('flash');setTimeout(()=>df.classList.remove('flash'),200);
+  const ca=q.type==='choice'?q.choices[q.ans]:q.ans;
+  showBattleResult(false,`不正解… <strong>${dmg}ダメージ！</strong>`,`正解: ${ca}　${q.expl}`);
+  showMessage('❌ 不正解…','#ff6666');playSound('wrong');updateHUD();
+  if(player.hp<=0)setTimeout(()=>{closeBattle();gameOver();},1500);
+}
+function bTimeOut(){
+  // Time out: fixed 50 damage instead of normal wrong damage
+  const q=battleQList[battleQIdx];
+  totalStreak=Math.max(0,totalStreak-1);roundCorrect=0;
+  const dmg=50;player.hp=Math.max(0,player.hp-dmg);
+  const df=document.getElementById('damage-flash');df.classList.add('flash');setTimeout(()=>df.classList.remove('flash'),200);
+  const ca=q.type==='choice'?q.choices[q.ans]:q.ans;
+  showBattleResult(false,`時間切れ… <strong>${dmg}ダメージ！</strong>`,`正解: ${ca}　${q.expl}`);
+  showMessage('⏰ 時間切れ…','#ff6666');playSound('wrong');updateHUD();
+  if(player.hp<=0)setTimeout(()=>{closeBattle();gameOver();},1500);
+}
+
+function showBattleResult(ok,msg,detail){
+  const el=document.getElementById('battle-result');el.style.display='flex';
+  el.className=ok?'correct-res':'wrong-res';
+  document.getElementById('r-icon').textContent=ok?'✅':'❌';
+  document.getElementById('r-msg').innerHTML=msg;
+  document.getElementById('r-detail').textContent=detail;
+}
+function battleContinue(){
+  if(battleEnemy&&battleEnemy.dying){doVictory();return;}
+  battleQIdx++;
+  if(battleQIdx>=battleQList.length){
+    if(battleEnemy&&battleEnemy.hp<=0){doVictory();}
+    else if(floor>=5){
+      // Floor 5+: enemy doesn't flee, load more questions
+      battleQList=pickQuestions(floor);battleQIdx=0;
+      showMessage('敵はまだ倒れない！ 追加問題！','#ff8844');
+      loadQ();
+    }else{battleEnd();}
+  }else loadQ();
+}
+function doVictory(){
+  stopBattleTimer();if(battleEnemy)killEnemy(battleEnemy);
+  closeBattle();showMessage(`⚔ 撃破！ 連続正解: ${roundCorrect}回`,'#ffdd44');
+}
+function battleEnd(){
+  // Enemy survived - battle ends, enemy stays alive
+  stopBattleTimer();
+  if(battleEnemy){battleEnemy.inBattle=false;}
+  battleEnemy=null;
+  closeBattle();
+  showMessage('敵が逃げた… HPを削りきれなかった！','#ff8844');
+}
+let escapeCount=0;
+const MAX_ESCAPES=2; // per floor
+function battleSkip(){
+  stopBattleTimer();
+  escapeCount++;
+  // Escalating penalty: 25% HP + loses XP
+  const hpPen=Math.floor(player.maxHp*(.25+escapeCount*.05));
+  const xpPen=Math.floor(player.xp*.15);
+  player.hp=Math.max(1,player.hp-hpPen);
+  player.xp=Math.max(0,player.xp-xpPen);
+  totalStreak=0;
+  if(battleEnemy)battleEnemy.inBattle=false;battleEnemy=null;
+  closeBattle();playSound('wrong');
+  showMessage(`💨 逃げた！ HP -${hpPen}, XP -${xpPen}`,'#ff8888');
+  if(escapeCount>=MAX_ESCAPES){
+    showMessage(`⚠ 逃走回数上限！次から逃げられません！`,'#ff4444');
+  }
+  updateHUD();
+}
+function closeBattle(){
+  battleActive=false;battleEnemy=null;
+  document.getElementById('battle-modal').classList.remove('open');
+  gameState='playing';
+  battleCooldown=3; // 3s cooldown after battle
+  setTimeout(function(){canvas.requestPointerLock();},350);
+  unmuteBGM();
+}
+
+// ═══════════════════════════════════
+//  CIPHER STATE
+// ═══════════════════════════════════
+
+
+// === cipher.js ===
+// Cipher System - Terminal Puzzle & Agent Phase
+let cipherActive=false, currentCipherStage=0, cipherTimerVal=90, cipherTimerInt=null;
+let cipherWrongCount=0, cipherSolved=false, startTime=0;
+let cipherPhase=1; // 1=passphrase, 2=agent
+let agentWrongCount=0, agentLockoutEnd=0, agentLockoutTimer=null;
+const MAX_AGENT_WRONG=5, LOCKOUT_SEC=300;
+
+function openCipherModal(){
+  if(cipherActive||cipherSolved||battleActive)return;
+  cipherActive=true;gameState='cipher';document.exitPointerLock();cipherPhase=1;muteBGM();
+  const s=CIPHER_STAGES[currentCipherStage];
+  document.getElementById('cm-avatar').textContent=s.avatar;
+  document.getElementById('cm-name').textContent='暗号ターミナル';
+  document.getElementById('cm-stage-sub').textContent=s.name;
+  document.getElementById('cm-mission').textContent=s.mission;
+  document.getElementById('cm-hint').textContent=s.hint;
+  document.getElementById('cm-footer').textContent=s.footer;
+  document.getElementById('cipher-close-btn').style.display='none';
+  cipherCodeRan=false; // must run code before submitting
+  // Show in-game editor if stage has template (hide raw data block)
+  if(s.template){
+    document.getElementById('cm-data').style.display='none';
+    document.getElementById('code-editor-wrap').classList.add('show');
+    document.getElementById('code-editor').value=s.template;
+    document.getElementById('code-editor').disabled=false;
+    document.getElementById('code-output-wrap').classList.remove('show');
+    document.getElementById('code-run-btn').onclick=async()=>{
+      try{
+        const result=miniPyEval(document.getElementById('code-editor').value);
+        document.getElementById('code-output-wrap').classList.add('show');
+        document.getElementById('code-output').textContent=result||'(出力なし)';
+        if(result.startsWith('Error')){
+          document.getElementById('code-output').style.color='#ff6666';
+        }else{
+          cipherCodeRan=true;
+          // Check if output matches passphrase
+          const h=await sha256(result.trim().toUpperCase());
+          if(h===s.passHash){
+            document.getElementById('code-output').style.color='#44ff88';
+            document.getElementById('code-output').textContent=result+'\n\n✅ 正解！ このパスフレーズを下に入力してください';
+            document.getElementById('c-input').value=result.trim();
+            document.getElementById('c-input').focus();
+            playSound('correct');
+          }else{
+            document.getElementById('code-output').style.color='#ffaa88';
+          }
+        }
+      }catch(e){
+        document.getElementById('code-output-wrap').classList.add('show');
+        document.getElementById('code-output').textContent='Error: '+e.message;
+        document.getElementById('code-output').style.color='#ff6666';
+      }
+    };
+  }else{
+    document.getElementById('cm-data').textContent=s.data;
+    document.getElementById('cm-data').style.display='';
+    document.getElementById('code-editor-wrap').classList.remove('show');
+    document.getElementById('code-output-wrap').classList.remove('show');
+    cipherCodeRan=true; // no template = no run required
+  }
+  document.getElementById('c-input').value='';document.getElementById('c-input').disabled=false;
+  document.getElementById('c-submit').disabled=false;
+  document.getElementById('c-result').style.display='none';document.getElementById('c-result').className='';
+  document.getElementById('secret-reveal').classList.remove('show');
+  document.getElementById('cm-input-row').style.display='flex';
+  document.getElementById('agent-phase').classList.remove('show');
+  document.getElementById('agent-result').style.display='none';
+  document.getElementById('agent-lockout').classList.remove('show');
+  cipherWrongCount=0;
+  document.getElementById('cipher-modal').classList.add('open');
+  startCipherTimer();setTimeout(()=>document.getElementById('c-input').focus(),100);
+}
+function startCipherTimer(){
+  clearInterval(cipherTimerInt);cipherTimerVal=300+currentCipherStage*60; // 5min base + 1min per stage
+  const el=document.getElementById('cipher-timer');el.classList.remove('danger');
+  const fmtTime=(s)=>{const m=Math.floor(s/60);return m>0?`${m}:${String(s%60).padStart(2,'0')}`:String(s);};
+  el.textContent=fmtTime(cipherTimerVal);
+  cipherTimerInt=setInterval(()=>{cipherTimerVal--;el.textContent=fmtTime(cipherTimerVal);
+    if(cipherTimerVal<=30)el.classList.add('danger');
+    if(cipherTimerVal<=0){clearInterval(cipherTimerInt);cipherTimeOut();}
+  },1000);
+}
+function stopCipherTimer(){clearInterval(cipherTimerInt);document.getElementById('cipher-timer').classList.remove('danger');}
+
+let cipherCodeRan=false;
+async function submitCipherAnswer(){
+  const v=document.getElementById('c-input').value.trim().toUpperCase();if(!v)return;
+  if(!cipherCodeRan){showMessage('⚠ まずコードを実行してください！','#ff8844');return;}
+  stopCipherTimer();const s=CIPHER_STAGES[currentCipherStage],h=await sha256(v);
+  const r=document.getElementById('c-result');
+  if(h===s.passHash){
+    r.style.display='flex';r.className='correct-res';
+    document.getElementById('cr-icon').textContent='✅';
+    document.getElementById('cr-msg').innerHTML=`<strong>パスフレーズ認証成功！</strong> 機密情報を表示します…`;
+    document.getElementById('c-input').disabled=true;document.getElementById('c-submit').disabled=true;
+    document.getElementById('cm-input-row').style.display='none';
+    document.getElementById('c-continue-btn').style.display='none';
+    spawnParticles(player.x,player.z,'#44ff88',20);
+    showMessage(`✅ Phase1クリア！`,'#44ff88');
+    // Show secret data + agent phase after delay
+    setTimeout(()=>{
+      document.getElementById('secret-title').textContent=s.secretTitle;
+      document.getElementById('encoding-hint').textContent=s.encodingHint||'';
+      document.getElementById('secret-data').textContent=s.secretData;
+      document.getElementById('secret-instruction').textContent=s.secretInstruction||'';
+      document.getElementById('secret-reveal').classList.add('show');
+      // Show agent phase
+      document.getElementById('agent-instruction').textContent=s.agentInstruction;
+      document.getElementById('agent-phase').classList.add('show');
+      document.getElementById('agent-input').value='';
+      document.getElementById('agent-input').disabled=false;
+      document.getElementById('agent-submit').disabled=false;
+      document.getElementById('agent-result').style.display='none';
+      document.getElementById('agent-input-row').style.display='flex';
+      agentWrongCount=0;
+      cipherPhase=2;
+      setTimeout(()=>document.getElementById('agent-input').focus(),100);
+    },700);
+  }else{
+    cipherWrongCount++;r.style.display='flex';r.className='wrong-res';
+    document.getElementById('cr-icon').textContent='❌';
+    const remain=3-cipherWrongCount;
+    if(remain>0){
+      document.getElementById('cr-msg').innerHTML=`不正解… (${cipherWrongCount}/3回) あと${remain}回で休憩`;
+      document.getElementById('c-continue-btn').style.display='inline-block';
+      document.getElementById('c-continue-btn').textContent='再挑戦 ▶';
+      document.getElementById('c-continue-btn').onclick=()=>{
+        r.style.display='none';document.getElementById('c-input').value='';startCipherTimer();document.getElementById('c-input').focus();
+      };
+    }else{
+      // 3回不正解 → 強制休憩
+      document.getElementById('cr-msg').innerHTML='3回不正解… 休憩してからもう一度挑戦しよう。';
+      document.getElementById('c-continue-btn').style.display='inline-block';
+      document.getElementById('c-continue-btn').textContent='閉じる';
+      document.getElementById('c-continue-btn').onclick=()=>{
+        closeCipherModal();cipherWrongCount=0;
+        // Trigger death-like rest (but shorter - 2 min)
+        gameState='dead';document.exitPointerLock();
+        document.getElementById('overlay-title').textContent='☕ 休憩タイム';
+        document.getElementById('overlay-title').style.color='#ffcc00';
+        document.getElementById('overlay-btn').style.display='none';
+        const endTime=Date.now()+120000; // 2 minutes
+        const restInt=setInterval(()=>{
+          const rem=Math.max(0,Math.ceil((endTime-Date.now())/1000));
+          const m=Math.floor(rem/60),s=rem%60;
+          document.getElementById('overlay-sub').innerHTML=
+            `<span style="font-size:16px;color:#ffcc00;">暗号解読に3回失敗しました</span><br><br>`+
+            `<span style="font-size:48px;font-family:'Cinzel Decorative',serif;color:#ffcc00;">${m}:${String(s).padStart(2,'0')}</span><br><br>`+
+            `<span style="color:#aaa;font-size:14px;">少し休憩して、コードを見直しましょう！</span>`;
+          if(rem<=0){
+            clearInterval(restInt);
+            totalPausedMs+=120000;
+            document.getElementById('overlay-title').textContent='🔄 再挑戦！';
+            document.getElementById('overlay-title').style.color='#44ff88';
+            document.getElementById('overlay-sub').innerHTML='休憩完了！ ターミナルに近づいて再挑戦しよう。';
+            document.getElementById('overlay-btn').style.display='inline-block';
+            document.getElementById('overlay-btn').textContent='続行する';
+            document.getElementById('overlay-btn').onclick=()=>{
+              document.getElementById('overlay-screen').classList.remove('show');
+              document.getElementById('overlay-btn').onclick=restartGame;
+              gameState='playing';canvas.requestPointerLock();updateHUD();
+            };
+          }
+        },1000);
+        document.getElementById('overlay-screen').classList.add('show');
+      };
+    }
+  }
+}
+
+async function submitAgentAnswer(){
+  if(agentLockoutEnd>Date.now())return;
+  const v=document.getElementById('agent-input').value.trim().toUpperCase();if(!v)return;
+  const s=CIPHER_STAGES[currentCipherStage],h=await sha256(v);
+  const r=document.getElementById('agent-result');
+  if(h===s.ansHash){
+    r.style.display='flex';r.className='correct-res';
+    document.getElementById('ar-icon').textContent='✅';
+    document.getElementById('ar-msg').innerHTML=`<strong>正解！</strong> 次のステージへ進みます…`;
+    document.getElementById('agent-input').disabled=true;document.getElementById('agent-submit').disabled=true;
+    document.getElementById('agent-input-row').style.display='none';
+    cipherSolved=true;agentWrongCount=0;
+    spawnParticles(player.x,player.z,'#44ff88',30);
+    showMessage(`🔓 STAGE ${currentCipherStage+1} 完全クリア！`,'#44ff88');
+  }else{
+    agentWrongCount++;const remain=MAX_AGENT_WRONG-agentWrongCount;
+    if(remain>0){
+      r.style.display='flex';r.className='wrong-res';
+      document.getElementById('ar-icon').textContent='❌';
+      document.getElementById('ar-msg').innerHTML=`不正解… 残り${remain}回（5回間違えると5分間ロック）`;
+      document.getElementById('agent-continue-btn').style.display='none';
+    }else{
+      r.style.display='none';startAgentLockout();
+    }
+  }
+}
+
+function startAgentLockout(){
+  agentLockoutEnd=Date.now()+LOCKOUT_SEC*1000;
+  document.getElementById('agent-input-row').style.display='none';
+  document.getElementById('agent-lockout').classList.add('show');
+  tickAgentLockout();
+  if(agentLockoutTimer)clearInterval(agentLockoutTimer);
+  agentLockoutTimer=setInterval(tickAgentLockout,1000);
+}
+function tickAgentLockout(){
+  const rem=Math.max(0,Math.ceil((agentLockoutEnd-Date.now())/1000));
+  const m=Math.floor(rem/60),s=rem%60;
+  document.getElementById('lock-timer').textContent=`${m}:${String(s).padStart(2,'0')}`;
+  if(rem<=0){
+    clearInterval(agentLockoutTimer);agentLockoutTimer=null;agentLockoutEnd=0;agentWrongCount=0;
+    document.getElementById('agent-lockout').classList.remove('show');
+    document.getElementById('agent-input-row').style.display='flex';
+    document.getElementById('agent-input').value='';document.getElementById('agent-input').disabled=false;
+    document.getElementById('agent-submit').disabled=false;
+    document.getElementById('agent-result').style.display='none';
+  }
+}
+
+document.getElementById('agent-input').addEventListener('keydown',e=>{if(e.key==='Enter')submitAgentAnswer();});
+
+function agentComplete(){
+  closeCipherModal();
+  const b=document.createElement('div');b.className='stage-clear-banner';
+  b.innerHTML=`<h2>🔓 STAGE ${currentCipherStage+1} CLEAR!</h2><p>${CIPHER_STAGES[currentCipherStage].name} — 完全解読</p>`;
+  document.body.appendChild(b);setTimeout(()=>b.remove(),3000);
+  // Remove terminal
+  if(terminalMesh){scene.remove(terminalMesh);terminalMesh=null;}
+  if(terminalLight){scene.remove(terminalLight);terminalLight=null;}
+  if(terminalGlow){scene.remove(terminalGlow);terminalGlow=null;}
+  // Rebuild portal as solved (epic beam)
+  if(stairMesh){
+    scene.remove(stairMesh);if(stairLight)scene.remove(stairLight);
+    // Rebuild with beam
+    const sx=dungeon.stairX*TILE,sz=dungeon.stairY*TILE;
+    const pg=new THREE.Group();
+    const bm=new THREE.MeshStandardMaterial({color:0x3a6a3a,roughness:.6,metalness:.3});
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(1.2,.15,8,16),bm);ring.rotation.x=-Math.PI/2;ring.position.y=.05;pg.add(ring);
+    const plat=new THREE.Mesh(new THREE.CylinderGeometry(1.0,1.2,.12,12),bm);plat.position.y=.06;pg.add(plat);
+    const pm=new THREE.MeshStandardMaterial({color:0x446644,emissive:0x1a3a1a,emissiveIntensity:.4,roughness:.5,metalness:.2});
+    for(let i=0;i<4;i++){
+      const a=i*Math.PI/2;
+      const p=new THREE.Mesh(new THREE.BoxGeometry(.18,2.2,.18),pm);p.position.set(Math.cos(a)*1.0,1.1,Math.sin(a)*1.0);pg.add(p);
+      const orb=new THREE.Mesh(new THREE.SphereGeometry(.12,8,8),new THREE.MeshStandardMaterial({color:0x44ff44,emissive:0x22ff22,emissiveIntensity:3,transparent:true,opacity:.8}));
+      orb.position.set(Math.cos(a)*1.0,2.3,Math.sin(a)*1.0);pg.add(orb);
+    }
+    const beamMat=new THREE.MeshStandardMaterial({color:0x44ff88,emissive:0x22ff44,emissiveIntensity:3,transparent:true,opacity:.3});
+    pg.add(new THREE.Mesh(new THREE.CylinderGeometry(.15,.15,3,8),beamMat));
+    pg.children[pg.children.length-1].position.y=1.5;
+    const bm2=beamMat.clone();bm2.opacity=.1;
+    pg.add(new THREE.Mesh(new THREE.CylinderGeometry(.4,.4,2.5,8),bm2));
+    pg.children[pg.children.length-1].position.y=1.5;
+    pg.position.set(sx,0,sz);scene.add(pg);stairMesh=pg;
+    stairLight=new THREE.PointLight(0x44ff44,4,12);stairLight.position.set(sx,2.5,sz);scene.add(stairLight);
+  }
+  playSound('clear');
+  showMessage('脱出口が開放された！光の柱へ向かえ！','#44ffaa');updateHUD();
+  saveProgress();
+}
+
+function cipherTimeOut(){
+  document.getElementById('c-input').disabled=true;document.getElementById('c-submit').disabled=true;
+  closeCipherModal();
+  // 3 minute review time
+  gameState='dead';document.exitPointerLock();
+  document.getElementById('overlay-title').textContent='⏰ 時間切れ';
+  document.getElementById('overlay-title').style.color='#ffcc00';
+  document.getElementById('overlay-btn').style.display='none';
+  const endTime=Date.now()+180000;
+  const revInt=setInterval(()=>{
+    const rem=Math.max(0,Math.ceil((endTime-Date.now())/1000));
+    const m=Math.floor(rem/60),s=rem%60;
+    document.getElementById('overlay-sub').innerHTML=
+      `<span style="font-size:16px;color:#ffcc00;">暗号の制限時間を超えました</span><br><br>`+
+      `<span style="font-size:48px;font-family:'Cinzel Decorative',serif;color:#ffcc00;">${m}:${String(s).padStart(2,'0')}</span><br><br>`+
+      `<span style="color:#aaa;font-size:14px;">📝 プログラムを見直す時間です！<br>stage${Math.min(currentCipherStage+1,6)}.py のコードを確認しましょう。<br>ヒントを読み直してみてください。</span>`;
+    if(rem<=0){
+      clearInterval(revInt);
+      totalPausedMs+=180000;
+      document.getElementById('overlay-title').textContent='🔄 再挑戦！';
+      document.getElementById('overlay-title').style.color='#44ff88';
+      document.getElementById('overlay-sub').innerHTML='見直し完了！ ターミナルに近づいて再挑戦しよう。';
+      document.getElementById('overlay-btn').style.display='inline-block';
+      document.getElementById('overlay-btn').textContent='続行する';
+      document.getElementById('overlay-btn').onclick=()=>{
+        document.getElementById('overlay-screen').classList.remove('show');
+        document.getElementById('overlay-btn').onclick=restartGame;
+        gameState='playing';canvas.requestPointerLock();updateHUD();
+      };
+    }
+  },1000);
+  document.getElementById('overlay-screen').classList.add('show');
+}
+
+function closeCipherModal(){
+  cipherActive=false;cipherPhase=1;
+  document.getElementById('cipher-modal').classList.remove('open');
+  document.getElementById('code-editor-wrap').classList.remove('show');
+  document.getElementById('code-output-wrap').classList.remove('show');
+  document.getElementById('cm-data').style.display='';
+  gameState='playing';
+  battleCooldown=3; // 3s enemy cooldown after cipher
+  setTimeout(function(){canvas.requestPointerLock();},350);
+  unmuteBGM();
+}
+document.getElementById('c-input').addEventListener('keydown',e=>{if(e.key==='Enter')submitCipherAnswer();});
+
+// ═══════════════════════════════════
+//  THREE.JS 3D ENGINE
+// ═══════════════════════════════════
+
+
+// === score.js ===
+// Score Calculation, Game Completion, Extra Stage
+function calcScore(forceS){
+  const elapsed=~~((Date.now()-startTime-totalPausedMs)/1000);
+  const timeScore=elapsed<1800?400:elapsed<2700?Math.max(0,400-((elapsed-1800)/900)*100):elapsed<3600?Math.max(0,300-((elapsed-2700)/900)*100):elapsed<5400?Math.max(0,200-((elapsed-3600)/1800)*100):50;
+  const xpScore=Math.min(350,(player.level-1)*35+player.kills*8);
+  const streakScore=Math.min(250,totalStreak*12);
+  let total=~~(timeScore+xpScore+streakScore);
+  let rank,rankColor;
+  if(forceS){rank='S';rankColor='#ffdd00';total=1000;}
+  else if(total>=750){rank='S';rankColor='#ffdd00';}
+  else if(total>=600){rank='A';rankColor='#00ff41';}
+  else if(total>=450){rank='B';rankColor='#44aaff';}
+  else if(total>=300){rank='C';rankColor='#ff8844';}
+  else if(total>=150){rank='D';rankColor='#cc88cc';}
+  else{rank='E';rankColor='#888888';}
+  return{elapsed,timeScore:~~timeScore,xpScore:~~xpScore,streakScore:~~streakScore,total,rank,rankColor};
+}
+
+function gameComplete(){
+  gameState='complete';document.exitPointerLock();stopBGM();
+  const isExtra=currentCipherStage>=6;
+  const sc=calcScore(isExtra); // Extra clear = forced S rank
+  const min=~~(sc.elapsed/60),sec=sc.elapsed%60;
+  const statsLine=`<span style="font-size:14px;color:#888;">タイム: ${min}分${sec}秒 (${sc.timeScore}pts) | 戦闘XP (${sc.xpScore}pts) | 連続正解 (${sc.streakScore}pts)</span><br>`+
+    `<span style="font-size:14px;color:#888;">Lv.${player.level} | ${player.kills}体撃破 | 🔥${totalStreak}連続正解</span>`;
+
+  if(isExtra){
+    // TRUE ENDING
+    playSound('truefanfare');
+    document.getElementById('overlay-title').innerHTML=`🔥 TRUE ESCAPE 🔥`;
+    document.getElementById('overlay-title').style.color='#ff8800';
+    document.getElementById('overlay-sub').innerHTML=
+      `<span style="font-size:80px;display:block;margin-bottom:12px;color:#ffdd00;text-shadow:0 0 40px #ffdd00;font-family:'Cinzel Decorative',serif;">RANK S</span>`+
+      `<span style="font-size:28px;color:#ffdd00;">PERFECT CLEAR</span><br><br>`+
+      statsLine+`<br><br>`+
+      `<span style="color:#ffcc88;font-size:15px;line-height:1.8;">全エージェントの帰還指令を復号した。<br>`+
+      `SHADOW NETWORKの全データを奪還し、<br>`+
+      `攻撃者の痕跡を突き止めた。<br><br>`+
+      `<span style="color:#ff8800;">君は真のエージェントだ。</span></span>`;
+    document.getElementById('overlay-btn').textContent='もう一度挑戦する';
+    document.getElementById('overlay-btn').style.display='inline-block';
+    document.getElementById('overlay-btn').onclick=restartGame;
+  }else{
+    // NORMAL ENDING
+    playSound('fanfare');
+    document.getElementById('overlay-title').innerHTML=`🔓 MISSION COMPLETE 🔓`;
+    document.getElementById('overlay-title').style.color='#00ff41';
+    document.getElementById('overlay-sub').innerHTML=
+      `<span style="font-size:72px;display:block;margin-bottom:12px;color:${sc.rankColor};text-shadow:0 0 30px ${sc.rankColor};font-family:'Cinzel Decorative',serif;">RANK ${sc.rank}</span>`+
+      `<span style="font-size:28px;color:${sc.rankColor};">${sc.total}pts</span><br><br>`+
+      statsLine+`<br><br>`+
+      `<span style="font-size:15px;color:#88ffaa;line-height:1.8;">ミッション完了。<br>`+
+      `5つの暗号を解読し、脱出コードを手に入れた。<br>`+
+      `エージェントの配置情報、作戦データ、優先度マップ、<br>`+
+      `緊急連絡プロトコル… すべてのデータを繋ぎ、<br>`+
+      `SHADOW NETWORKからの脱出に成功した。</span><br><br>`+
+      `<span style="font-size:13px;color:#668866;">習得スキル：リスト操作 / chr関数 / 辞書ソート / 文字列処理 / 関数パイプライン</span><br><br>`+
+      `<span style="font-size:11px;color:#555;cursor:pointer;text-decoration:underline;" onclick="document.getElementById('extra-reveal').style.display='block'">…しかし、施設の最深部にもう一つの階層があるという噂が…</span>`+
+      `<div id="extra-reveal" style="display:none;margin-top:16px;">`+
+      `<p style="color:#ff8844;font-size:12px;margin-bottom:10px;">帰還指令がまだ復号されていない。全エージェントが危険な状態だ。</p>`+
+      `<button onclick="startExtraStage()" style="font-family:'Cinzel',serif;font-size:14px;letter-spacing:3px;color:#000;background:linear-gradient(135deg,#ff8844,#cc4400);border:none;padding:12px 36px;cursor:pointer;border-radius:3px;box-shadow:0 0 20px rgba(255,100,0,.5);">🔥 EXTRA STAGE — 帰還指令を復号する 🔥</button></div>`;
+    document.getElementById('overlay-btn').textContent='終了する';
+    document.getElementById('overlay-btn').style.display='inline-block';
+    document.getElementById('overlay-btn').onclick=resetToTitle;
+  }
+  document.getElementById('overlay-screen').classList.add('show');
+}
+
+function startExtraStage(){
+  document.getElementById('overlay-screen').classList.remove('show');
+  document.getElementById('overlay-btn').onclick=restartGame;
+  floor++;cipherSolved=false;escapeCount=0;
+  playSound('battle');
+  showMessage('🔥 最高機密区画「不死鳥の炉」','#ff4400');
+  showMessage('帰還指令を復号せよ。全エージェントの命がかかっている。','#ff8844');
+  dungeon=genDungeon();buildScene();
+  gameState='playing';canvas.requestPointerLock();
+  updateHUD();saveProgress();
+  startBGM(floor);
+}
+
+
+// === death.js ===
+// Death Penalty & Game Over
+const DEATH_PENALTY_SEC=300; // 5 minutes
+let deathTimerInt=null;
+let deathStartedAt=0;
+
+function gameOver(){
+  // Clear any existing death timer
+  if(deathTimerInt){clearInterval(deathTimerInt);deathTimerInt=null;}
+
+  gameState='dead';
+  deathStartedAt=Date.now();
+  document.exitPointerLock();
+  playSound('wrong');
+
+  document.getElementById('overlay-title').textContent='☠ DEAD';
+  document.getElementById('overlay-title').style.color='#cc2222';
+  document.getElementById('overlay-btn').style.display='none';
+
+  const endTime=Date.now()+DEATH_PENALTY_SEC*1000;
+
+  function updateDeathTimer(){
+    const remaining=Math.max(0,Math.ceil((endTime-Date.now())/1000));
+    const m=Math.floor(remaining/60);
+    const s=remaining%60;
+    document.getElementById('overlay-sub').innerHTML=
+      `<span style="font-size:14px;">Floor ${floor} | Lv.${player.level} | ${player.kills}体撃破 | Stage ${Math.min(currentCipherStage+1,CIPHER_STAGES.length)}/${CIPHER_STAGES.length}</span><br><br>`+
+      `<span style="color:#ff4444;font-size:16px;">☕ 休憩タイム：5分間の強制休憩です</span><br>`+
+      `<span style="font-size:48px;font-family:'Cinzel Decorative',serif;color:#ffcc00;text-shadow:0 0 15px rgba(255,200,0,.5);">${m}:${String(s).padStart(2,'0')}</span><br><br>`+
+      `<span style="color:#aaa;font-size:14px;">HPが0になりました。<br>少し休憩して、リフレッシュしましょう！<br>復活後はスポーン地点に戻ります。</span>`;
+
+    if(remaining<=0){
+      clearInterval(deathTimerInt);deathTimerInt=null;
+      // Add death time to paused time (don't count toward score)
+      totalPausedMs+=Date.now()-deathStartedAt;
+      // Revive
+      player.hp=~~(player.maxHp*.5);player.mp=~~(player.maxMp*.5);
+      player.xp=Math.max(0,player.xp-~~(player.xpNext*.2));
+      const r0=dungeon.rooms[0];
+      player.x=(r0.x+~~(r0.w/2))*TILE;player.z=(r0.y+~~(r0.h/2))*TILE;
+      player.yaw=0;player.pitch=0;
+      camera.position.set(player.x,1.2,player.z);
+      document.getElementById('overlay-title').textContent='🔄 復活！';
+      document.getElementById('overlay-title').style.color='#44ff88';
+      document.getElementById('overlay-sub').innerHTML=
+        `HP 50% / MP 50% で復活しました。<br>XP -20% のペナルティ。<br>スポーン地点に戻りました。<br><br>気を取り直して先に進みましょう！`;
+      document.getElementById('overlay-btn').style.display='inline-block';
+      document.getElementById('overlay-btn').textContent='続行する';
+      document.getElementById('overlay-btn').onclick=()=>{
+        document.getElementById('overlay-screen').classList.remove('show');
+        document.getElementById('overlay-btn').onclick=restartGame;
+        gameState='playing';canvas.requestPointerLock();
+        updateHUD();showMessage('復活！ スポーン地点から再出発！','#44ff88');playSound('levelup');
+      };
+    }
+  }
+
+  updateDeathTimer();
+  document.getElementById('overlay-screen').classList.add('show');
+  deathTimerInt=setInterval(updateDeathTimer,1000);
+}
+
+
+// === sound.js ===
+// Sound System - SFX (Web Audio API) + BGM (MP3 files)
+let audioCtx=null;
+function ensureAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();}
+
+function playTone(freq,dur,type='sine',vol=.15){
+  ensureAudio();const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(vol,audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+dur);
+  o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+dur);
+}
+
+function playSound(name){
+  try{
+    if(name==='hit'){playTone(200,.15,'sawtooth',.1);setTimeout(()=>playTone(150,.1,'sawtooth',.08),50);}
+    else if(name==='correct'){playTone(523,.1,'sine',.12);setTimeout(()=>playTone(659,.1,'sine',.12),100);setTimeout(()=>playTone(784,.2,'sine',.12),200);}
+    else if(name==='wrong'){playTone(200,.2,'square',.1);setTimeout(()=>playTone(150,.3,'square',.08),150);}
+    else if(name==='clear'){playTone(523,.15,'sine',.15);setTimeout(()=>playTone(659,.15,'sine',.15),120);setTimeout(()=>playTone(784,.15,'sine',.15),240);setTimeout(()=>playTone(1047,.4,'sine',.15),360);}
+    else if(name==='levelup'){playTone(440,.1,'sine',.12);setTimeout(()=>playTone(554,.1,'sine',.12),80);setTimeout(()=>playTone(659,.1,'sine',.12),160);setTimeout(()=>playTone(880,.3,'sine',.15),240);}
+    else if(name==='pickup'){playTone(880,.08,'sine',.1);setTimeout(()=>playTone(1100,.1,'sine',.08),60);}
+    else if(name==='step'){playTone(80+Math.random()*40,.05,'triangle',.03);}
+    else if(name==='portal'){playTone(330,.3,'sine',.1);setTimeout(()=>playTone(440,.3,'sine',.1),200);setTimeout(()=>playTone(550,.5,'sine',.12),400);}
+    else if(name==='battle'){playTone(300,.1,'sawtooth',.12);setTimeout(()=>playTone(400,.1,'sawtooth',.12),80);setTimeout(()=>playTone(500,.15,'sawtooth',.1),160);}
+    else if(name==='swap'){playTone(660,.1,'sine',.1);setTimeout(()=>playTone(880,.15,'sine',.12),100);}
+    // Stage 5 clear fanfare
+    else if(name==='fanfare'){
+      const v=.2;
+      playTone(523,.2,'sine',v);
+      setTimeout(()=>playTone(659,.2,'sine',v),200);
+      setTimeout(()=>playTone(784,.2,'sine',v),400);
+      setTimeout(()=>playTone(1047,.4,'sine',v),600);
+      setTimeout(()=>{playTone(784,.15,'sine',v);playTone(1047,.15,'sine',v*.7);},900);
+      setTimeout(()=>{playTone(1047,.6,'sine',v);playTone(1319,.6,'sine',v*.7);},1100);
+    }
+    // Stage 6 TRUE ESCAPE - loud, long, unmistakable
+    else if(name==='truefanfare'){
+      const v=.35; // loud!
+      // Chord 1: C major
+      playTone(523,.3,'sine',v);playTone(659,.3,'sine',v*.8);playTone(784,.3,'sine',v*.6);
+      // Chord 2: F major
+      setTimeout(()=>{playTone(698,.3,'sine',v);playTone(880,.3,'sine',v*.8);playTone(1047,.3,'sine',v*.6);},350);
+      // Chord 3: G major
+      setTimeout(()=>{playTone(784,.3,'sine',v);playTone(988,.3,'sine',v*.8);playTone(1175,.3,'sine',v*.6);},700);
+      // Chord 4: C major high - BIG
+      setTimeout(()=>{playTone(1047,.6,'sine',v);playTone(1319,.6,'sine',v*.8);playTone(1568,.6,'sine',v*.6);},1050);
+      // Arpeggio up
+      setTimeout(()=>playTone(1047,.15,'sine',v),1700);
+      setTimeout(()=>playTone(1319,.15,'sine',v),1850);
+      setTimeout(()=>playTone(1568,.15,'sine',v),2000);
+      setTimeout(()=>{playTone(2093,.8,'sine',v);playTone(1568,.8,'sine',v*.7);playTone(1047,.8,'sine',v*.5);},2150);
+    }
+  }catch(e){}
+}
+
+// ═══════════════════════════════════
+//  BGM SYSTEM (MP3 files in audio/)
+// ═══════════════════════════════════
+// Place MP3 files as: audio/bgm1.mp3 ~ audio/bgm6.mp3
+// If a file doesn't exist, that floor plays in silence.
+// Try .mp3 first (Safari), then .ogg (Chrome/Firefox)
+const BGM_BASES=['audio/bgm1','audio/bgm2','audio/bgm3','audio/bgm4','audio/bgm5','audio/bgm6'];
+const BGM_VOL=0.15; // master BGM volume
+const BGM_VOL_MUTED=0.04; // during battle/cipher
+let bgmAudio=null;
+let bgmPlaying=false;
+let bgmCurrentFloor=-1;
+
+function startBGM(floorNum){
+  if(bgmPlaying && bgmCurrentFloor===floorNum) return;
+  stopBGM();
+  bgmCurrentFloor=floorNum;
+  const base=BGM_BASES[(floorNum-1)%BGM_BASES.length];
+  // Determine supported format
+  const testA=new Audio();
+  const canMP3=testA.canPlayType('audio/mpeg')!=='';
+  const canOGG=testA.canPlayType('audio/ogg')!=='';
+  const exts=[];
+  if(canMP3)exts.push('.mp3');
+  if(canOGG)exts.push('.ogg');
+  if(!exts.length){bgmPlaying=false;return;}
+  // Try each extension
+  function tryExt(i){
+    if(i>=exts.length){bgmPlaying=false;return;}
+    const a=new Audio(base+exts[i]);
+    a.loop=true;a.volume=BGM_VOL;
+    a.play().then(()=>{bgmAudio=a;bgmPlaying=true;}).catch(()=>tryExt(i+1));
+  }
+  tryExt(0);
+}
+
+function stopBGM(){
+  if(bgmAudio){
+    bgmAudio.pause();
+    bgmAudio.currentTime=0;
+    bgmAudio=null;
+  }
+  bgmPlaying=false;
+  bgmCurrentFloor=-1;
+}
+
+function setBGMVolume(vol){
+  if(bgmAudio) bgmAudio.volume=vol;
+}
+
+function muteBGM(){setBGMVolume(BGM_VOL_MUTED);}
+function unmuteBGM(){setBGMVolume(BGM_VOL);}
+
+
+// === save.js ===
+// Save/Load System (localStorage)
+// ═══════════════════════════════════
+//  SAVE / LOAD (localStorage)
+// ═══════════════════════════════════
+function saveProgress(){
+  const data={floor,currentCipherStage,cipherSolved,player:{level:player.level,xp:player.xp,xpNext:player.xpNext,hp:player.hp,maxHp:player.maxHp,mp:player.mp,maxMp:player.maxMp,kills:player.kills,attackPower:player.attackPower,defense:player.defense},totalStreak,startTime};
+  localStorage.setItem('cipherDungeonSave',JSON.stringify(data));
+}
+function loadProgress(){
+  const raw=localStorage.getItem('cipherDungeonSave');
+  if(!raw)return false;
+  try{
+    const d=JSON.parse(raw);
+    floor=d.floor||1;currentCipherStage=d.currentCipherStage||0;cipherSolved=d.cipherSolved||false;
+    totalStreak=d.totalStreak||0;startTime=d.startTime||Date.now();
+    if(d.player){
+      player.level=d.player.level||1;player.xp=d.player.xp||0;player.xpNext=d.player.xpNext||100;
+      player.hp=d.player.hp||100;player.maxHp=d.player.maxHp||100;
+      player.mp=d.player.mp||50;player.maxMp=d.player.maxMp||50;
+      player.kills=d.player.kills||0;
+      player.attackPower=d.player.attackPower||22;player.defense=d.player.defense||5;
+    }
+    return true;
+  }catch(e){return false;}
+}
+function clearSave(){localStorage.removeItem('cipherDungeonSave');}
+
+
+
+// === gameloop.js ===
+// Game Loop, Input, Pause System
+
+// Cache DOM elements (avoid getElementById every frame)
+const _elApproach=document.getElementById('approach-indicator');
+const _elApproachText=document.getElementById('approach-text');
+const _elApproachRing=document.querySelector('.approach-ring');
+const _elMinimap=document.getElementById('minimap');
+const _elMinimapCD=document.getElementById('minimap-countdown');
+
+function updateCDs(dt){
+  player.skills.forEach((s,i)=>{
+    if(s.cd>0)s.cd=Math.max(0,s.cd-dt);
+    const slot=document.getElementById('skills-hud').children[i];
+    let cdEl=slot.querySelector('.skill-cooldown');
+    if(s.cd>0){if(!cdEl){cdEl=document.createElement('div');cdEl.className='skill-cooldown';slot.appendChild(cdEl);}cdEl.textContent=s.cd.toFixed(1);}
+    else{if(cdEl)cdEl.remove();}
+  });
+}
+
+function updateTorches(t){for(const tc of torches){
+  if(tc.light)tc.light.intensity=tc.base+Math.sin(t*3+tc.base)*.4;
+  tc.flame.scale.y=1+Math.cos(t*5)*.3;
+}}
+
+let lastTime=0;
+let hudThrottle=0; // only update HUD every 5 frames
+function loop(ts){
+  requestAnimationFrame(loop);
+  if(gameState!=='playing')return;
+  const dt=Math.min((ts-lastTime)/1000,.05);lastTime=ts;
+
+  player.yaw-=mouse.dx*.002;
+  player.pitch=Math.max(-Math.PI/3,Math.min(Math.PI/3,player.pitch-mouse.dy*.002));
+  mouse.dx=0;mouse.dy=0;
+
+  const spd=player.speed*(1+(player.level-1)*.12);
+  let mx=0,mz=0;
+  const fwd=player.yaw+Math.PI;
+  if(keys['KeyW']||keys['ArrowUp']){mx+=Math.sin(fwd)*spd;mz+=Math.cos(fwd)*spd;}
+  if(keys['KeyS']||keys['ArrowDown']){mx-=Math.sin(fwd)*spd;mz-=Math.cos(fwd)*spd;}
+  if(keys['KeyA']){mx+=Math.cos(fwd)*spd;mz-=Math.sin(fwd)*spd;} // right
+  if(keys['KeyD']){mx-=Math.cos(fwd)*spd;mz+=Math.sin(fwd)*spd;} // left
+  const nx=player.x+mx,nz=player.z+mz;
+  if(!isWall(nx+(mx>0?.4:-.4),player.z))player.x=nx;
+  if(!isWall(player.x,nz+(mz>0?.4:-.4)))player.z=nz;
+
+  camera.position.set(player.x,1.2,player.z);
+  camera.rotation.order='YXZ';camera.rotation.y=player.yaw;camera.rotation.x=player.pitch;
+
+  player.mp=Math.min(player.maxMp,player.mp+dt*2);
+  updateEnemies(dt);updateProjectiles();checkTerminal();checkChallengeTerminals();checkItems();checkStair();updateCDs(dt);
+
+  // Animate torches every other frame
+  if(ts%2<1)updateTorches(ts/1000);
+
+  // Animate terminal (only if nearby)
+  if(terminalMesh&&!cipherSolved){
+    const tdx=terminalX-player.x,tdz=terminalZ-player.z;
+    if(tdx*tdx+tdz*tdz<400){ // only animate if within ~20 tiles
+      terminalMesh.children.forEach((c,i)=>{if(i>=3)return;c.position.y=1.5+Math.sin(ts/1000*2+i*2)*.2;c.rotation.y+=dt*(1+i*.5);});
+      if(terminalGlow)terminalGlow.scale.setScalar(1+Math.sin(ts/500)*.3);
+      if(terminalLight)terminalLight.intensity=3+Math.sin(ts/400)*.8;
+    }
+  }
+  if(stairMesh)stairMesh.rotation.y+=dt*.3;
+
+  // Approach indicator (cached DOM)
+  if(approachTarget&&!battleActive&&!cipherActive){
+    _elApproach.classList.add('show');
+    if(approachTarget==='terminal'){_elApproachText.textContent='🔓 DECRYPT!';_elApproachRing.style.borderColor='rgba(0,255,65,.8)';}
+    else{_elApproachText.textContent='⚔ BATTLE!';_elApproachRing.style.borderColor='rgba(255,100,0,.8)';}
+  }else _elApproach.classList.remove('show');
+
+  // Item animation (skip far items)
+  const t=ts/1000;
+  for(const it of items){
+    if(it.collected||!it.mesh)continue;
+    const dx=it.x-player.x,dz=it.z-player.z;
+    if(dx*dx+dz*dz<600){it.mesh.position.y=.4+Math.sin(t*2+it.x)*.15;it.mesh.rotation.y+=dt;}
+  }
+
+  // HUD: update every 5 frames instead of every frame
+  if(++hudThrottle>=5){hudThrottle=0;updateHUD();}
+
+  // Minimap only visible during reveal
+  if(minimapRevealEnd>0){
+    _elMinimap.style.display='block';
+    drawMinimap();
+    const rem=Math.max(0,Math.ceil((minimapRevealEnd-Date.now())/1000));
+    _elMinimapCD.textContent=rem+'s';
+    if(Date.now()>=minimapRevealEnd){minimapRevealEnd=0;_elMinimap.style.display='none';}
+  }
+
+  pCtx.clearRect(0,0,W,H);drawParticles();
+  renderer.render(scene,camera);
+}
+
+let minimapRevealEnd=0;
+let minimapCooldownEnd=0;
+const MINIMAP_COST=30; // MP cost
+const MINIMAP_DURATION=5000; // 5s display
+const MINIMAP_COOLDOWN=60000; // 1 min cooldown
+function revealMinimap(){
+  if(Date.now()<minimapCooldownEnd){
+    const rem=Math.ceil((minimapCooldownEnd-Date.now())/1000);
+    showMessage(`🗺️ クールダウン中… あと${rem}秒`,'#ff8888');return;
+  }
+  if(player.mp<MINIMAP_COST){showMessage('MPが不足！(30MP必要)','#ff8888');return;}
+  player.mp-=MINIMAP_COST;
+  minimapRevealEnd=Date.now()+MINIMAP_DURATION;
+  minimapCooldownEnd=Date.now()+MINIMAP_COOLDOWN;
+  _elMinimap.style.display='block';
+  showMessage('🗺️ マップ表示！(5秒間)','#66ccff');playSound('pickup');
+  updateHUD();
+}
+
+let prevStateBeforePause=null;
+let pauseStartedAt=0;
+let totalPausedMs=0;
+function togglePause(){
+  if(gameState==='paused'){
+    totalPausedMs+=Date.now()-pauseStartedAt;
+    gameState=prevStateBeforePause||'playing';
+    document.getElementById('pause-screen').classList.remove('show');
+    if(gameState==='playing')canvas.requestPointerLock();
+  }else if(gameState==='playing'){
+    pauseStartedAt=Date.now();
+    prevStateBeforePause=gameState;
+    gameState='paused';
+    document.exitPointerLock();
+    document.getElementById('pause-screen').classList.add('show');
+  }
+}
+document.addEventListener('keydown',e=>{
+  keys[e.code]=true;
+  if(e.code==='Escape'){
+    if(gameState==='playing'||gameState==='paused'){togglePause();e.preventDefault();return;}
+  }
+  // DEBUG: Ctrl+Shift+L = skip floor / instant win in battle (TODO: remove later)
+  if((e.metaKey||e.ctrlKey)&&e.shiftKey&&e.code==='KeyL'){
+    e.preventDefault();
+    if(gameState==='battle'){
+      // Instant win
+      stopBattleTimer();if(battleEnemy)killEnemy(battleEnemy);
+      closeBattle();showMessage('⏩ DEBUG: 即勝利','#ff00ff');
+      return;
+    }
+    if(gameState==='cipher'){
+      // Close cipher and mark solved
+      cipherSolved=true;closeCipherModal();
+      if(stairMesh){scene.remove(stairMesh);if(stairLight)scene.remove(stairLight);}
+      if(terminalMesh){scene.remove(terminalMesh);terminalMesh=null;}
+      if(terminalLight){scene.remove(terminalLight);terminalLight=null;}
+      if(terminalGlow){scene.remove(terminalGlow);terminalGlow=null;}
+      showMessage('⏩ DEBUG: 暗号スキップ','#ff00ff');updateHUD();
+      return;
+    }
+    if(gameState==='playing'){
+      currentCipherStage++;
+      if(currentCipherStage>=CIPHER_STAGES.length){gameComplete();return;}
+      floor++;cipherSolved=false;escapeCount=0;
+      dungeon=genDungeon();buildScene();
+      player.hp=player.maxHp;player.mp=player.maxMp;
+      updateHUD();showMessage(`⏩ DEBUG: Floor ${floor} へスキップ`,'#ff00ff');
+      startBGM(floor);saveProgress();
+      return;
+    }
+  }
+  if(gameState==='playing'){if(e.code==='Digit2')useSkill(0);if(e.code==='Digit3')useSkill(1);if(e.code==='Digit4')useSkill(2);if(e.code==='Digit5')revealMinimap();}
+  if(gameState!=='battle'&&gameState!=='cipher')e.preventDefault();
+});
+document.addEventListener('keyup',e=>keys[e.code]=false);
+document.addEventListener('mousemove',e=>{if(!pointerLocked||gameState!=='playing')return;mouse.dx+=e.movementX;mouse.dy+=e.movementY;});
+canvas.addEventListener('click',()=>{if(gameState==='playing')canvas.requestPointerLock();});
+document.addEventListener('pointerlockchange',()=>pointerLocked=document.pointerLockElement===canvas);
+
+
+// === flow.js ===
+// Game Flow - Start, Mob Timer, Reset, Restart
+function startGame(){
+  const hasSave=loadProgress();
+  if(!hasSave)startTime=Date.now();
+  document.getElementById('title-screen').style.opacity='0';
+  setTimeout(()=>{
+    document.getElementById('title-screen').style.display='none';
+    if(hasSave){
+      // Saved game: skip tutorial, start immediately
+      dungeon=genDungeon();buildScene();
+      actualStart(true);
+    }else{
+      // New game: show tutorial first
+      document.getElementById('tutorial-screen').classList.add('show');
+    }
+  },1000);
+}
+
+function closeTutorial(){
+  document.getElementById('tutorial-screen').classList.remove('show');
+  actualStart(false);
+}
+
+function actualStart(hasSave){
+  gameState='playing';canvas.requestPointerLock();
+  if(hasSave){
+    showMessage(`セーブデータをロード！ Stage ${currentCipherStage+1} / Floor ${floor}`,'#ffcc44');
+  }else{
+    showMessage('SHADOW NETWORK 地下施設に侵入','#88ffaa');
+    showMessage(`1階「${FLOOR_THEMES[0].name}」— 暗号ターミナルを探せ`,'#00ff41');
+  }
+  updateHUD();
+  startMobTimer();
+  startBGM(floor);
+}
+
+// ═══════════════════════════════════
+//  MOB PROGRAMMING ROTATION TIMER
+// ═══════════════════════════════════
+const MOB_PLAYERS=['Player 1','Player 2','Player 3'];
+const MOB_ROTATE_SEC=300; // 5 minutes per driver
+let mobCurrentIdx=0, mobTimeLeft=MOB_ROTATE_SEC, mobTimerInt=null, mobActive=false;
+
+function startMobTimer(){
+  mobActive=true; mobCurrentIdx=0; mobTimeLeft=MOB_ROTATE_SEC;
+  document.getElementById('mob-timer').classList.add('active');
+  updateMobDisplay();
+  mobTimerInt=setInterval(tickMob,1000);
+}
+function stopMobTimer(){
+  mobActive=false;
+  clearInterval(mobTimerInt);
+  document.getElementById('mob-timer').classList.remove('active');
+}
+function tickMob(){
+  // Don't count down during pause, swap, death, battle, or cipher
+  if(gameState==='paused'||gameState==='swap'||gameState==='dead'||gameState==='battle'||gameState==='cipher')return;
+  mobTimeLeft--;
+  if(mobTimeLeft<=0){
+    mobCurrentIdx=(mobCurrentIdx+1)%MOB_PLAYERS.length;
+    mobTimeLeft=MOB_ROTATE_SEC;
+    showMobBanner();
+  }
+  updateMobDisplay();
+}
+function updateMobDisplay(){
+  const m=Math.floor(mobTimeLeft/60),s=mobTimeLeft%60;
+  document.getElementById('mob-driver').textContent=MOB_PLAYERS[mobCurrentIdx];
+  const cdEl=document.getElementById('mob-countdown');
+  cdEl.textContent=`${m}:${String(s).padStart(2,'0')}`;
+  cdEl.className=mobTimeLeft<=30?'mob-countdown warn':'mob-countdown';
+  document.getElementById('mob-next').textContent=`次: ${MOB_PLAYERS[(mobCurrentIdx+1)%MOB_PLAYERS.length]}`;
+}
+let prevStateBeforeSwap=null;
+let swapStartedAt=0;
+function showMobBanner(){
+  prevStateBeforeSwap=gameState;
+  gameState='swap';
+  swapStartedAt=Date.now();
+  document.exitPointerLock();
+  playSound('swap');
+  // Show swap overlay using pause screen
+  const ps=document.getElementById('pause-screen');
+  ps.querySelector('h1').textContent='🔄 DRIVER交代！';
+  ps.querySelector('p').textContent=`${MOB_PLAYERS[mobCurrentIdx]} の番です！ キーボード・マウスを交代してください`;
+  const btn=ps.querySelector('.pause-btn');
+  btn.textContent='✅ 交代完了';
+  btn.onclick=()=>{
+    ps.classList.remove('show');
+    totalPausedMs+=Date.now()-swapStartedAt; // don't count swap time
+    ps.querySelector('h1').textContent='⏸ PAUSE';
+    ps.querySelector('p').textContent='ESCキーで再開';
+    btn.textContent='▶ 再開';
+    btn.onclick=()=>togglePause();
+    gameState=prevStateBeforeSwap||'playing';
+    if(gameState==='playing')canvas.requestPointerLock();
+  };
+  ps.classList.add('show');
+}
+
+function resetToTitle(){
+  // Close any open modals
+  document.getElementById('battle-modal').classList.remove('open');
+  document.getElementById('cipher-modal').classList.remove('open');
+  document.getElementById('overlay-screen').classList.remove('show');
+  battleActive=false;cipherActive=false;
+  clearInterval(battleTimerInt);clearInterval(cipherTimerInt);
+  if(agentLockoutTimer)clearInterval(agentLockoutTimer);
+  stopMobTimer();stopBGM();
+  clearSave();
+  document.exitPointerLock();
+  // Reset state
+  floor=1;currentCipherStage=0;cipherSolved=false;totalStreak=0;battleCooldown=0;escapeCount=0;
+  player=mkPlayer();agentWrongCount=0;agentLockoutEnd=0;
+  dungeon=genDungeon();buildScene();updateHUD();
+  // Show title
+  const ts=document.getElementById('title-screen');
+  ts.style.display='flex';ts.style.opacity='1';
+  gameState='title';
+}
+
+function restartGame(){
+  document.getElementById('overlay-screen').classList.remove('show');
+  floor=1;currentCipherStage=0;cipherSolved=false;totalStreak=0;battleCooldown=0;
+  player=mkPlayer();startTime=Date.now();
+  dungeon=genDungeon();buildScene();gameState='playing';canvas.requestPointerLock();
+  updateHUD();showMessage('再挑戦！','#88ffaa');
+}
+
+window.addEventListener('resize',()=>{
+  W=window.innerWidth;H=window.innerHeight;
+  renderer.setSize(W,H);camera.aspect=W/H;camera.updateProjectionMatrix();
+  canvas.width=W;canvas.height=H;pCanvas.width=W;pCanvas.height=H;
+});
+
+dungeon=genDungeon();buildScene();updateHUD();
+requestAnimationFrame(loop);
+
+</script>
 </body>
 </html>
 
