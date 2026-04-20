@@ -3346,7 +3346,16 @@ document.addEventListener('keydown',e=>{
       return;
     }
     if(gameState==='cipher'){
-      // Close cipher and mark solved
+      // Boss battle: instant win all phases
+      if(bossEntity&&!bossEntity.defeated){
+        bossEntity.hp=0;bossEntity.defeated=true;scene.remove(bossEntity.mesh);
+        for(var pi=0;pi<bossProjectiles.length;pi++)scene.remove(bossProjectiles[pi].mesh);
+        bossProjectiles=[];
+        closeBossModal();unlockPortal();
+        showMessage('⏩ DEBUG: ボス撃破','#ff00ff');
+        return;
+      }
+      // Normal cipher: skip
       cipherSolved=true;closeCipherModal();
       if(stairMesh){scene.remove(stairMesh);if(stairLight)scene.remove(stairLight);}
       if(terminalMesh){scene.remove(terminalMesh);terminalMesh=null;}
