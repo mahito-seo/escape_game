@@ -1758,9 +1758,8 @@ function checkStair(){
 function miniPyEval(code){
   let output=[];
   try{
-    // Strip Python comments first (# ...)
-    let js=code.split('\n').map(line=>{
-      // Remove # comments (skip if inside string)
+    // Strip Python comments (# ...) and stray ← markers
+    var js=code.split('\n').map(function(line){
       var inQ=false,qc='';
       for(var ci=0;ci<line.length;ci++){
         var ch=line[ci];
@@ -1768,6 +1767,9 @@ function miniPyEval(code){
         else if(ch==='"'||ch==="'"){inQ=true;qc=ch;}
         else if(ch==='#')return line.substring(0,ci);
       }
+      // Also strip ← and everything after it (stray hint text)
+      var arrowIdx=line.indexOf('\u2190');
+      if(arrowIdx>=0)line=line.substring(0,arrowIdx);
       return line;
     }).join('\n');
     // Strip import lines
