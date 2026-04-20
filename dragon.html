@@ -2480,43 +2480,199 @@ function tickAgentLockout(){
 
 document.getElementById('agent-input').addEventListener('keydown',e=>{if(e.key==='Enter')submitAgentAnswer();});
 
+// Boss system
+var bossEntity=null; // {mesh,x,z,hp,maxHp,defeated}
+var bossQIdx=0;
+var BOSS_CHALLENGES=[
+  {q:'【要件】引数のリストから偶数だけを返す関数を書け\n\ndef filter_even(nums):\n    # nums: 整数のリスト\n    # 戻り値: 偶数だけのリスト\n    # 例: filter_even([1,2,3,4,5]) → [2,4]',
+   template:'def filter_even(nums):\n    return _____\n\nprint(filter_even([1,2,3,4,5,6,7,8]))',
+   answer:'[2, 4, 6, 8]',hint:'リスト内包表記 + if x%2==0'},
+  {q:'【要件】文字列の各単語の頭文字を大文字にする関数を書け\n\ndef capitalize_words(s):\n    # s: 文字列\n    # 戻り値: 各単語の先頭が大文字の文字列\n    # 例: capitalize_words("hello world") → "Hello World"',
+   template:'def capitalize_words(s):\n    words = s.split(" ")\n    result = []\n    for w in words:\n        result.append(_____)\n    return " ".join(result)\n\nprint(capitalize_words("hello world python"))',
+   answer:'Hello World Python',hint:'w[0].upper() + w[1:]'},
+  {q:'【要件】フィボナッチ数列のn番目を返す関数を書け\n\ndef fib(n):\n    # n: 0以上の整数\n    # 戻り値: n番目のフィボナッチ数\n    # fib(0)=0, fib(1)=1, fib(5)=5, fib(10)=55',
+   template:'def fib(n):\n    if n <= 0:\n        return 0\n    if n == 1:\n        return 1\n    a = 0\n    b = 1\n    for i in range(2, n + 1):\n        a, b = b, _____\n    return b\n\nprint(fib(10))',
+   answer:'55',hint:'a + b (フィボナッチの漸化式)'},
+];
+
+function spawnBoss(){
+  var sx=dungeon.stairX*TILE,sz=dungeon.stairY*TILE;
+  // Giant demon boss
+  var bg=new THREE.Group();
+  var S=1.2; // much bigger than normal
+  var bodyM=new THREE.MeshStandardMaterial({color:0x4a0000,emissive:0x2a0000,emissiveIntensity:.5,roughness:.7});
+  var headM=new THREE.MeshStandardMaterial({color:0x3a0000,emissive:0x1a0000,roughness:.7});
+  var eyeM=new THREE.MeshStandardMaterial({color:0xff0000,emissive:0xff0000,emissiveIntensity:5});
+  // Body
+  var torso=new THREE.Mesh(new THREE.BoxGeometry(S*1.2,S*1.5,S*.8),bodyM);torso.position.y=S*1.5;bg.add(torso);
+  // Head
+  var head=new THREE.Mesh(new THREE.BoxGeometry(S,S,S),headM);head.position.y=S*2.8;bg.add(head);
+  // Eyes
+  var e1=new THREE.Mesh(new THREE.BoxGeometry(S*.2,S*.12,S*.05),eyeM);e1.position.set(-S*.25,S*2.9,S*.51);bg.add(e1);
+  var e2=new THREE.Mesh(new THREE.BoxGeometry(S*.2,S*.12,S*.05),eyeM);e2.position.set(S*.25,S*2.9,S*.51);bg.add(e2);
+  // Horns
+  var hornM=new THREE.MeshStandardMaterial({color:0x1a0000,emissive:0x330000,roughness:.5,metalness:.4});
+  var h1=new THREE.Mesh(new THREE.BoxGeometry(S*.12,S*.7,S*.12),hornM);h1.position.set(-S*.4,S*3.5,0);h1.rotation.z=.3;bg.add(h1);
+  var h2=new THREE.Mesh(new THREE.BoxGeometry(S*.12,S*.7,S*.12),hornM);h2.position.set(S*.4,S*3.5,0);h2.rotation.z=-.3;bg.add(h2);
+  // Arms
+  var arm1=new THREE.Mesh(new THREE.BoxGeometry(S*.4,S*1.4,S*.4),bodyM);arm1.position.set(-S*.85,S*1.5,0);bg.add(arm1);
+  var arm2=new THREE.Mesh(new THREE.BoxGeometry(S*.4,S*1.4,S*.4),bodyM);arm2.position.set(S*.85,S*1.5,0);bg.add(arm2);
+  // Legs
+  var legM=new THREE.MeshStandardMaterial({color:0x2a0000,roughness:.8});
+  var l1=new THREE.Mesh(new THREE.BoxGeometry(S*.45,S*1.2,S*.45),legM);l1.position.set(-S*.35,S*.4,0);bg.add(l1);
+  var l2=new THREE.Mesh(new THREE.BoxGeometry(S*.45,S*1.2,S*.45),legM);l2.position.set(S*.35,S*.4,0);bg.add(l2);
+  // Aura
+  var auraMat=new THREE.MeshStandardMaterial({color:0xff2200,emissive:0xff0000,emissiveIntensity:2,transparent:true,opacity:.2});
+  var aura=new THREE.Mesh(new THREE.SphereGeometry(S*2.5,8,8),auraMat);aura.position.y=S*1.5;bg.add(aura);
+
+  bg.position.set(sx,0,sz);scene.add(bg);
+  bossEntity={mesh:bg,x:sx,z:sz,hp:3,maxHp:3,defeated:false,aura:aura};
+  bossQIdx=0;
+  showMessage('🔥 ボス「PHOENIX GUARDIAN」が出現した！','#ff2200');
+  showMessage('近づいてコーディングバトルで倒せ！','#ff8844');
+}
+
+function checkBoss(){
+  if(!bossEntity||bossEntity.defeated)return;
+  var dx=bossEntity.x-player.x,dz=bossEntity.z-player.z;
+  var dist=Math.sqrt(dx*dx+dz*dz);
+  // Animate aura
+  if(bossEntity.aura)bossEntity.aura.rotation.y+=.01;
+  if(dist<3.5){openBossBattle();}
+}
+
+function openBossBattle(){
+  if(gameState!=='playing'||!bossEntity)return;
+  gameState='cipher';document.exitPointerLock();muteBGM();
+  var ch=BOSS_CHALLENGES[bossQIdx];
+  var modal=document.getElementById('cipher-modal');
+  document.getElementById('cm-avatar').textContent='👹';
+  document.getElementById('cm-name').textContent='PHOENIX GUARDIAN';
+  document.getElementById('cm-stage-sub').textContent='ボスバトル '+(bossQIdx+1)+'/'+BOSS_CHALLENGES.length+' — 要件を満たす関数を書け';
+  document.getElementById('cm-mission').textContent=ch.q;
+  document.getElementById('cm-data').style.display='none';
+  document.getElementById('cm-hint').textContent='ヒント: '+ch.hint;
+  document.getElementById('cm-footer').textContent='👹 ボス HP: '+bossEntity.hp+'/'+bossEntity.maxHp;
+  // Editor
+  document.getElementById('code-editor-wrap').classList.add('show');
+  document.getElementById('code-editor').value=ch.template;
+  document.getElementById('code-editor').disabled=false;
+  document.getElementById('code-output-wrap').classList.remove('show');
+  document.getElementById('cm-input-row').style.display='none';
+  document.getElementById('c-result').style.display='none';
+  document.getElementById('c-continue-btn').style.display='none';
+  document.getElementById('secret-reveal').classList.remove('show');
+  document.getElementById('agent-phase').classList.remove('show');
+  document.getElementById('cipher-close-btn').style.display='inline-block';
+  // Run button = auto check
+  document.getElementById('code-run-btn').onclick=function(){
+    try{
+      var code=document.getElementById('code-editor').value;
+      var result=miniPyEval(code);
+      document.getElementById('code-output-wrap').classList.add('show');
+      document.getElementById('code-output').textContent=result||'(出力なし)';
+      if(result.trim()===ch.answer){
+        document.getElementById('code-output').style.color='#44ff88';
+        bossEntity.hp--;bossQIdx++;
+        playSound('correct');
+        var r=document.getElementById('c-result');
+        r.style.display='flex';r.className='correct-res';
+        document.getElementById('cr-icon').textContent='⚔';
+        if(bossEntity.hp<=0){
+          document.getElementById('cr-msg').innerHTML='<strong>ボス撃破！！</strong>';
+          bossEntity.defeated=true;scene.remove(bossEntity.mesh);
+          playSound('truefanfare');
+          setTimeout(function(){
+            closeBossModal();
+            // Now spawn portal
+            unlockPortal();
+            showMessage('🔥 PHOENIX GUARDIAN を撃破！','#ff8800');
+            showMessage('脱出口が出現した！','#44ffaa');
+          },2500);
+        }else{
+          document.getElementById('cr-msg').innerHTML='<strong>ダメージ！ ボス HP: '+bossEntity.hp+'/'+bossEntity.maxHp+'</strong><br>次のチャレンジへ…';
+          setTimeout(function(){
+            closeBossModal();
+            battleCooldown=2;
+          },2000);
+        }
+      }else if(result.indexOf('Error')===0){
+        document.getElementById('code-output').style.color='#ff6666';
+      }else{
+        document.getElementById('code-output').style.color='#ffaa88';
+        showMessage('出力が違う… コードを修正して再実行','#ff8844');
+      }
+    }catch(e){
+      document.getElementById('code-output-wrap').classList.add('show');
+      document.getElementById('code-output').textContent='Error: '+e.message;
+      document.getElementById('code-output').style.color='#ff6666';
+    }
+  };
+  // Timer (10 min per challenge)
+  clearInterval(cipherTimerInt);cipherTimerVal=600;
+  var el=document.getElementById('cipher-timer');el.classList.remove('danger');
+  var fmtT=function(s){var m=Math.floor(s/60);return m>0?m+':'+('0'+s%60).slice(-2):String(s);};
+  el.textContent=fmtT(cipherTimerVal);
+  cipherTimerInt=setInterval(function(){cipherTimerVal--;el.textContent=fmtT(cipherTimerVal);
+    if(cipherTimerVal<=30)el.classList.add('danger');
+    if(cipherTimerVal<=0){clearInterval(cipherTimerInt);closeBossModal();showMessage('⏰ 時間切れ…再挑戦しよう','#ff8844');battleCooldown=3;}
+  },1000);
+  modal.classList.add('open');
+  setTimeout(function(){document.getElementById('code-editor').focus();},100);
+}
+
+function closeBossModal(){
+  clearInterval(cipherTimerInt);
+  document.getElementById('cipher-modal').classList.remove('open');
+  document.getElementById('code-editor-wrap').classList.remove('show');
+  document.getElementById('code-output-wrap').classList.remove('show');
+  document.getElementById('cm-data').style.display='';
+  document.getElementById('cipher-close-btn').style.display='none';
+  document.getElementById('c-submit').onclick=function(){submitCipherAnswer();};
+  document.getElementById('c-input').onkeydown=function(e){if(e.key==='Enter')submitCipherAnswer();};
+  gameState='playing';unmuteBGM();
+  setTimeout(function(){canvas.requestPointerLock();},350);
+}
+
+function unlockPortal(){
+  cipherSolved=true;
+  if(stairMesh){scene.remove(stairMesh);if(stairLight)scene.remove(stairLight);}
+  var sx=dungeon.stairX*TILE,sz=dungeon.stairY*TILE;
+  var pg=new THREE.Group();
+  var bm=new THREE.MeshStandardMaterial({color:0x3a6a3a,roughness:.6,metalness:.3});
+  var ring=new THREE.Mesh(new THREE.TorusGeometry(1.2,.15,8,16),bm);ring.rotation.x=-Math.PI/2;ring.position.y=.05;pg.add(ring);
+  var plat=new THREE.Mesh(new THREE.CylinderGeometry(1.0,1.2,.12,12),bm);plat.position.y=.06;pg.add(plat);
+  var pm=new THREE.MeshStandardMaterial({color:0x446644,emissive:0x1a3a1a,emissiveIntensity:.4,roughness:.5,metalness:.2});
+  for(var i=0;i<4;i++){var a=i*Math.PI/2;var p=new THREE.Mesh(new THREE.BoxGeometry(.18,2.2,.18),pm);p.position.set(Math.cos(a)*1.0,1.1,Math.sin(a)*1.0);pg.add(p);var orb=new THREE.Mesh(new THREE.SphereGeometry(.12,8,8),new THREE.MeshStandardMaterial({color:0x44ff44,emissive:0x22ff22,emissiveIntensity:3,transparent:true,opacity:.8}));orb.position.set(Math.cos(a)*1.0,2.3,Math.sin(a)*1.0);pg.add(orb);}
+  var beamMat=new THREE.MeshStandardMaterial({color:0x44ff88,emissive:0x22ff44,emissiveIntensity:3,transparent:true,opacity:.3});
+  pg.add(new THREE.Mesh(new THREE.CylinderGeometry(.15,.15,3,8),beamMat));pg.children[pg.children.length-1].position.y=1.5;
+  var bm2=beamMat.clone();bm2.opacity=.1;pg.add(new THREE.Mesh(new THREE.CylinderGeometry(.4,.4,2.5,8),bm2));pg.children[pg.children.length-1].position.y=1.5;
+  pg.position.set(sx,0,sz);scene.add(pg);stairMesh=pg;
+  stairLight=new THREE.PointLight(0x44ff44,4,12);stairLight.position.set(sx,2.5,sz);scene.add(stairLight);
+  updateHUD();saveProgress();
+}
+
 function agentComplete(){
   closeCipherModal();
-  const b=document.createElement('div');b.className='stage-clear-banner';
-  b.innerHTML=`<h2>🔓 STAGE ${currentCipherStage+1} CLEAR!</h2><p>${CIPHER_STAGES[currentCipherStage].name} — 完全解読</p>`;
-  document.body.appendChild(b);setTimeout(()=>b.remove(),3000);
+  var b=document.createElement('div');b.className='stage-clear-banner';
+  b.innerHTML='<h2>🔓 STAGE '+(currentCipherStage+1)+' CLEAR!</h2><p>'+CIPHER_STAGES[currentCipherStage].name+' — 完全解読</p>';
+  document.body.appendChild(b);setTimeout(function(){b.remove();},3000);
   // Remove terminal
   if(terminalMesh){scene.remove(terminalMesh);terminalMesh=null;}
   if(terminalLight){scene.remove(terminalLight);terminalLight=null;}
   if(terminalGlow){scene.remove(terminalGlow);terminalGlow=null;}
-  // Rebuild portal as solved (epic beam)
-  if(stairMesh){
-    scene.remove(stairMesh);if(stairLight)scene.remove(stairLight);
-    // Rebuild with beam
-    const sx=dungeon.stairX*TILE,sz=dungeon.stairY*TILE;
-    const pg=new THREE.Group();
-    const bm=new THREE.MeshStandardMaterial({color:0x3a6a3a,roughness:.6,metalness:.3});
-    const ring=new THREE.Mesh(new THREE.TorusGeometry(1.2,.15,8,16),bm);ring.rotation.x=-Math.PI/2;ring.position.y=.05;pg.add(ring);
-    const plat=new THREE.Mesh(new THREE.CylinderGeometry(1.0,1.2,.12,12),bm);plat.position.y=.06;pg.add(plat);
-    const pm=new THREE.MeshStandardMaterial({color:0x446644,emissive:0x1a3a1a,emissiveIntensity:.4,roughness:.5,metalness:.2});
-    for(let i=0;i<4;i++){
-      const a=i*Math.PI/2;
-      const p=new THREE.Mesh(new THREE.BoxGeometry(.18,2.2,.18),pm);p.position.set(Math.cos(a)*1.0,1.1,Math.sin(a)*1.0);pg.add(p);
-      const orb=new THREE.Mesh(new THREE.SphereGeometry(.12,8,8),new THREE.MeshStandardMaterial({color:0x44ff44,emissive:0x22ff22,emissiveIntensity:3,transparent:true,opacity:.8}));
-      orb.position.set(Math.cos(a)*1.0,2.3,Math.sin(a)*1.0);pg.add(orb);
-    }
-    const beamMat=new THREE.MeshStandardMaterial({color:0x44ff88,emissive:0x22ff44,emissiveIntensity:3,transparent:true,opacity:.3});
-    pg.add(new THREE.Mesh(new THREE.CylinderGeometry(.15,.15,3,8),beamMat));
-    pg.children[pg.children.length-1].position.y=1.5;
-    const bm2=beamMat.clone();bm2.opacity=.1;
-    pg.add(new THREE.Mesh(new THREE.CylinderGeometry(.4,.4,2.5,8),bm2));
-    pg.children[pg.children.length-1].position.y=1.5;
-    pg.position.set(sx,0,sz);scene.add(pg);stairMesh=pg;
-    stairLight=new THREE.PointLight(0x44ff44,4,12);stairLight.position.set(sx,2.5,sz);scene.add(stairLight);
+
+  // Stage 6 (Extra): spawn boss instead of opening portal
+  if(currentCipherStage>=5){
+    spawnBoss();
+    playSound('battle');
+    return;
   }
+
+  // Normal stages: open portal
+  unlockPortal();
   playSound('clear');
-  showMessage('脱出口が開放された！光の柱へ向かえ！','#44ffaa');updateHUD();
-  saveProgress();
+  showMessage('脱出口が開放された！光の柱へ向かえ！','#44ffaa');
 }
 
 function cipherTimeOut(){
@@ -2906,7 +3062,7 @@ function loop(ts){
   camera.rotation.order='YXZ';camera.rotation.y=player.yaw;camera.rotation.x=player.pitch;
 
   player.mp=Math.min(player.maxMp,player.mp+dt*2);
-  updateEnemies(dt);updateProjectiles();checkTerminal();checkChallengeTerminals();checkItems();checkStair();updateCDs(dt);
+  updateEnemies(dt);updateProjectiles();checkTerminal();checkChallengeTerminals();checkBoss();checkItems();checkStair();updateCDs(dt);
 
   // Animate torches every other frame
   if(ts%2<1)updateTorches(ts/1000);
