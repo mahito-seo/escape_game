@@ -1232,7 +1232,19 @@ function buildScene(){
     for(let j=0;j<cnt;j++){
       const ti=Math.min(~~(Math.random()*(1+floor*.8)),ETYPES.length-1);
       const t=ETYPES[ti];
-      const ex=(rm.x+1+Math.random()*(rm.w-2))*TILE,ez=(rm.y+1+Math.random()*(rm.h-2))*TILE;
+      // Find spawn position not colliding with decorations
+      var ex,ez,spawnOk=false;
+      for(var attempt=0;attempt<10;attempt++){
+        ex=(rm.x+1+Math.random()*(rm.w-2))*TILE;
+        ez=(rm.y+1+Math.random()*(rm.h-2))*TILE;
+        spawnOk=true;
+        for(var di=0;di<decoBlocks.length;di++){
+          var ddx=ex-decoBlocks[di].x,ddz=ez-decoBlocks[di].z;
+          if(ddx*ddx+ddz*ddz<(decoBlocks[di].r+.8)*(decoBlocks[di].r+.8)){spawnOk=false;break;}
+        }
+        if(spawnOk)break;
+      }
+      if(!spawnOk)continue; // skip this enemy if no valid position
       const{body,leg1,leg2,arm1,arm2}=buildEnemyMesh(t);
       body.position.set(ex,t.sz*1.1,ez);scene.add(body);
       const sc=1+(floor-1)*.25; // HP scales 25% per floor
@@ -2509,36 +2521,66 @@ var BOSS_CHALLENGES=[
 
 function spawnBoss(){
   var sx=dungeon.stairX*TILE,sz=dungeon.stairY*TILE;
-  // Giant demon boss
   var bg=new THREE.Group();
-  var S=1.2; // much bigger than normal
-  var bodyM=new THREE.MeshStandardMaterial({color:0x4a0000,emissive:0x2a0000,emissiveIntensity:.5,roughness:.7});
-  var headM=new THREE.MeshStandardMaterial({color:0x3a0000,emissive:0x1a0000,roughness:.7});
-  var eyeM=new THREE.MeshStandardMaterial({color:0xff0000,emissive:0xff0000,emissiveIntensity:5});
-  // Body
-  var torso=new THREE.Mesh(new THREE.BoxGeometry(S*1.2,S*1.5,S*.8),bodyM);torso.position.y=S*1.5;bg.add(torso);
-  // Head
-  var head=new THREE.Mesh(new THREE.BoxGeometry(S,S,S),headM);head.position.y=S*2.8;bg.add(head);
-  // Eyes
-  var e1=new THREE.Mesh(new THREE.BoxGeometry(S*.2,S*.12,S*.05),eyeM);e1.position.set(-S*.25,S*2.9,S*.51);bg.add(e1);
-  var e2=new THREE.Mesh(new THREE.BoxGeometry(S*.2,S*.12,S*.05),eyeM);e2.position.set(S*.25,S*2.9,S*.51);bg.add(e2);
-  // Horns
-  var hornM=new THREE.MeshStandardMaterial({color:0x1a0000,emissive:0x330000,roughness:.5,metalness:.4});
-  var h1=new THREE.Mesh(new THREE.BoxGeometry(S*.12,S*.7,S*.12),hornM);h1.position.set(-S*.4,S*3.5,0);h1.rotation.z=.3;bg.add(h1);
-  var h2=new THREE.Mesh(new THREE.BoxGeometry(S*.12,S*.7,S*.12),hornM);h2.position.set(S*.4,S*3.5,0);h2.rotation.z=-.3;bg.add(h2);
+  var S=1.5;
+  var bodyM=new THREE.MeshStandardMaterial({color:0x4a0000,emissive:0x3a0000,emissiveIntensity:.6,roughness:.6,metalness:.2});
+  var armorM=new THREE.MeshStandardMaterial({color:0x1a1a1a,emissive:0x0a0a0a,roughness:.4,metalness:.6});
+  var eyeM=new THREE.MeshStandardMaterial({color:0xff0000,emissive:0xff0000,emissiveIntensity:6});
+  var fireM=new THREE.MeshStandardMaterial({color:0xff4400,emissive:0xff2200,emissiveIntensity:3,transparent:true,opacity:.6});
+  // Legs (thick, armored)
+  var legM=new THREE.MeshStandardMaterial({color:0x2a0808,roughness:.7,metalness:.3});
+  var l1=new THREE.Mesh(new THREE.BoxGeometry(S*.5,S*1.3,S*.5),legM);l1.position.set(-S*.4,S*.65,0);bg.add(l1);
+  var l2=new THREE.Mesh(new THREE.BoxGeometry(S*.5,S*1.3,S*.5),legM);l2.position.set(S*.4,S*.65,0);bg.add(l2);
+  // Body (armored torso)
+  var torso=new THREE.Mesh(new THREE.BoxGeometry(S*1.4,S*1.6,S*.9),bodyM);torso.position.y=S*2.1;bg.add(torso);
+  // Chest armor plate
+  var plate=new THREE.Mesh(new THREE.BoxGeometry(S*1.0,S*.8,S*.1),armorM);plate.position.set(0,S*2.2,S*.46);bg.add(plate);
+  // Shoulder pads
+  var sp1=new THREE.Mesh(new THREE.BoxGeometry(S*.6,S*.3,S*.6),armorM);sp1.position.set(-S*.85,S*2.8,0);bg.add(sp1);
+  var sp2=new THREE.Mesh(new THREE.BoxGeometry(S*.6,S*.3,S*.6),armorM);sp2.position.set(S*.85,S*2.8,0);bg.add(sp2);
+  // Shoulder spikes
+  var spkM=new THREE.MeshStandardMaterial({color:0x1a0000,emissive:0x330000,roughness:.5,metalness:.5});
+  var sk1=new THREE.Mesh(new THREE.BoxGeometry(S*.1,S*.5,S*.1),spkM);sk1.position.set(-S*.85,S*3.2,0);bg.add(sk1);
+  var sk2=new THREE.Mesh(new THREE.BoxGeometry(S*.1,S*.5,S*.1),spkM);sk2.position.set(S*.85,S*3.2,0);bg.add(sk2);
   // Arms
-  var arm1=new THREE.Mesh(new THREE.BoxGeometry(S*.4,S*1.4,S*.4),bodyM);arm1.position.set(-S*.85,S*1.5,0);bg.add(arm1);
-  var arm2=new THREE.Mesh(new THREE.BoxGeometry(S*.4,S*1.4,S*.4),bodyM);arm2.position.set(S*.85,S*1.5,0);bg.add(arm2);
-  // Legs
-  var legM=new THREE.MeshStandardMaterial({color:0x2a0000,roughness:.8});
-  var l1=new THREE.Mesh(new THREE.BoxGeometry(S*.45,S*1.2,S*.45),legM);l1.position.set(-S*.35,S*.4,0);bg.add(l1);
-  var l2=new THREE.Mesh(new THREE.BoxGeometry(S*.45,S*1.2,S*.45),legM);l2.position.set(S*.35,S*.4,0);bg.add(l2);
-  // Aura
-  var auraMat=new THREE.MeshStandardMaterial({color:0xff2200,emissive:0xff0000,emissiveIntensity:2,transparent:true,opacity:.2});
-  var aura=new THREE.Mesh(new THREE.SphereGeometry(S*2.5,8,8),auraMat);aura.position.y=S*1.5;bg.add(aura);
+  var arm1=new THREE.Mesh(new THREE.BoxGeometry(S*.4,S*1.5,S*.4),bodyM);arm1.position.set(-S*1.0,S*1.8,0);bg.add(arm1);
+  var arm2=new THREE.Mesh(new THREE.BoxGeometry(S*.4,S*1.5,S*.4),bodyM);arm2.position.set(S*1.0,S*1.8,0);bg.add(arm2);
+  // Fists (larger)
+  var fist1=new THREE.Mesh(new THREE.BoxGeometry(S*.5,S*.5,S*.5),armorM);fist1.position.set(-S*1.0,S*.9,0);bg.add(fist1);
+  var fist2=new THREE.Mesh(new THREE.BoxGeometry(S*.5,S*.5,S*.5),armorM);fist2.position.set(S*1.0,S*.9,0);bg.add(fist2);
+  // Head
+  var head=new THREE.Mesh(new THREE.BoxGeometry(S*.9,S*.9,S*.9),bodyM);head.position.y=S*3.4;bg.add(head);
+  // Eyes (3 eyes)
+  var e1=new THREE.Mesh(new THREE.BoxGeometry(S*.18,S*.1,S*.05),eyeM);e1.position.set(-S*.22,S*3.5,S*.46);bg.add(e1);
+  var e2=new THREE.Mesh(new THREE.BoxGeometry(S*.18,S*.1,S*.05),eyeM);e2.position.set(S*.22,S*3.5,S*.46);bg.add(e2);
+  var e3=new THREE.Mesh(new THREE.BoxGeometry(S*.12,S*.08,S*.05),eyeM);e3.position.set(0,S*3.7,S*.46);bg.add(e3);
+  // Horns (large, curved look via multiple segments)
+  var hornM=new THREE.MeshStandardMaterial({color:0x0a0000,emissive:0x220000,roughness:.4,metalness:.5});
+  var h1a=new THREE.Mesh(new THREE.BoxGeometry(S*.14,S*.5,S*.14),hornM);h1a.position.set(-S*.4,S*4.0,0);h1a.rotation.z=.2;bg.add(h1a);
+  var h1b=new THREE.Mesh(new THREE.BoxGeometry(S*.1,S*.4,S*.1),hornM);h1b.position.set(-S*.55,S*4.4,0);h1b.rotation.z=.4;bg.add(h1b);
+  var h2a=new THREE.Mesh(new THREE.BoxGeometry(S*.14,S*.5,S*.14),hornM);h2a.position.set(S*.4,S*4.0,0);h2a.rotation.z=-.2;bg.add(h2a);
+  var h2b=new THREE.Mesh(new THREE.BoxGeometry(S*.1,S*.4,S*.1),hornM);h2b.position.set(S*.55,S*4.4,0);h2b.rotation.z=-.4;bg.add(h2b);
+  // Wings (large flat panels)
+  var wingM=new THREE.MeshStandardMaterial({color:0x2a0000,emissive:0x1a0000,side:THREE.DoubleSide,transparent:true,opacity:.7});
+  var w1=new THREE.Mesh(new THREE.BoxGeometry(S*1.5,S*1.2,S*.04),wingM);w1.position.set(-S*1.2,S*2.8,-S*.3);w1.rotation.y=.3;bg.add(w1);
+  var w2=new THREE.Mesh(new THREE.BoxGeometry(S*1.5,S*1.2,S*.04),wingM);w2.position.set(S*1.2,S*2.8,-S*.3);w2.rotation.y=-.3;bg.add(w2);
+  // Tail
+  for(var ti=0;ti<5;ti++){
+    var tc=new THREE.Mesh(new THREE.BoxGeometry(S*.12-ti*.01,S*.12-ti*.01,S*.2),bodyM);
+    tc.position.set(0,S*.5-ti*S*.06,-S*.5-ti*S*.2);bg.add(tc);
+  }
+  // Fire aura (inner + outer)
+  var aura=new THREE.Mesh(new THREE.SphereGeometry(S*2.0,8,8),new THREE.MeshStandardMaterial({color:0xff2200,emissive:0xff0000,emissiveIntensity:2,transparent:true,opacity:.15}));
+  aura.position.y=S*2;bg.add(aura);
+  var aura2=new THREE.Mesh(new THREE.SphereGeometry(S*3.0,6,6),new THREE.MeshStandardMaterial({color:0xff4400,emissive:0xff2200,emissiveIntensity:1,transparent:true,opacity:.06}));
+  aura2.position.y=S*2;bg.add(aura2);
+  // Fire particles on shoulders
+  var fp1=new THREE.Mesh(new THREE.BoxGeometry(S*.2,S*.3,S*.2),fireM);fp1.position.set(-S*.85,S*3.4,0);bg.add(fp1);
+  var fp2=new THREE.Mesh(new THREE.BoxGeometry(S*.2,S*.3,S*.2),fireM);fp2.position.set(S*.85,S*3.4,0);bg.add(fp2);
 
   bg.position.set(sx,0,sz);scene.add(bg);
-  bossEntity={mesh:bg,x:sx,z:sz,hp:3,maxHp:3,defeated:false,aura:aura};
+  bossEntity={mesh:bg,x:sx,z:sz,hp:3,maxHp:3,defeated:false,aura:aura,aura2:aura2,
+    arm1:arm1,arm2:arm2,head:head,fp1:fp1,fp2:fp2,l1:l1,l2:l2,phase:0};
   bossQIdx=0;
   showMessage('🔥 ボス「PHOENIX GUARDIAN」が出現した！','#ff2200');
   showMessage('近づいてコーディングバトルで倒せ！','#ff8844');
@@ -2548,8 +2590,18 @@ function checkBoss(){
   if(!bossEntity||bossEntity.defeated)return;
   var dx=bossEntity.x-player.x,dz=bossEntity.z-player.z;
   var dist=Math.sqrt(dx*dx+dz*dz);
-  // Animate aura
-  if(bossEntity.aura)bossEntity.aura.rotation.y+=.01;
+  var b=bossEntity;
+  b.phase+=.02;
+  // Idle animation: breathe, sway, face player
+  b.mesh.rotation.y=Math.atan2(-dx,-dz);
+  if(b.aura)b.aura.scale.setScalar(1+Math.sin(b.phase*2)*.1);
+  if(b.aura2)b.aura2.rotation.y+=.005;
+  if(b.arm1){b.arm1.rotation.x=Math.sin(b.phase*1.5)*.3;b.arm2.rotation.x=-Math.sin(b.phase*1.5)*.3;}
+  if(b.head)b.head.position.y=1.5*3.4+Math.sin(b.phase)*.05;
+  if(b.fp1){b.fp1.scale.y=1+Math.sin(b.phase*4)*.4;b.fp2.scale.y=1+Math.cos(b.phase*4)*.4;}
+  if(b.l1){b.l1.rotation.x=Math.sin(b.phase)*.1;b.l2.rotation.x=-Math.sin(b.phase)*.1;}
+  // Hover/bob
+  b.mesh.position.y=Math.sin(b.phase*.8)*.15;
   if(dist<3.5){openBossBattle();}
 }
 
