@@ -2653,7 +2653,7 @@ function checkBoss(){
   b.mesh.position.y=Math.sin(b.phase*.8)*.15;
 
   // Movement: chase player (slower than player, avoids walls)
-  var bossSpeed=.03;
+  var bossSpeed=.05; // faster than normal mobs
   if(dist>4&&dist<30){
     var ndx=dx/dist,ndz=dz/dist;
     var nx=b.x+ndx*bossSpeed,nz=b.z+ndz*bossSpeed;
@@ -2672,7 +2672,7 @@ function checkBoss(){
   // Ranged attack: shoot fireball every 4-6 seconds
   bossShootTimer-=.016;
   if(bossShootTimer<=0&&dist<25&&dist>3){
-    bossShootTimer=4+Math.random()*2;
+    bossShootTimer=2+Math.random()*1.5; // every 2-3.5 seconds
     bossShootFireball(b,dx,dz,dist);
   }
 
@@ -2700,7 +2700,7 @@ function updateBossProjectiles(){
     var pdx=p.x-player.x,pdz=p.z-player.z;
     if(pdx*pdx+pdz*pdz<.8){
       // Hit!
-      var dmg=30+~~(Math.random()*20);
+      var dmg=40+~~(Math.random()*25); // 40-65 damage
       player.hp=Math.max(0,player.hp-dmg);
       showMessage('🔥 ボスの攻撃！ -'+dmg+'HP','#ff4444');
       playSound('wrong');
@@ -2719,7 +2719,8 @@ function updateBossProjectiles(){
 function openBossBattle(){
   if(gameState!=='playing'||!bossEntity)return;
   gameState='cipher';document.exitPointerLock();
-  // Boss battle BGM (don't stop - already playing from spawn)
+  // Ensure boss BGM is playing
+  startBossBGM();
   var ch=BOSS_CHALLENGES[bossQIdx];
   var modal=document.getElementById('cipher-modal');
   document.getElementById('cm-avatar').textContent='👹';
@@ -3136,20 +3137,23 @@ function playSound(name){
     }
     // Stage 6 TRUE ESCAPE - loud, long, unmistakable
     else if(name==='truefanfare'){
-      const v=.35; // loud!
-      // Chord 1: C major
-      playTone(523,.3,'sine',v);playTone(659,.3,'sine',v*.8);playTone(784,.3,'sine',v*.6);
-      // Chord 2: F major
-      setTimeout(()=>{playTone(698,.3,'sine',v);playTone(880,.3,'sine',v*.8);playTone(1047,.3,'sine',v*.6);},350);
-      // Chord 3: G major
-      setTimeout(()=>{playTone(784,.3,'sine',v);playTone(988,.3,'sine',v*.8);playTone(1175,.3,'sine',v*.6);},700);
-      // Chord 4: C major high - BIG
-      setTimeout(()=>{playTone(1047,.6,'sine',v);playTone(1319,.6,'sine',v*.8);playTone(1568,.6,'sine',v*.6);},1050);
-      // Arpeggio up
-      setTimeout(()=>playTone(1047,.15,'sine',v),1700);
-      setTimeout(()=>playTone(1319,.15,'sine',v),1850);
-      setTimeout(()=>playTone(1568,.15,'sine',v),2000);
-      setTimeout(()=>{playTone(2093,.8,'sine',v);playTone(1568,.8,'sine',v*.7);playTone(1047,.8,'sine',v*.5);},2150);
+      var v=.35;
+      // Part 1: Rising chords C→F→G→C
+      playTone(523,.4,'sine',v);playTone(659,.4,'sine',v*.8);playTone(784,.4,'sine',v*.6);
+      setTimeout(function(){playTone(698,.4,'sine',v);playTone(880,.4,'sine',v*.8);playTone(1047,.4,'sine',v*.6);},450);
+      setTimeout(function(){playTone(784,.4,'sine',v);playTone(988,.4,'sine',v*.8);playTone(1175,.4,'sine',v*.6);},900);
+      setTimeout(function(){playTone(1047,.6,'sine',v);playTone(1319,.6,'sine',v*.8);playTone(1568,.6,'sine',v*.6);},1350);
+      // Part 2: Arpeggio up
+      setTimeout(function(){playTone(1047,.2,'sine',v);},2000);
+      setTimeout(function(){playTone(1319,.2,'sine',v);},2200);
+      setTimeout(function(){playTone(1568,.2,'sine',v);},2400);
+      setTimeout(function(){playTone(2093,.5,'sine',v);playTone(1568,.5,'sine',v*.7);},2600);
+      // Part 3: Triumphant repeat (higher)
+      setTimeout(function(){playTone(1047,.3,'sine',v);playTone(1319,.3,'sine',v*.8);playTone(1568,.3,'sine',v*.6);},3200);
+      setTimeout(function(){playTone(1175,.3,'sine',v);playTone(1480,.3,'sine',v*.8);playTone(1760,.3,'sine',v*.6);},3600);
+      setTimeout(function(){playTone(1319,.3,'sine',v);playTone(1568,.3,'sine',v*.8);playTone(2093,.3,'sine',v*.6);},4000);
+      // Part 4: Final grand chord (long sustain)
+      setTimeout(function(){playTone(2093,1.5,'sine',v);playTone(1568,1.5,'sine',v*.8);playTone(1319,1.5,'sine',v*.6);playTone(1047,1.5,'sine',v*.4);},4400);
     }
   }catch(e){}
 }
