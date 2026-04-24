@@ -47,11 +47,11 @@ function loop(ts){
   camera.position.set(player.x,1.2,player.z);
   camera.rotation.order='YXZ';camera.rotation.y=player.yaw;camera.rotation.x=player.pitch;
 
-  player.mp=Math.min(player.maxMp,player.mp+dt*2);
-  updateEnemies(dt);updateProjectiles();checkTerminal();checkChallengeTerminals();checkItems();checkStair();updateCDs(dt);
+  player.mp=Math.min(player.maxMp,player.mp+dt*1);
+  updateEnemies(dt);updateProjectiles();checkTerminal();checkRepairTerminals();checkBoss();updateBossProjectiles();checkItems();checkStair();updateCDs(dt);
 
   // Animate torches every other frame
-  if(ts%2<1)updateTorches(ts/1000);
+  if(ts%2<1){updateTorches(ts/1000);updateRepairTerminals(ts);}
 
   // Animate terminal (only if nearby)
   if(terminalMesh&&!cipherSolved){
@@ -65,9 +65,10 @@ function loop(ts){
   if(stairMesh)stairMesh.rotation.y+=dt*.3;
 
   // Approach indicator (cached DOM)
-  if(approachTarget&&!battleActive&&!cipherActive){
+  if(approachTarget&&!battleActive&&!cipherActive&&!repairActive){
     _elApproach.classList.add('show');
     if(approachTarget==='terminal'){_elApproachText.textContent='🔓 DECRYPT!';_elApproachRing.style.borderColor='rgba(0,255,65,.8)';}
+    else if(approachTarget&&approachTarget.type==='repair'){_elApproachText.textContent=approachTarget.icon+' '+approachTarget.name;_elApproachRing.style.borderColor='rgba(255,200,0,.8)';}
     else{_elApproachText.textContent='⚔ BATTLE!';_elApproachRing.style.borderColor='rgba(255,100,0,.8)';}
   }else _elApproach.classList.remove('show');
 
@@ -97,20 +98,22 @@ function loop(ts){
 
 let minimapRevealEnd=0;
 let minimapCooldownEnd=0;
-const MINIMAP_COST=30; // MP cost
+const MINIMAP_COST=40; // MP cost
 const MINIMAP_DURATION=5000; // 5s display
 const MINIMAP_COOLDOWN=60000; // 1 min cooldown
 function revealMinimap(){
+  if(features.minimap<=0){showMessage('🔒 ミニマップは修理が必要！','#ff4444');return;}
   if(Date.now()<minimapCooldownEnd){
     const rem=Math.ceil((minimapCooldownEnd-Date.now())/1000);
     showMessage(`🗺️ クールダウン中… あと${rem}秒`,'#ff8888');return;
   }
   if(player.mp<MINIMAP_COST){showMessage('MPが不足！(30MP必要)','#ff8888');return;}
   player.mp-=MINIMAP_COST;
-  minimapRevealEnd=Date.now()+MINIMAP_DURATION;
+  const dur=[0,3000,5000,8000][features.minimap]||MINIMAP_DURATION;
+  minimapRevealEnd=Date.now()+dur;
   minimapCooldownEnd=Date.now()+MINIMAP_COOLDOWN;
   _elMinimap.style.display='block';
-  showMessage('🗺️ マップ表示！(5秒間)','#66ccff');playSound('pickup');
+  showMessage(`\uD83D\uDDFA\uFE0F \u30DE\u30C3\u30D7\u8868\u793A\uFF01(${dur/1000}\u79D2\u9593)`,'#66ccff');playSound('pickup');
   updateHUD();
 }
 
@@ -146,22 +149,52 @@ document.addEventListener('keydown',e=>{
       return;
     }
     if(gameState==='cipher'){
+      // Boss active? Kill boss
+      if(bossEntity&&!bossEntity.defeated){
+        bossEntity.hp=0;bossEntity.defeated=true;scene.remove(bossEntity.mesh);
+        for(var bi=0;bi<bossProjectiles.length;bi++)scene.remove(bossProjectiles[bi].mesh);
+        bossProjectiles=[];
+        closeBossModal();unlockPortal();
+        showMessage('\u23E9 DEBUG: \u30DC\u30B9\u30B9\u30AD\u30C3\u30D7','#ff00ff');updateHUD();
+        return;
+      }
       // Close cipher and mark solved
       cipherSolved=true;closeCipherModal();
       if(stairMesh){scene.remove(stairMesh);if(stairLight)scene.remove(stairLight);}
       if(terminalMesh){scene.remove(terminalMesh);terminalMesh=null;}
       if(terminalLight){scene.remove(terminalLight);terminalLight=null;}
       if(terminalGlow){scene.remove(terminalGlow);terminalGlow=null;}
-      showMessage('⏩ DEBUG: 暗号スキップ','#ff00ff');updateHUD();
+      showMessage('\u23E9 DEBUG: \u6697\u53F7\u30B9\u30AD\u30C3\u30D7','#ff00ff');updateHUD();
       return;
     }
     if(gameState==='playing'){
-      currentCipherStage++;
-      if(currentCipherStage>=CIPHER_STAGES.length){gameComplete();return;}
-      floor++;cipherSolved=false;escapeCount=0;
+      // Extra stage (floor 6+): spawn boss or finish
+      if(floor>=6&&currentCipherStage>=5){
+        if(!bossEntity||bossEntity.defeated){
+          // Boss already dead or not spawned yet → spawn
+          spawnBoss();startBossBGM();
+          showMessage('\u23E9 DEBUG: \u30DC\u30B9\u51FA\u73FE','#ff00ff');
+        }else{
+          // Boss alive → kill and true ending
+          bossEntity.hp=0;bossEntity.defeated=true;scene.remove(bossEntity.mesh);
+          for(var bi=0;bi<bossProjectiles.length;bi++)scene.remove(bossProjectiles[bi].mesh);
+          bossProjectiles=[];
+          currentCipherStage=6;gameComplete();
+          showMessage('\u23E9 DEBUG: TRUE ENDING','#ff00ff');
+        }
+        return;
+      }
+      // Stage 5 clear → normal ending
+      if(currentCipherStage>=4){
+        currentCipherStage=5;gameComplete();
+        showMessage('\u23E9 DEBUG: \u30AF\u30EA\u30A2','#ff00ff');
+        return;
+      }
+      // Normal: skip to next floor
+      currentCipherStage++;floor++;cipherSolved=false;escapeCount=0;
       dungeon=genDungeon();buildScene();
       player.hp=player.maxHp;player.mp=player.maxMp;
-      updateHUD();showMessage(`⏩ DEBUG: Floor ${floor} へスキップ`,'#ff00ff');
+      updateHUD();showMessage(`\u23E9 DEBUG: Floor ${floor} \u3078\u30B9\u30AD\u30C3\u30D7`,'#ff00ff');
       startBGM(floor);saveProgress();
       return;
     }
@@ -170,6 +203,22 @@ document.addEventListener('keydown',e=>{
   if(gameState!=='battle'&&gameState!=='cipher')e.preventDefault();
 });
 document.addEventListener('keyup',e=>keys[e.code]=false);
-document.addEventListener('mousemove',e=>{if(!pointerLocked||gameState!=='playing')return;mouse.dx+=e.movementX;mouse.dy+=e.movementY;});
+var pointerLockJustAcquired=0; // timestamp to ignore initial spike
+document.addEventListener('mousemove',e=>{
+  if(!pointerLocked||gameState!=='playing')return;
+  // Ignore mouse spike right after pointer lock (Windows bug)
+  if(Date.now()-pointerLockJustAcquired<200)return;
+  var dx=e.movementX,dy=e.movementY;
+  // Dead zone: ignore tiny movements (Windows phantom drift)
+  if(Math.abs(dx)<2&&Math.abs(dy)<2)return;
+  // Clamp extreme values
+  dx=Math.max(-60,Math.min(60,dx));
+  dy=Math.max(-60,Math.min(60,dy));
+  mouse.dx+=dx;mouse.dy+=dy;
+});
 canvas.addEventListener('click',()=>{if(gameState==='playing')canvas.requestPointerLock();});
-document.addEventListener('pointerlockchange',()=>pointerLocked=document.pointerLockElement===canvas);
+document.addEventListener('pointerlockchange',()=>{
+  var wasLocked=pointerLocked;
+  pointerLocked=document.pointerLockElement===canvas;
+  if(pointerLocked&&!wasLocked){pointerLockJustAcquired=Date.now();mouse.dx=0;mouse.dy=0;}
+});

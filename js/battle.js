@@ -3,17 +3,18 @@ let battleActive=false, battleEnemy=null, battleQList=[], battleQIdx=0;
 let battleTimer=30, battleTimerInt=null, totalStreak=0, roundCorrect=0;
 const BATTLE_QCOUNT=3, BATTLE_TIME=30;
 
-function pickQuestions(fl){
-  let pool;
-  if(fl<=1) pool=QUESTIONS.filter(q=>q.diff==='easy');
-  else if(fl<=2) pool=QUESTIONS.filter(q=>q.diff!=='hard');
-  else if(fl<=3) pool=[...QUESTIONS];
-  else if(fl<=5) pool=QUESTIONS.filter(q=>q.diff!=='easy');
-  else pool=QUESTIONS.filter(q=>q.diff==='hard');
-  // Mix in code-input questions for floor 3+
-  if(fl>=3&&typeof CODE_BATTLE_QS!=='undefined'){
-    const codePool=fl>=5?CODE_BATTLE_QS:CODE_BATTLE_QS.filter(q=>q.diff==='normal');
-    pool=[...pool,...codePool];
+function pickQuestions(fl,enemyDiff){
+  // Match questions to enemy difficulty
+  let diff=enemyDiff||'easy';
+  let pool=QUESTIONS.filter(q=>q.diff===diff);
+  // Mix in code-input questions for normal+ enemies on floor 3+
+  if(fl>=3&&diff!=='easy'&&typeof CODE_BATTLE_QS!=='undefined'){
+    pool=[...pool,...CODE_BATTLE_QS.filter(q=>q.diff===diff)];
+  }
+  // Fallback: if not enough questions, add adjacent difficulty
+  if(pool.length<BATTLE_QCOUNT){
+    const fallback=diff==='hard'?'normal':diff==='normal'?'easy':'easy';
+    pool=[...pool,...QUESTIONS.filter(q=>q.diff===fallback)];
   }
   return[...pool].sort(()=>Math.random()-.5).slice(0,BATTLE_QCOUNT);
 }
@@ -21,12 +22,12 @@ function pickQuestions(fl){
 function openBattle(e){
   if(battleActive||cipherActive)return;
   battleActive=true; battleEnemy=e; e.inBattle=true;
-  battleQList=pickQuestions(floor); battleQIdx=0; roundCorrect=0;
+  battleQList=pickQuestions(floor,e.diff); battleQIdx=0; roundCorrect=0;
   gameState='battle'; document.exitPointerLock(); playSound('battle'); muteBGM();
   const ef=document.getElementById('encounter-flash');
   [0,200,400].forEach(t=>{setTimeout(()=>{ef.classList.add('flash');setTimeout(()=>ef.classList.remove('flash'),120);},t);});
   document.getElementById('b-enemy-avatar').textContent=e.avatar||'👹';
-  document.getElementById('b-enemy-name').textContent=e.name;
+  document.getElementById('b-enemy-name').textContent=features.enemyName>0?e.name:'???';
   updateBattleHP();
   document.getElementById('battle-modal').classList.add('open');
   document.getElementById('battle-result').style.display='none';
@@ -42,9 +43,14 @@ function openBattle(e){
 
 function updateBattleHP(){
   if(!battleEnemy)return;
-  const pct=Math.max(0,battleEnemy.hp/battleEnemy.maxHp*100);
-  document.getElementById('b-enemy-hp-txt').textContent=`HP ${battleEnemy.hp} / ${battleEnemy.maxHp}`;
-  document.getElementById('b-enemy-hp-bar').style.width=pct+'%';
+  if(features.enemyName>0){
+    const pct=Math.max(0,battleEnemy.hp/battleEnemy.maxHp*100);
+    document.getElementById('b-enemy-hp-txt').textContent=`HP ${battleEnemy.hp} / ${battleEnemy.maxHp}`;
+    document.getElementById('b-enemy-hp-bar').style.width=pct+'%';
+  }else{
+    document.getElementById('b-enemy-hp-txt').textContent='HP ??? / ???';
+    document.getElementById('b-enemy-hp-bar').style.width='100%';
+  }
 }
 
 function loadQ(){
@@ -110,7 +116,9 @@ function submitFreeAnswer(){
 document.getElementById('battle-input').addEventListener('keydown',e=>{if(e.key==='Enter')submitFreeAnswer();});
 
 function calcDmg(q){
-  const base=player.attackPower,dm={easy:1,normal:1.6,hard:2.5}[q.diff];
+  // Attack feature gives bonus multiplier, but base damage always works
+  const mult=features.attack>0?[0,1,1.5,2][features.attack]||1:1;
+  const base=player.attackPower*mult,dm={easy:1,normal:1.6,hard:2.5}[q.diff];
   const streak=1+roundCorrect*.25,speed=battleTimer>=20?1.4:battleTimer>=10?1:.75;
   return Math.floor(base*dm*streak*speed);
 }
@@ -129,6 +137,17 @@ function onWrong(q){
   const ca=q.type==='choice'?q.choices[q.ans]:q.ans;
   showBattleResult(false,`不正解… <strong>${dmg}ダメージ！</strong>`,`正解: ${ca}　${q.expl}`);
   showMessage('❌ 不正解…','#ff6666');playSound('wrong');updateHUD();
+  if(player.hp<=0)setTimeout(()=>{closeBattle();gameOver();},1500);
+}
+function questionSkip(){
+  const q=battleQList[battleQIdx];if(!q)return;
+  stopBattleTimer();
+  totalStreak=Math.max(0,totalStreak-1);roundCorrect=0;
+  const dmg=Math.floor(8+battleEnemy.atk*.6);player.hp=Math.max(0,player.hp-dmg);
+  const df=document.getElementById('damage-flash');df.classList.add('flash');setTimeout(()=>df.classList.remove('flash'),200);
+  const ca=q.type==='choice'?q.choices[q.ans]:q.ans;
+  showBattleResult(false,`スキップ… <strong>${dmg}ダメージ！</strong>`,`正解: ${ca}　${q.expl}`);
+  showMessage('\u23ED \u30B9\u30AD\u30C3\u30D7…','#ff8844');playSound('wrong');updateHUD();
   if(player.hp<=0)setTimeout(()=>{closeBattle();gameOver();},1500);
 }
 function bTimeOut(){

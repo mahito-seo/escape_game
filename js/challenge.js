@@ -7,6 +7,13 @@
 function miniPyEval(code){
   let output=[];
   try{
+    // ── Pre-process: fix common input errors ──
+    // Full-width characters → half-width
+    code=code.replace(/\uff08/g,'(').replace(/\uff09/g,')').replace(/\uff0b/g,'+').replace(/\uff0d/g,'-').replace(/\uff0a/g,'*').replace(/\uff0f/g,'/').replace(/\uff1a/g,':').replace(/\uff1d/g,'=').replace(/\uff0c/g,',').replace(/\u3000/g,' ').replace(/\u201c/g,'"').replace(/\u201d/g,'"').replace(/\u2018/g,"'").replace(/\u2019/g,"'").replace(/\uff3b/g,'[').replace(/\uff3d/g,']').replace(/\uff5b/g,'{').replace(/\uff5d/g,'}');
+    // Tab → 4 spaces
+    code=code.replace(/\t/g,'    ');
+    // Strip trailing whitespace per line
+    code=code.split('\n').map(l=>l.trimEnd()).join('\n');
     // Strip Python comments first (# ...)
     let js=code.split('\n').map(line=>{
       // Remove # comments (skip if inside string)
@@ -21,8 +28,8 @@ function miniPyEval(code){
     }).join('\n');
     // Convert common Python to JS
     js=js
-      .replace(/print\((.+)\)/g,'__out.push(String($1))')
-      .replace(/\bTrue\b/g,'true').replace(/\bFalse\b/g,'false').replace(/\bNone\b/g,'null')
+      .replace(/\bTrue\b/g,'true').replace(/\bFalse\b/g,'false').replace(/\bNone\b/g,'null').replace(/^\s*pass\s*$/gm,'')
+      .replace(/\band\b/g,'&&').replace(/\bor\b/g,'||').replace(/\bnot\s+/g,'!')
       .replace(/\blen\((.+?)\)/g,'($1).length')
       .replace(/\bstr\((.+?)\)/g,'String($1)')
       .replace(/\bint\((.+?)\)/g,'parseInt($1)')
@@ -67,6 +74,15 @@ function miniPyEval(code){
     // Fix join pattern: "x".join(y) → y.join("x")
     js=js.replace(/"([^"]*)"\s*\.\s*join\s*\(\s*(\w+)\s*\)/g,'$2.join("$1")');
     js=js.replace(/'([^']*)'\s*\.\s*join\s*\(\s*(\w+)\s*\)/g,"$2.join('$1')");
+    // Convert print() — match balanced parens per line
+    js=js.split('\n').map(function(ln){
+      var m=ln.match(/^(\s*)print\((.+)\)\s*$/);
+      if(m){
+        var indent=m[1],arg=m[2];
+        return indent+'__out.push((function(v){return Array.isArray(v)?JSON.stringify(v).replace(/,/g,", "):typeof v==="number"&&v!==~~v?String(v):String(v);})('+arg+'))';
+      }
+      return ln;
+    }).join('\n');
     // for x in range(a,b): → special handling (convert range inline)
     js=js.replace(/^(\s*)for\s+(\w+)\s+in\s+range\((\d+),\s*(\d+)\)\s*:/gm,
       '$1for(let $2=$3;$2<$4;$2++){');
@@ -83,7 +99,7 @@ function miniPyEval(code){
     js=js.replace(/^(\s*)else\s*:/gm,'$1}else{');
     // Handle def/return
     js=js.replace(/def\s+(\w+)\s*\(([^)]*)\)\s*:/g,'function $1($2){');
-    js=js.replace(/^\s*return\s+/gm,'return ');
+    js=js.replace(/^(\s*)return\s+/gm,'$1return ');
     // += for strings (Python: result += x, JS same but need no change)
     // Handle indentation-based blocks → add closing braces
     const lines=js.split('\n');
@@ -242,9 +258,7 @@ function openCodingChallenge(ct){
 
   // Show editor with template
   document.getElementById('code-editor-wrap').classList.add('show');
-  const editor=document.getElementById('code-editor');
-  editor.value=ch.template;
-  editor.disabled=false;
+  initAceEditor();setEditorCode(ch.template);setEditorReadOnly(false);
   document.getElementById('code-output-wrap').classList.remove('show');
 
   // Hide answer input row (auto-check on run)
@@ -258,7 +272,7 @@ function openCodingChallenge(ct){
   // Run button: execute + auto-check answer
   document.getElementById('code-run-btn').onclick=()=>{
     try{
-      const code=editor.value;
+      const code=getEditorCode();
       const result=miniPyEval(code);
       document.getElementById('code-output-wrap').classList.add('show');
       document.getElementById('code-output').textContent=result||'(出力なし)';
@@ -274,7 +288,7 @@ function openCodingChallenge(ct){
         player.xp+=ch.xp;checkLevelUp();updateHUD();
         ct.solved=true;scene.remove(ct.mesh);
         playSound('correct');spawnParticles(player.x,player.z,'#ffdd44',20);
-        editor.disabled=true;
+        setEditorReadOnly(true);
         // Auto-close after 2 seconds
         setTimeout(()=>closeChallengeModal(),2000);
       }else if(result.startsWith('Error')){
@@ -307,7 +321,7 @@ function openCodingChallenge(ct){
   },1000);
 
   modal.classList.add('open');
-  setTimeout(()=>editor.focus(),100);
+  // Don't auto-focus editor — user clicks to start typing
 }
 
 var challengeCooldownEnd=0; // timestamp when challenge can re-trigger

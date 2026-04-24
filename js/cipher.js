@@ -3,7 +3,7 @@ let cipherActive=false, currentCipherStage=0, cipherTimerVal=90, cipherTimerInt=
 let cipherWrongCount=0, cipherSolved=false, startTime=0;
 let cipherPhase=1; // 1=passphrase, 2=agent
 let agentWrongCount=0, agentLockoutEnd=0, agentLockoutTimer=null;
-const MAX_AGENT_WRONG=5, LOCKOUT_SEC=300;
+const MAX_AGENT_WRONG=3, LOCKOUT_SEC=300;
 
 function openCipherModal(){
   if(cipherActive||cipherSolved||battleActive)return;
@@ -21,12 +21,11 @@ function openCipherModal(){
   if(s.template){
     document.getElementById('cm-data').style.display='none';
     document.getElementById('code-editor-wrap').classList.add('show');
-    document.getElementById('code-editor').value=s.template;
-    document.getElementById('code-editor').disabled=false;
+    initAceEditor();setEditorCode(s.template);setEditorReadOnly(false);
     document.getElementById('code-output-wrap').classList.remove('show');
     document.getElementById('code-run-btn').onclick=async()=>{
       try{
-        const result=miniPyEval(document.getElementById('code-editor').value);
+        const result=miniPyEval(getEditorCode());
         document.getElementById('code-output-wrap').classList.add('show');
         document.getElementById('code-output').textContent=result||'(出力なし)';
         if(result.startsWith('Error')){
@@ -68,7 +67,7 @@ function openCipherModal(){
   document.getElementById('agent-lockout').classList.remove('show');
   cipherWrongCount=0;
   document.getElementById('cipher-modal').classList.add('open');
-  startCipherTimer();setTimeout(()=>document.getElementById('c-input').focus(),100);
+  startCipherTimer();
 }
 function startCipherTimer(){
   clearInterval(cipherTimerInt);cipherTimerVal=300+currentCipherStage*60; // 5min base + 1min per stage
@@ -114,7 +113,9 @@ async function submitCipherAnswer(){
       document.getElementById('agent-input-row').style.display='flex';
       agentWrongCount=0;
       cipherPhase=2;
-      setTimeout(()=>document.getElementById('agent-input').focus(),100);
+      // Restart timer for Phase 2 (10 min)
+      startCipherTimer();
+      // User clicks to focus agent input
     },700);
   }else{
     cipherWrongCount++;r.style.display='flex';r.className='wrong-res';
@@ -187,7 +188,7 @@ async function submitAgentAnswer(){
     if(remain>0){
       r.style.display='flex';r.className='wrong-res';
       document.getElementById('ar-icon').textContent='❌';
-      document.getElementById('ar-msg').innerHTML=`不正解… 残り${remain}回（5回間違えると5分間ロック）`;
+      document.getElementById('ar-msg').innerHTML=`不正解… 残り${remain}回（3回間違えると5分間ロック）`;
       document.getElementById('agent-continue-btn').style.display='none';
     }else{
       r.style.display='none';startAgentLockout();
@@ -222,40 +223,18 @@ document.getElementById('agent-input').addEventListener('keydown',e=>{if(e.key==
 function agentComplete(){
   closeCipherModal();
   const b=document.createElement('div');b.className='stage-clear-banner';
-  b.innerHTML=`<h2>🔓 STAGE ${currentCipherStage+1} CLEAR!</h2><p>${CIPHER_STAGES[currentCipherStage].name} — 完全解読</p>`;
+  b.innerHTML=`<h2>\uD83D\uDD13 STAGE ${currentCipherStage+1} CLEAR!</h2><p>${CIPHER_STAGES[currentCipherStage].name} \u2014 \u5B8C\u5168\u89E3\u8AAD</p>`;
   document.body.appendChild(b);setTimeout(()=>b.remove(),3000);
-  // Remove terminal
   if(terminalMesh){scene.remove(terminalMesh);terminalMesh=null;}
   if(terminalLight){scene.remove(terminalLight);terminalLight=null;}
   if(terminalGlow){scene.remove(terminalGlow);terminalGlow=null;}
-  // Rebuild portal as solved (epic beam)
-  if(stairMesh){
-    scene.remove(stairMesh);if(stairLight)scene.remove(stairLight);
-    // Rebuild with beam
-    const sx=dungeon.stairX*TILE,sz=dungeon.stairY*TILE;
-    const pg=new THREE.Group();
-    const bm=new THREE.MeshStandardMaterial({color:0x3a6a3a,roughness:.6,metalness:.3});
-    const ring=new THREE.Mesh(new THREE.TorusGeometry(1.2,.15,8,16),bm);ring.rotation.x=-Math.PI/2;ring.position.y=.05;pg.add(ring);
-    const plat=new THREE.Mesh(new THREE.CylinderGeometry(1.0,1.2,.12,12),bm);plat.position.y=.06;pg.add(plat);
-    const pm=new THREE.MeshStandardMaterial({color:0x446644,emissive:0x1a3a1a,emissiveIntensity:.4,roughness:.5,metalness:.2});
-    for(let i=0;i<4;i++){
-      const a=i*Math.PI/2;
-      const p=new THREE.Mesh(new THREE.BoxGeometry(.18,2.2,.18),pm);p.position.set(Math.cos(a)*1.0,1.1,Math.sin(a)*1.0);pg.add(p);
-      const orb=new THREE.Mesh(new THREE.SphereGeometry(.12,8,8),new THREE.MeshStandardMaterial({color:0x44ff44,emissive:0x22ff22,emissiveIntensity:3,transparent:true,opacity:.8}));
-      orb.position.set(Math.cos(a)*1.0,2.3,Math.sin(a)*1.0);pg.add(orb);
-    }
-    const beamMat=new THREE.MeshStandardMaterial({color:0x44ff88,emissive:0x22ff44,emissiveIntensity:3,transparent:true,opacity:.3});
-    pg.add(new THREE.Mesh(new THREE.CylinderGeometry(.15,.15,3,8),beamMat));
-    pg.children[pg.children.length-1].position.y=1.5;
-    const bm2=beamMat.clone();bm2.opacity=.1;
-    pg.add(new THREE.Mesh(new THREE.CylinderGeometry(.4,.4,2.5,8),bm2));
-    pg.children[pg.children.length-1].position.y=1.5;
-    pg.position.set(sx,0,sz);scene.add(pg);stairMesh=pg;
-    stairLight=new THREE.PointLight(0x44ff44,4,12);stairLight.position.set(sx,2.5,sz);scene.add(stairLight);
+  // Stage 6 (Extra, floor 6+): spawn boss
+  if(currentCipherStage>=5&&floor>=6){
+    spawnBoss();playSound('battle');startBossBGM();return;
   }
-  playSound('clear');
-  showMessage('脱出口が開放された！光の柱へ向かえ！','#44ffaa');updateHUD();
-  saveProgress();
+  // Normal stages: open portal
+  unlockPortal();playSound('clear');
+  showMessage('\u8131\u51FA\u53E3\u304C\u958B\u653E\u3055\u308C\u305F\uFF01\u5149\u306E\u67F1\u3078\u5411\u304B\u3048\uFF01','#44ffaa');
 }
 
 function cipherTimeOut(){

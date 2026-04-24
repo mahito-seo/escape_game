@@ -5,6 +5,7 @@
 function saveProgress(){
   const data={floor,currentCipherStage,cipherSolved,player:{level:player.level,xp:player.xp,xpNext:player.xpNext,hp:player.hp,maxHp:player.maxHp,mp:player.mp,maxMp:player.maxMp,kills:player.kills,attackPower:player.attackPower,defense:player.defense},totalStreak,startTime};
   localStorage.setItem('cipherDungeonSave',JSON.stringify(data));
+  saveFeatures();
 }
 function loadProgress(){
   const raw=localStorage.getItem('cipherDungeonSave');
@@ -20,8 +21,9 @@ function loadProgress(){
       player.kills=d.player.kills||0;
       player.attackPower=d.player.attackPower||22;player.defense=d.player.defense||5;
     }
+    loadFeatures();
     return true;
   }catch(e){return false;}
 }
-function clearSave(){localStorage.removeItem('cipherDungeonSave');}
+function clearSave(){localStorage.removeItem('cipherDungeonSave');clearFeatures();}
 

@@ -7,7 +7,7 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600&family=Source+Code+Pro:wght@400;600&display=swap');
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { background:#1a1410; overflow:hidden; font-family:'Cinzel',serif; color:#e8c87a; user-select:none; }
+  body { background:#1a1410; overflow:hidden; font-family:'Cinzel',serif; color:#e8c87a; user-select:none; -webkit-user-select:none; }
   #canvas { display:block; }
 
   /* ── HUD ── */
@@ -34,11 +34,17 @@
   .bar-text { font-size:11px; color:#ccc; min-width:60px; }
   .stage-hint-box { background:rgba(0,0,0,.8); border:1px solid #00aa41; border-radius:4px; padding:8px 14px; max-width:320px; margin-top:4px; }
   .stage-hint-title { font-size:10px; color:#00ff41; letter-spacing:2px; margin-bottom:2px; }
-  .stage-hint-text { font-size:11px; color:#88cc88; font-family:'Source Code Pro',monospace; line-height:1.4; }
+  .stage-hint-text { font-size:11px; color:#88cc88; font-family:'Source Code Pro',monospace; line-height:1.6; white-space:pre-line; }
 
   #skills-hud { position:absolute; bottom:20px; right:20px; display:flex; gap:8px; }
   .skill-slot { width:56px; height:56px; background:rgba(0,0,0,.8); border:2px solid #2a5a2a; border-radius:4px; display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; cursor:pointer; pointer-events:all; transition:all .15s; }
   .skill-slot:hover { border-color:#00aa41; box-shadow:0 0 15px rgba(0,200,65,.5); transform:translateY(-2px); }
+  .skill-slot.locked { border-color:#442222; cursor:default; }
+  .skill-slot.locked:hover { border-color:#442222; box-shadow:none; transform:none; }
+  .skill-slot.locked .skill-icon { filter:grayscale(1) brightness(.4); }
+  .skill-slot.unlocked { border-color:#00aa41; box-shadow:0 0 8px rgba(0,200,65,.3); }
+  .skill-lock-overlay { position:absolute; inset:0; background:rgba(0,0,0,.7); display:flex; align-items:center; justify-content:center; font-size:16px; border-radius:2px; pointer-events:none; }
+  .skill-star { position:absolute; top:1px; left:3px; font-size:8px; color:#ffcc00; letter-spacing:-1px; pointer-events:none; text-shadow:0 0 4px rgba(255,200,0,.6); }
   .skill-icon { font-size:22px; }
   .skill-key { font-size:9px; color:#888; letter-spacing:1px; position:absolute; bottom:2px; right:4px; }
   .skill-cooldown { position:absolute; inset:0; background:rgba(0,0,0,.7); display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:bold; color:#ccc; border-radius:2px; }
@@ -47,8 +53,8 @@
   #minimap-canvas { width:100%; height:100%; }
   #minimap-countdown { position:absolute; bottom:2px; right:4px; font-size:10px; color:#00ff41; letter-spacing:1px; pointer-events:none; }
   #messages { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); display:flex; flex-direction:column; align-items:center; gap:8px; pointer-events:none; }
-  .msg { font-size:20px; font-weight:600; text-align:center; animation:msgFade 2s ease forwards; text-shadow:0 0 20px currentColor; }
-  @keyframes msgFade { 0%{opacity:0;transform:translateY(10px) scale(.9)} 20%{opacity:1;transform:translateY(0) scale(1)} 70%{opacity:1} 100%{opacity:0;transform:translateY(-10px)} }
+  .msg { font-size:20px; font-weight:600; text-align:center; animation:msgFade 4s ease forwards; text-shadow:0 0 20px currentColor; }
+  @keyframes msgFade { 0%{opacity:0;transform:translateY(10px) scale(.9)} 10%{opacity:1;transform:translateY(0) scale(1)} 75%{opacity:1} 100%{opacity:0;transform:translateY(-10px)} }
   #xp-bar-container { position:absolute; bottom:0; left:0; right:0; height:4px; background:rgba(0,0,0,.5); }
   #xp-fill { height:100%; background:linear-gradient(90deg,#00aa41,#44ff88); transition:width .5s; }
   #controls-hint { position:absolute; bottom:90px; left:50%; transform:translateX(-50%); display:flex; gap:16px; opacity:.4; }
@@ -165,9 +171,9 @@
   #cipher-timer { font-family:'Cinzel Decorative',serif; font-size:38px; color:#88ffaa; text-shadow:0 0 15px rgba(0,255,100,.7); min-width:60px; text-align:center; }
   #cipher-timer.danger { color:#ff4444; animation:timerPulse .5s ease-in-out infinite; }
   .cipher-body { padding:20px 28px; flex:1; overflow-y:auto; }
-  .cipher-mission { font-family:'Cinzel',serif; font-size:15px; line-height:1.7; color:#c8e8d0; margin-bottom:16px; white-space:pre-wrap; }
-  .cipher-data-block { background:#020804; border:1px solid #00aa2a; border-radius:5px; padding:16px 20px; margin-bottom:18px; font-family:'Source Code Pro',monospace; font-size:15px; line-height:1.8; color:#00ff41; overflow-x:auto; box-shadow:inset 0 0 20px rgba(0,0,0,.5); white-space:pre-wrap; word-break:break-all; user-select:all; text-shadow:0 0 5px rgba(0,255,65,.3); }
-  .cipher-hint-block { background:#1a1a00; border:1px solid #aaaa00; border-radius:4px; padding:12px 16px; margin-bottom:16px; font-family:'Source Code Pro',monospace; font-size:13px; line-height:1.6; color:#dddd44; white-space:pre-wrap; }
+  .cipher-mission { font-family:'Cinzel',serif; font-size:15px; line-height:1.7; color:#c8e8d0; margin-bottom:16px; white-space:pre-wrap; user-select:text; -webkit-user-select:text; }
+  .cipher-data-block { background:#020804; border:1px solid #00aa2a; border-radius:5px; padding:16px 20px; margin-bottom:18px; font-family:'Source Code Pro',monospace; font-size:15px; line-height:1.8; color:#00ff41; overflow-x:auto; box-shadow:inset 0 0 20px rgba(0,0,0,.5); white-space:pre-wrap; word-break:break-all; user-select:all; -webkit-user-select:all; text-shadow:0 0 5px rgba(0,255,65,.3); cursor:text; }
+  .cipher-hint-block { background:#1a1a00; border:1px solid #aaaa00; border-radius:4px; padding:12px 16px; margin-bottom:16px; font-family:'Source Code Pro',monospace; font-size:13px; line-height:1.6; color:#dddd44; white-space:pre-wrap; user-select:text; -webkit-user-select:text; }
   .cipher-input-row { display:flex; gap:10px; margin-bottom:14px; }
   #c-input { flex:1; background:rgba(0,10,0,.9); border:1px solid #00aa41; border-radius:4px; padding:12px 14px; font-family:'Source Code Pro',monospace; font-size:15px; color:#00ff41; outline:none; }
   #c-input:focus { border-color:#00ff41; box-shadow:0 0 12px rgba(0,255,65,.4); }
@@ -180,15 +186,15 @@
   .secret-reveal { display:none; background:#0d1a0d; border:2px solid #00ff41; border-radius:6px; padding:16px; margin-top:12px; animation:fadeIn .5s ease; }
   .secret-reveal.show { display:block; }
   .secret-reveal h4 { color:#00ff41; font-size:13px; margin-bottom:8px; letter-spacing:2px; }
-  .secret-reveal-data { background:#0a0a0a; border:1px solid #00aa2a; border-radius:4px; padding:12px; font-family:'Source Code Pro',monospace; font-size:11px; line-height:1.5; color:#00ff41; max-height:150px; overflow-y:auto; white-space:pre-wrap; word-break:break-all; }
+  .secret-reveal-data { background:#0a0a0a; border:1px solid #00aa2a; border-radius:4px; padding:12px; font-family:'Source Code Pro',monospace; font-size:11px; line-height:1.5; color:#00ff41; max-height:150px; overflow-y:auto; white-space:pre-wrap; word-break:break-all; user-select:all; -webkit-user-select:all; cursor:text; }
   @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
   /* Agent Phase */
   .agent-phase { display:none; padding-top:16px; margin-top:16px; border-top:1px solid #ff660044; animation:fadeIn .5s ease; }
   .agent-phase.show { display:block; }
   .agent-phase-label { font-family:'Cinzel',serif; font-size:14px; font-weight:bold; color:#ff6600; margin-bottom:10px; letter-spacing:2px; }
-  .agent-instruction { background:#1a0d00; border:1px solid #ff6600; border-radius:4px; padding:14px; margin-bottom:14px; font-family:'Source Code Pro',monospace; font-size:13px; line-height:1.7; color:#ffaa44; white-space:pre-wrap; }
-  .encoding-hint-box { background:#0a1a0a; border:1px solid #1a5a1a; border-radius:4px; padding:12px; margin-bottom:12px; font-family:'Source Code Pro',monospace; font-size:12px; line-height:1.6; color:#88cc88; white-space:pre-wrap; }
-  .secret-instruction-box { color:#aaa; font-size:12px; line-height:1.6; white-space:pre-wrap; margin-bottom:12px; }
+  .agent-instruction { background:#1a0d00; border:1px solid #ff6600; border-radius:4px; padding:14px; margin-bottom:14px; font-family:'Source Code Pro',monospace; font-size:13px; line-height:1.7; color:#ffaa44; white-space:pre-wrap; user-select:text; -webkit-user-select:text; }
+  .encoding-hint-box { background:#0a1a0a; border:1px solid #1a5a1a; border-radius:4px; padding:12px; margin-bottom:12px; font-family:'Source Code Pro',monospace; font-size:12px; line-height:1.6; color:#88cc88; white-space:pre-wrap; user-select:text; -webkit-user-select:text; }
+  .secret-instruction-box { color:#aaa; font-size:12px; line-height:1.6; white-space:pre-wrap; margin-bottom:12px; user-select:text; -webkit-user-select:text; }
   .agent-input-row { display:flex; gap:10px; margin-bottom:14px; }
   #agent-input { flex:1; background:rgba(20,10,0,.9); border:1px solid #ff6600; border-radius:4px; padding:12px 14px; font-family:'Source Code Pro',monospace; font-size:15px; color:#ff6600; outline:none; }
   #agent-input:focus { border-color:#ff8800; box-shadow:0 0 12px rgba(255,102,0,.4); }
@@ -216,8 +222,7 @@
   .code-editor-header span { font-size:11px; color:#44aa44; letter-spacing:2px; }
   #code-run-btn { background:#2a6a2a; border:1px solid #3a8a3a; border-radius:3px; padding:4px 14px; font-family:'Source Code Pro',monospace; font-size:12px; color:#aaffaa; cursor:pointer; pointer-events:all; }
   #code-run-btn:hover { background:#3a8a3a; }
-  #code-editor { width:100%; min-height:200px; max-height:350px; background:#050a05; border:none; padding:12px; font-family:'Source Code Pro',monospace; font-size:14px; line-height:1.7; color:#a8ff8a; resize:vertical; outline:none; tab-size:4; }
-  #code-editor:focus { box-shadow:inset 0 0 10px rgba(0,255,65,.1); }
+  #code-editor { width:100%; height:280px; font-size:14px; }
   .code-output-wrap { display:none; background:#0a0505; border:1px solid #3a1a1a; border-radius:4px; padding:10px 12px; margin-bottom:14px; }
   .code-output-wrap.show { display:block; }
   .code-output-label { font-size:10px; color:#aa6644; letter-spacing:2px; margin-bottom:4px; }
@@ -254,16 +259,25 @@
   .pause-btn { font-family:'Cinzel',serif; font-size:14px; letter-spacing:3px; color:#000; background:linear-gradient(135deg,#88ffaa,#00aa41); border:none; padding:12px 36px; cursor:pointer; border-radius:3px; margin:6px; pointer-events:all; }
 
   /* ── Tutorial Screen ── */
-  #tutorial-screen { position:fixed; inset:0; background:rgba(0,0,0,.95); display:none; flex-direction:column; align-items:center; justify-content:flex-start; z-index:110; overflow-y:auto; padding:40px 20px; }
+  #tutorial-screen { position:fixed; inset:0; background:rgba(0,0,0,.95); display:none; flex-direction:column; align-items:center; justify-content:center; z-index:110; padding:20px; }
   #tutorial-screen.show { display:flex; }
-  .tutorial-box { max-width:700px; width:100%; }
-  .tutorial-box h1 { font-family:'Cinzel Decorative',serif; font-size:32px; color:#00ff41; text-shadow:0 0 20px rgba(0,255,65,.5); text-align:center; margin-bottom:24px; }
-  .tutorial-section { background:rgba(0,20,10,.6); border:1px solid #00aa41; border-radius:6px; padding:16px 20px; margin-bottom:16px; }
-  .tutorial-section h3 { color:#44ffaa; font-size:15px; margin-bottom:8px; letter-spacing:2px; }
-  .tutorial-section p { color:#aaccaa; font-size:13px; line-height:1.8; font-family:'Source Code Pro',monospace; }
-  .tutorial-section .key { display:inline-block; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2); border-radius:3px; padding:1px 6px; font-size:12px; color:#ddd; margin:0 2px; }
-  .tutorial-start-btn { display:block; margin:24px auto 0; font-family:'Cinzel',serif; font-size:16px; letter-spacing:4px; color:#000; background:linear-gradient(135deg,#88ffaa,#00aa41); border:none; padding:14px 48px; cursor:pointer; border-radius:3px; font-weight:600; box-shadow:0 0 20px rgba(0,200,65,.5); }
-  .tutorial-start-btn:hover { transform:scale(1.03); }
+  .tutorial-box { max-width:720px; width:100%; }
+  .tutorial-box h1 { font-family:'Cinzel Decorative',serif; font-size:clamp(24px,5vw,36px); color:#00ff41; text-shadow:0 0 20px rgba(0,255,65,.5); text-align:center; margin-bottom:16px; }
+  .tutorial-page { display:none; animation:fadeIn .4s ease; }
+  .tutorial-page.active { display:block; }
+  .tutorial-section { background:rgba(0,20,10,.6); border:1px solid #00aa41; border-radius:8px; padding:20px 24px; margin-bottom:16px; }
+  .tutorial-section h3 { color:#44ffaa; font-size:clamp(14px,2.5vw,18px); margin-bottom:10px; letter-spacing:2px; }
+  .tutorial-section p { color:#bbddbb; font-size:clamp(13px,2vw,15px); line-height:2.0; font-family:'Source Code Pro',monospace; }
+  .tutorial-section .key { display:inline-block; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.25); border-radius:4px; padding:2px 8px; font-size:clamp(11px,1.8vw,13px); color:#eee; margin:0 2px; }
+  .tutorial-nav { display:flex; justify-content:space-between; align-items:center; margin-top:20px; }
+  .tutorial-nav-btn { font-family:'Cinzel',serif; font-size:14px; letter-spacing:3px; color:#88ffaa; background:rgba(0,100,40,.4); border:1px solid #00aa41; padding:10px 28px; cursor:pointer; border-radius:4px; pointer-events:all; transition:all .15s; }
+  .tutorial-nav-btn:hover { background:rgba(0,150,60,.6); box-shadow:0 0 15px rgba(0,255,65,.3); }
+  .tutorial-nav-btn.start { color:#000; background:linear-gradient(135deg,#88ffaa,#00aa41); border:none; padding:14px 48px; font-size:16px; font-weight:600; box-shadow:0 0 20px rgba(0,200,65,.5); letter-spacing:4px; }
+  .tutorial-nav-btn.start:hover { transform:scale(1.03); }
+  .tutorial-nav-btn:disabled { opacity:.3; cursor:default; }
+  .tutorial-dots { display:flex; gap:8px; }
+  .tutorial-dot { width:10px; height:10px; border-radius:50%; background:#333; border:1px solid #555; transition:all .2s; }
+  .tutorial-dot.active { background:#00ff41; border-color:#00ff41; box-shadow:0 0 8px rgba(0,255,65,.5); }
 
   .dev-reset {
     position:fixed; bottom:12px; right:12px;
@@ -349,112 +363,144 @@
   <p class="title-desc">拠点が攻撃された。全データが暗号ロックされた。<br>地下施設を突破し、5つの暗号を解読して脱出せよ。</p>
 </div>
 
-<!-- Tutorial -->
+<!-- Tutorial (paged) -->
 <div id="tutorial-screen">
   <div class="tutorial-box">
-    <h1>📖 BRIEFING</h1>
+    <h1 id="tutorial-title">📖 BRIEFING</h1>
 
-    <div class="tutorial-section" style="border-color:#ff6600;">
-      <h3 style="color:#ff8844;">📡 緊急通信</h3>
-      <p style="color:#ffcc88;">エージェント、聞こえるか。<br><br>
-      我々の拠点「<span style="color:#ff6600;">SHADOW NETWORK</span>」が何者かに攻撃された。<br>
-      全システムが暗号ロックされ、エージェントの情報、作戦データ、<br>
-      緊急連絡プロトコル… すべてが地下施設の各階層に散らばった。<br><br>
-      施設内のセキュリティシステムが暴走し、<br>
-      <span style="color:#ff4444;">侵入者排除プログラム（モンスター）</span>が徘徊している。<br><br>
-      君のミッションはこうだ：<br>
-      <span style="color:#00ff41;">① 各階層の暗号ターミナルを見つけ、Pythonで暗号を解読せよ</span><br>
-      <span style="color:#ff6600;">② 復号した機密データをAIエージェントに渡し、情報を繋げよ</span><br>
-      <span style="color:#44aaff;">③ 5つの階層を突破し、脱出コードを手に入れろ</span><br><br>
-      データは層を重ねるほど複雑になる。<br>
-      だが覚えておけ…<span style="color:#ffcc00;">すべてのデータは繋がっている。</span><br>
-      一つでも欠ければ、最後の暗号は解けない。<br><br>
-      健闘を祈る。</p>
+    <!-- Page 1: Story -->
+    <div class="tutorial-page active" data-page="0">
+      <div class="tutorial-section" style="border-color:#ff6600;">
+        <h3 style="color:#ff8844;">📡 緊急通信</h3>
+        <p style="color:#ffcc88;">エージェント、聞こえるか。<br><br>
+        我々の拠点「<span style="color:#ff6600;">SHADOW NETWORK</span>」が何者かに攻撃された。<br>
+        全システムが暗号ロックされ、さらに<br>
+        <span style="color:#ff4444;">スキルシステムが全てダウンしている。</span><br><br>
+        施設内のセキュリティシステムが暴走し、<br>
+        <span style="color:#ff4444;">侵入者排除プログラム（モンスター）</span>が徘徊している。<br><br>
+        君のミッションはこうだ：<br><br>
+        <span style="color:#ffcc00;font-size:clamp(14px,2.2vw,16px);">⓪ 修理ターミナルを見つけ、Pythonで機能を修復</span><br>
+        <span style="color:#00ff41;font-size:clamp(14px,2.2vw,16px);">① 暗号ターミナルで暗号を解読</span><br>
+        <span style="color:#ff6600;font-size:clamp(14px,2.2vw,16px);">② 機密データをAIエージェントで推論</span><br>
+        <span style="color:#44aaff;font-size:clamp(14px,2.2vw,16px);">③ 5つの階層を突破し、脱出コードを入手</span></p>
+      </div>
     </div>
 
-    <div class="tutorial-section">
-      <h3>🎮 操作方法</h3>
-      <p><span class="key">W</span> 前進　<span class="key">S</span> 後退　<span class="key">A</span> 右移動　<span class="key">D</span> 左移動<br>
-      <span class="key">マウス</span> 視点移動　<span class="key">ESC</span> ポーズ<br><br>
-      <strong>スキル:</strong><br>
-      <span class="key">2</span> 🔥火球（MP15）— 敵に直接ダメージ<br>
-      <span class="key">3</span> ⚡雷撃（MP25）— <span style="color:#ff8844;">Lv.3で解放</span>。高威力<br>
-      <span class="key">4</span> 💊回復（MP20）— HP30%回復<br>
-      <span class="key">5</span> 🗺️マップ（MP30）— 5秒間だけ表示。<span style="color:#ff8844;">使用後1分間クールダウン</span></p>
+    <!-- Page 2: Repair System -->
+    <div class="tutorial-page" data-page="1">
+      <div class="tutorial-section" style="border-color:#ffcc00;">
+        <h3 style="color:#ffdd44;">🔧 修理ターミナル</h3>
+        <p style="color:#ffcc88;">
+        各フロアにある<span style="color:#ffcc00;">色付きの光る端末</span>が修理ターミナル。<br>
+        近づくとPythonエディタが開く。<br><br>
+        <strong style="color:#fff;">修理の手順:</strong><br>
+        　1. 修理ターミナルに近づく<br>
+        　2. Pythonエディタで関数を完成させる<br>
+        　3.「▶ 実行」でテスト<br>
+        　4. テストが通れば修理完了！<br><br>
+        <span style="color:#ffcc00;font-size:clamp(15px,2.5vw,18px);">★☆☆ → ★★☆ → ★★★</span><br><br>
+        コードの出来によってスキルの<strong style="color:#fff;">強さ</strong>が変わる！<br>
+        <span style="color:#44ff44;">工夫して高い出力を出せば、より強い機能がアンロック！</span></p>
+      </div>
     </div>
 
-    <div class="tutorial-section">
-      <h3>⚔ セキュリティプログラム（敵）</h3>
-      <p>施設内のセキュリティプログラムが暴走している。<br>
-      接触するとPythonクイズバトル（3問）が始まる。<br>
-      正解で敵にダメージ、不正解や時間切れで自分にダメージ。<br>
-      <span style="color:#ff8844;">階層が上がるほど問題が難しくなり、コード記述問題も出現する。</span><br>
-      <span style="color:#ff8844;">5階以上では敵が逃げなくなる（倒すまで追加問題）。</span><br><br>
-      敵を倒すと <span style="color:#44ff44;">XP獲得</span> + <span style="color:#ff6666;">HP自動回復</span>（強い敵ほど多い）。<br>
-      ドロップアイテム: <span style="color:#4444ff;">MP回復</span> / <span style="color:#44ff44;">XPボーナス</span><br><br>
-      <span style="color:#888;">💨 逃走は各階層2回まで。HP-25%＋XP減のペナルティあり。</span></p>
+    <!-- Page 3: Controls & Skills -->
+    <div class="tutorial-page" data-page="2">
+      <div class="tutorial-section">
+        <h3>🎮 操作方法</h3>
+        <p><span class="key">W</span> 前進　<span class="key">S</span> 後退　<span class="key">A</span> 右移動　<span class="key">D</span> 左移動<br>
+        <span class="key">マウス</span> 視点移動　<span class="key">ESC</span> ポーズ</p>
+      </div>
+      <div class="tutorial-section">
+        <h3>⚡ スキル <span style="color:#ff4444;font-size:12px;">※最初は使用不可！修理が必要</span></h3>
+        <p><span class="key">2</span> 🔥 火球（MP15）<br>
+        <span class="key">3</span> ⚡ 雷撃（MP25）<br>
+        <span class="key">4</span> 💊 回復（MP20）<br>
+        <span class="key">5</span> 🗺️ マップ（MP30）<br><br>
+        <span style="color:#ffcc00;">★の数でスキルの威力が変わる！</span></p>
+      </div>
     </div>
 
-    <div class="tutorial-section">
-      <h3>📈 セキュリティクリアランス（レベル）</h3>
-      <p>XPを貯めるとクリアランスレベルが上がる。<br>
-      レベルアップで: HP/MP増加、攻撃力UP、<span style="color:#44aaff;">移動速度UP</span><br><br>
-      <span style="color:#ff8844;">各階層の暗号ターミナルは、階層番号以上のレベルが必要。</span><br>
-      例: 2階 → Lv.2以上、5階 → Lv.5以上<br>
-      レベルが足りなければ敵を倒してXPを稼ごう！</p>
+    <!-- Page 4: Combat -->
+    <div class="tutorial-page" data-page="3">
+      <div class="tutorial-section">
+        <h3>⚔ バトルシステム</h3>
+        <p>敵に接触すると<span style="color:#ff8844;">Pythonクイズバトル（3問）</span>が開始。<br><br>
+        <span style="color:#44ff44;">正解</span> → 敵にダメージ<br>
+        <span style="color:#ff4444;">不正解・時間切れ</span> → 自分にダメージ<br><br>
+        敵を倒すと <span style="color:#44ff44;">XP獲得</span> + <span style="color:#ff6666;">HP自動回復</span><br><br>
+        <span style="color:#888;">💨 逃走は各階層2回まで（HP-25%＋XP減）</span></p>
+      </div>
+      <div class="tutorial-section">
+        <h3>📈 レベルシステム</h3>
+        <p>XPを貯めるとレベルアップ → HP/MP増加、攻撃力UP<br><br>
+        <span style="color:#ff8844;">暗号ターミナルは階層番号以上のレベルが必要</span><br>
+        例: 2階 → Lv.2以上、5階 → Lv.5以上</p>
+      </div>
     </div>
 
-    <div class="tutorial-section">
-      <h3>🔐 暗号解読（2フェーズ制）</h3>
-      <p><strong style="color:#00ff41;">Phase 1: Pythonで暗号解読</strong><br>
-      ゲーム内のPythonエディタでコードの穴埋め（_____）を完成させる。<br>
-      「▶ 実行」ボタンでその場で実行 → 正しい結果が出たらパスフレーズを入力。<br>
-      <span style="color:#888;">※ コードを実行するまでパスフレーズは入力できません。</span><br><br>
-      <strong style="color:#ff6600;">Phase 2: AIエージェントで推論</strong><br>
-      復号した機密データをCopilot Agentに渡し、質問に答える。<br>
-      <span style="color:#ffcc00;">前のステージのデータも保持させることが重要！</span><br><br>
-      <span style="color:#888;">3回間違え → 2分間の見直し休憩<br>
-      制限時間切れ → 3分間の見直し休憩</span></p>
+    <!-- Page 5: Cipher & Agent -->
+    <div class="tutorial-page" data-page="4">
+      <div class="tutorial-section">
+        <h3>🔐 暗号解読（2フェーズ制）</h3>
+        <p><strong style="color:#00ff41;">Phase 1: Pythonで暗号解読</strong><br>
+        エディタでコードの穴埋めを完成させて実行。<br>
+        正しい結果が出たらパスフレーズを入力。<br><br>
+        <strong style="color:#ff6600;">Phase 2: AIエージェントで推論</strong><br>
+        復号した機密データをCopilot Agentに渡す。<br>
+        <span style="color:#ffcc00;">前ステージのデータも保持させることが重要！</span></p>
+      </div>
+      <div class="tutorial-section">
+        <h3>👥 モブプログラミング（3人1組）</h3>
+        <p>5分ごとにドライバー交代の通知が出る。<br>
+        <span style="color:#ffcc00;">役割例: 操作担当 / コード担当 / Agent担当</span></p>
+      </div>
     </div>
 
-    <div class="tutorial-section">
-      <h3>⭐ コーディングチャレンジ（オプション）</h3>
-      <p>施設内に<span style="color:#ffcc00;">金色に光る端末（⭐）</span>が点在している。<br>
-      近づくとPythonの穴埋め問題がゲーム内エディタで出題される。<br>
-      コードを完成させて実行 → 正しい結果が出れば自動クリア！<br><br>
-      <strong>報酬:</strong><br>
-      ・<span style="color:#44ff44;">大量XP</span>（Easy: 60-70 / Normal: 100-110 / Hard: 250-300）<br>
-      ・<span style="color:#ff6666;">HP 20%回復</span><br>
-      ・<span style="color:#44aaff;">移動速度1.5倍バフ（30秒間）</span><br><br>
-      <span style="color:#888;">制限時間5分。タイムアップで端末は消滅。スキップ可（ペナルティなし）。</span></p>
+    <!-- Page 6: Other Rules -->
+    <div class="tutorial-page" data-page="5">
+      <div class="tutorial-section">
+        <h3>☠ HP0 = 強制休憩</h3>
+        <p>HPが0になると<span style="color:#ff4444;">5分間の強制休憩</span>。<br>
+        復活後はスポーン地点に戻る。XP -20%。</p>
+      </div>
+      <div class="tutorial-section">
+        <h3>🏆 スコア（RANK S〜E）</h3>
+        <p>クリア時にスコアとランクが表示される。<br><br>
+        ・タイムスコア（30分以内で満点）<br>
+        ・戦闘XPスコア（レベル×35 + 撃破数×8）<br>
+        ・連続正解ボーナス<br><br>
+        <span style="color:#888;">S(750+) / A(600+) / B(450+) / C(300+) / D(150+) / E</span></p>
+      </div>
     </div>
 
-    <div class="tutorial-section">
-      <h3>☠ HP0 = 強制休憩</h3>
-      <p>HPが0になると<span style="color:#ff4444;">5分間の強制休憩</span>が発生する。<br>
-      復活後はスポーン地点に戻される。XP -20%のペナルティ。<br>
-      <span style="color:#888;">休憩中の時間はスコアに影響しません。</span></p>
+    <!-- Navigation -->
+    <div class="tutorial-nav">
+      <button class="tutorial-nav-btn" id="tut-prev" onclick="tutPage(-1)" disabled>◀ 前へ</button>
+      <div class="tutorial-dots" id="tut-dots"></div>
+      <button class="tutorial-nav-btn" id="tut-next" onclick="tutPage(1)">次へ ▶</button>
     </div>
-
-    <div class="tutorial-section">
-      <h3>👥 モブプログラミング（3人1組）</h3>
-      <p>5分ごとにドライバー交代の通知が表示される。<br>
-      交代時・ポーズ中はゲームが完全停止（スコアタイマーも停止）。<br>
-      <span style="color:#ffcc00;">役割分担例: 操作担当 / コード記述担当 / Agent担当</span></p>
-    </div>
-
-    <div class="tutorial-section">
-      <h3>🏆 スコア（RANK S〜E）</h3>
-      <p>クリア時にスコアとランクが表示される。<br>
-      ・タイムスコア（30分以内で満点、ポーズ中は非カウント）<br>
-      ・戦闘XPスコア（レベル × 35 + 撃破数 × 8）<br>
-      ・連続正解ボーナス<br>
-      <span style="color:#888;">ランク: S(750+) / A(600+) / B(450+) / C(300+) / D(150+) / E</span></p>
-    </div>
-
-    <button class="tutorial-start-btn" onclick="closeTutorial()">▶ ミッション開始</button>
   </div>
 </div>
+
+<script>
+var tutCurrentPage=0;
+var tutTotalPages=6;
+function tutPage(dir){
+  tutCurrentPage+=dir;
+  if(tutCurrentPage>=tutTotalPages){closeTutorial();return;}
+  if(tutCurrentPage<0)tutCurrentPage=0;
+  var pages=document.querySelectorAll('.tutorial-page');
+  for(var i=0;i<pages.length;i++)pages[i].classList.toggle('active',i===tutCurrentPage);
+  document.getElementById('tut-prev').disabled=tutCurrentPage===0;
+  var nb=document.getElementById('tut-next');
+  if(tutCurrentPage===tutTotalPages-1){nb.textContent='\u25B6 \u30DF\u30C3\u30B7\u30E7\u30F3\u958B\u59CB';nb.className='tutorial-nav-btn start';}
+  else{nb.textContent='\u6B21\u3078 \u25B6';nb.className='tutorial-nav-btn';}
+  var dots=document.getElementById('tut-dots').children;
+  for(var i=0;i<dots.length;i++)dots[i].classList.toggle('active',i===tutCurrentPage);
+}
+(function(){var d=document.getElementById('tut-dots');for(var i=0;i<tutTotalPages;i++){var dot=document.createElement('div');dot.className='tutorial-dot'+(i===0?' active':'');d.appendChild(dot);}})();
+</script>
 
 <!-- Overlay -->
 <div id="overlay-screen">
@@ -505,6 +551,7 @@
     </div>
     <div class="battle-footer">
       <div class="battle-hint" id="b-hint">💡</div>
+      <button id="battle-qskip-btn" onclick="questionSkip()" style="background:rgba(100,80,0,.5);border:1px solid #aa8800;border-radius:4px;padding:6px 16px;font-family:'Cinzel',serif;font-size:11px;letter-spacing:2px;color:#ccaa44;cursor:pointer;pointer-events:all;">⏭ 問題スキップ</button>
       <button id="battle-skip-btn" onclick="battleSkip()">💨 逃げる（HP -15%）</button>
     </div>
   </div>
@@ -536,7 +583,7 @@
           <span>🐍 PYTHON EDITOR</span>
           <button id="code-run-btn">▶ 実行</button>
         </div>
-        <textarea id="code-editor" spellcheck="false" placeholder="# ここにPythonコードを書いて実行ボタンを押す"></textarea>
+        <div id="code-editor"></div>
       </div>
       <div class="code-output-wrap" id="code-output-wrap">
         <div class="code-output-label">OUTPUT</div>
@@ -579,6 +626,7 @@
     </div>
     <div class="cipher-footer">
       <div class="cipher-footer-hint" id="cm-footer">💡 stage1.py ～ stage5.py のロジックがヒントです</div>
+      <button id="repair-hint-btn" style="display:none;background:rgba(200,150,0,.4);border:1px solid #aa8800;border-radius:4px;padding:6px 16px;font-family:'Cinzel',serif;font-size:11px;letter-spacing:2px;color:#ffcc44;cursor:pointer;pointer-events:all;" onclick="showRepairHint()">💡 ヒント</button>
       <button id="cipher-close-btn" style="display:none;" onclick="closeChallengeModal()">✕ 閉じる</button>
     </div>
   </div>
@@ -601,8 +649,32 @@
 
 <button class="dev-reset" onclick="resetToTitle()">🏠 RESET</button>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.6/ace.min.js"></script>
 <script src="three.min.js"></script>
-<script>
+<script src="js/util.js"></script>
+<script src="js/questions.js"></script>
+<script src="js/stages.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/repair.js"></script>
+<script src="js/themes.js"></script>
+<script src="js/dungeon.js"></script>
+<script src="js/scene.js"></script>
+<script src="js/entities.js"></script>
+<script src="js/player.js"></script>
+<script src="js/challenge.js"></script>
+<script src="js/battle.js"></script>
+<script src="js/cipher.js"></script>
+<script src="js/boss.js"></script>
+<script src="js/score.js"></script>
+<script src="js/death.js"></script>
+<script src="js/sound.js"></script>
+<script src="js/save.js"></script>
+<script src="js/gameloop.js"></script>
+<script src="js/flow.js"></script>
+
+<!-- IGNORE BELOW: preserved inline for reference -->
+<script>var _INLINE_DISABLED=true;</script>
+<script type="text/disabled">
 // === util.js ===
 // Utility Functions
 // SHA-256 (with fallback for environments without crypto.subtle)
@@ -3602,6 +3674,7 @@ dungeon=genDungeon();buildScene();updateHUD();
 requestAnimationFrame(loop);
 
 </script>
+<!-- End of preserved inline reference -->
 </body>
 </html>
 

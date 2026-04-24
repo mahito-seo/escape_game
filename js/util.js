@@ -1,4 +1,45 @@
 // Utility Functions
+
+// ═══════════════════════════════════
+//  ACE EDITOR WRAPPER
+// ═══════════════════════════════════
+var aceEditor=null;
+function initAceEditor(){
+  if(aceEditor)return;
+  aceEditor=ace.edit('code-editor');
+  aceEditor.setTheme('ace/theme/monokai');
+  aceEditor.session.setMode('ace/mode/python');
+  aceEditor.setOptions({
+    fontSize:'14px',
+    showPrintMargin:false,
+    useSoftTabs:true,
+    tabSize:4,
+    wrap:true,
+    enableBasicAutocompletion:false,
+    highlightActiveLine:true,
+    showGutter:true
+  });
+  aceEditor.setReadOnly(false);
+}
+
+// Compatibility layer: get/set code from Ace (replaces textarea .value)
+function getEditorCode(){
+  if(aceEditor)return aceEditor.getValue();
+  var el=document.getElementById('code-editor');
+  return el.value||el.textContent||'';
+}
+function setEditorCode(code){
+  if(aceEditor){aceEditor.setValue(code,-1);aceEditor.clearSelection();return;}
+  var el=document.getElementById('code-editor');
+  if(el.value!==undefined)el.value=code;else el.textContent=code;
+}
+function setEditorReadOnly(ro){
+  if(aceEditor)aceEditor.setReadOnly(ro);
+}
+function focusEditor(){
+  if(aceEditor)aceEditor.focus();
+}
+
 // SHA-256 (with fallback for environments without crypto.subtle)
 async function sha256(t){
   try{

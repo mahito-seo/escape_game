@@ -1,7 +1,7 @@
 // Scene Building - Terrain, Portal, Terminal, Enemies, Torches, Items
 function buildScene(){
   scene.children.slice().forEach(c=>{if(c.isMesh||c.isGroup||c.isPointLight)scene.remove(c);});
-  torches=[];items=[];enemies=[];projectiles=[];challengeTerminals=[];decoBlocks=[];
+  torches=[];items=[];enemies=[];projectiles=[];challengeTerminals=[];repairTerminals=[];decoBlocks=[];bossEntity=null;bossProjectiles=[];
   // Apply floor theme
   const theme=FLOOR_THEMES[(floor-1)%FLOOR_THEMES.length];
   // Materials
@@ -29,8 +29,12 @@ function buildScene(){
   }
   scene.add(floorGroup,ceilGroup,wallGroup);
 
-  // ── Exit Portal (epic) ──
+  // ── Exit Portal (epic) ── (hidden on extra stage until boss defeated)
   const sx=stairX*TILE,sz=stairY*TILE;
+  if(floor>=6&&currentCipherStage>=5&&!(bossEntity&&bossEntity.defeated)){
+    // Extra stage: no portal until boss is beaten
+    stairMesh=null;stairLight=null;
+  }
   const portalGroup=new THREE.Group();
   // Base platform (stone ring)
   const baseMat=new THREE.MeshStandardMaterial({color:cipherSolved?0x3a6a3a:0x3a2a2a,roughness:.6,metalness:.3});
@@ -109,15 +113,15 @@ function buildScene(){
   // Enemies
   // Minecraft-style blocky monsters
   const ETYPES=[
-    {name:'スケルトン',avatar:'💀',sz:.4,hp:40,atk:8,spd:.025,xp:20,xpBonus:5,build:'skeleton',
+    {name:'スケルトン',avatar:'💀',sz:.4,hp:40,atk:8,spd:.025,xp:12,xpBonus:3,diff:'easy',build:'skeleton',
      body:0xd4c8a0,bodyEm:0x332211,head:0xe0d8b0,shirt:0x888888,pants:0x555555,eye:0x111111,eyeEm:0x000000},
-    {name:'ゴブリン',avatar:'👺',sz:.38,hp:30,atk:6,spd:.04,xp:15,xpBonus:8,build:'goblin',
+    {name:'ゴブリン',avatar:'👺',sz:.38,hp:30,atk:6,spd:.04,xp:10,xpBonus:4,diff:'easy',build:'goblin',
      body:0x2a8a1a,bodyEm:0x0a2a00,head:0x3aaa2a,shirt:0x553311,pants:0x442200,eye:0xff2200,eyeEm:0xff0000},
-    {name:'オーク',avatar:'👹',sz:.55,hp:80,atk:15,spd:.02,xp:35,xpBonus:12,build:'orc',
+    {name:'オーク',avatar:'👹',sz:.55,hp:80,atk:15,spd:.02,xp:35,xpBonus:12,diff:'normal',build:'orc',
      body:0x5a6a3a,bodyEm:0x1a2a0a,head:0x6a7a4a,shirt:0x3a2a10,pants:0x2a1a08,eye:0xff4400,eyeEm:0xff2200},
-    {name:'ゾンビ',avatar:'🧟',sz:.44,hp:60,atk:10,spd:.015,xp:25,xpBonus:6,build:'zombie',
+    {name:'ゾンビ',avatar:'🧟',sz:.44,hp:60,atk:10,spd:.015,xp:25,xpBonus:6,diff:'normal',build:'zombie',
      body:0x4a7a5a,bodyEm:0x0a2a10,head:0x5a8a6a,shirt:0x2a6a6a,pants:0x2a2a5a,eye:0x111111,eyeEm:0x000000},
-    {name:'デーモン',avatar:'😈',sz:.6,hp:120,atk:25,spd:.03,xp:60,xpBonus:25,build:'demon',
+    {name:'デーモン',avatar:'😈',sz:.6,hp:120,atk:25,spd:.03,xp:60,xpBonus:25,diff:'hard',build:'demon',
      body:0x8a1a1a,bodyEm:0x4a0000,head:0x6a0a0a,shirt:0x1a1a1a,pants:0x0a0a0a,eye:0xff0000,eyeEm:0xff0000},
   ];
   function buildEnemyMesh(t){
@@ -246,15 +250,14 @@ function buildScene(){
       body.position.set(ex,t.sz*1.1,ez);scene.add(body);
       const sc=1+(floor-1)*.25; // HP scales 25% per floor
       const spdSc=1+(floor-1)*.03; // speed scales 3% per floor (gentle)
-      enemies.push({mesh:body,x:ex,z:ez,name:t.name,avatar:t.avatar,hp:~~(t.hp*sc),maxHp:~~(t.hp*sc),atk:~~(t.atk*(1+(floor-1)*.15)),speed:t.spd*spdSc,xp:~~(t.xp*(1+(floor-1)*.1)),xpBonus:t.xpBonus,size:t.sz,state:'idle',attackTimer:0,leg1,leg2,arm1,arm2,legPhase:0,alertTimer:0,inBattle:false,dying:false});
+      enemies.push({mesh:body,x:ex,z:ez,name:t.name,avatar:t.avatar,diff:t.diff||'easy',hp:~~(t.hp*sc),maxHp:~~(t.hp*sc),atk:~~(t.atk*(1+(floor-1)*.15)),speed:t.spd*spdSc,xp:~~(t.xp*(1+(floor-1)*.1)),xpBonus:t.xpBonus,size:t.sz,state:'idle',attackTimer:0,leg1,leg2,arm1,arm2,legPhase:0,alertTimer:0,inBattle:false,dying:false});
     }
     if(Math.random()<.4)spawnItemInRoom(rm);
     // Decorations
     spawnDecorations(rm);
-    // Challenge terminal (15% chance per room, not in first 2 rooms)
-    if(i>2&&Math.random()<.15)spawnChallengeTerminal(rm);
   }
-  challengeTerminals=challengeTerminals||[];
+  // Spawn repair terminals for this floor
+  spawnFloorRepairTerminals(rooms);
 }
 
 // Room decoration spawner

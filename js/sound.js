@@ -31,22 +31,34 @@ function playSound(name){
       setTimeout(()=>{playTone(784,.15,'sine',v);playTone(1047,.15,'sine',v*.7);},900);
       setTimeout(()=>{playTone(1047,.6,'sine',v);playTone(1319,.6,'sine',v*.7);},1100);
     }
-    // Stage 6 TRUE ESCAPE - loud, long, unmistakable
+    // Stage 6 TRUE ESCAPE - loud, ~8 seconds, proper ending
     else if(name==='truefanfare'){
-      const v=.35; // loud!
-      // Chord 1: C major
+      const v=.4;
+      // Part 1: Fast ascending chords (0-0.9s)
       playTone(523,.3,'sine',v);playTone(659,.3,'sine',v*.8);playTone(784,.3,'sine',v*.6);
-      // Chord 2: F major
-      setTimeout(()=>{playTone(698,.3,'sine',v);playTone(880,.3,'sine',v*.8);playTone(1047,.3,'sine',v*.6);},350);
-      // Chord 3: G major
-      setTimeout(()=>{playTone(784,.3,'sine',v);playTone(988,.3,'sine',v*.8);playTone(1175,.3,'sine',v*.6);},700);
-      // Chord 4: C major high - BIG
-      setTimeout(()=>{playTone(1047,.6,'sine',v);playTone(1319,.6,'sine',v*.8);playTone(1568,.6,'sine',v*.6);},1050);
-      // Arpeggio up
-      setTimeout(()=>playTone(1047,.15,'sine',v),1700);
-      setTimeout(()=>playTone(1319,.15,'sine',v),1850);
-      setTimeout(()=>playTone(1568,.15,'sine',v),2000);
-      setTimeout(()=>{playTone(2093,.8,'sine',v);playTone(1568,.8,'sine',v*.7);playTone(1047,.8,'sine',v*.5);},2150);
+      setTimeout(()=>{playTone(698,.3,'sine',v);playTone(880,.3,'sine',v*.8);playTone(1047,.3,'sine',v*.6);},300);
+      setTimeout(()=>{playTone(784,.3,'sine',v);playTone(988,.3,'sine',v*.8);playTone(1175,.3,'sine',v*.6);},600);
+      // Part 2: Big hit (0.9s)
+      setTimeout(()=>{playTone(1047,.5,'sine',v);playTone(1319,.5,'sine',v*.8);playTone(1568,.5,'sine',v*.6);},900);
+      // Part 3: Arpeggio run (1.5-2.1s)
+      setTimeout(()=>playTone(1047,.15,'sine',v),1500);
+      setTimeout(()=>playTone(1319,.15,'sine',v),1650);
+      setTimeout(()=>playTone(1568,.15,'sine',v),1800);
+      setTimeout(()=>playTone(2093,.15,'sine',v),1950);
+      // Part 4: Power chord (2.2s)
+      setTimeout(()=>{playTone(2093,.8,'sine',v);playTone(1568,.8,'sine',v*.8);playTone(1047,.8,'sine',v*.6);playTone(784,.8,'sine',v*.4);},2150);
+      // Part 5: Melody phrase (3.2-4.8s)
+      setTimeout(()=>playTone(2093,.2,'sine',v*.9),3200);
+      setTimeout(()=>playTone(1568,.2,'sine',v*.9),3400);
+      setTimeout(()=>playTone(1760,.2,'sine',v*.9),3600);
+      setTimeout(()=>playTone(2093,.3,'sine',v*.9),3800);
+      setTimeout(()=>{playTone(2637,.5,'sine',v);playTone(2093,.5,'sine',v*.7);playTone(1568,.5,'sine',v*.5);},4100);
+      // Part 6: Descending resolution (4.8-6.2s)
+      setTimeout(()=>{playTone(2093,.4,'sine',v*.8);playTone(1568,.4,'sine',v*.6);},4800);
+      setTimeout(()=>{playTone(1568,.4,'sine',v*.7);playTone(1319,.4,'sine',v*.5);},5200);
+      setTimeout(()=>{playTone(1047,.4,'sine',v*.6);playTone(784,.4,'sine',v*.4);},5600);
+      // Part 7: Final grand chord (6.2-8s)
+      setTimeout(()=>{playTone(1047,1.8,'sine',v);playTone(1319,1.8,'sine',v*.8);playTone(1568,1.8,'sine',v*.6);playTone(2093,1.8,'sine',v*.5);},6200);
     }
   }catch(e){}
 }

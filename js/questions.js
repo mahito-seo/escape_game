@@ -98,6 +98,23 @@ const QUESTIONS=[
   {cat:'再帰',diff:'hard',type:'fill',q:'この関数の出力は？（数字のみ）',code:'def f(n):\n    if n == 0: return 1\n    return n * f(n-1)\nprint(f(5))',ans:'120',expl:'5! = 120（階乗）'},
   {cat:'ビット演算',diff:'hard',type:'fill',q:'次の式の結果は？（数字のみ）',code:'print(1 << 4)',ans:'16',expl:'1を左に4ビットシフト = 16'},
   {cat:'文字列',diff:'hard',type:'fill',q:'次のコードの出力は？（数字のみ）',code:'print(ord("A"))',ans:'65',expl:'ord("A") = 65（ASCII値）'},
+
+  // ── 追加 EASY その3 (15問) ──
+  {cat:'リスト',diff:'easy',type:'choice',q:'次のコードの出力は？',code:'a = [10, 20, 30]\nprint(a[1])',choices:['10','20','30','Error'],ans:1,expl:'インデックス1は2番目の要素 = 20'},
+  {cat:'演算',diff:'easy',type:'choice',q:'次のコードの出力は？',code:'print(10 // 3)',choices:['3.33','3','1','10'],ans:1,expl:'// は整数除算（切り捨て）= 3'},
+  {cat:'文字列',diff:'easy',type:'choice',q:'次のコードの出力は？',code:'s = "Hello"\nprint(s * 2)',choices:['Hello2','HelloHello','10','Error'],ans:1,expl:'文字列 * 2 は繰り返し'},
+  {cat:'リスト',diff:'easy',type:'choice',q:'リストの要素を全部消すメソッドは？',choices:['.clear()','.delete()','.removeAll()','.empty()'],ans:0,expl:'.clear() でリストを空にする'},
+  {cat:'bool',diff:'easy',type:'choice',q:'次の式の結果は？',code:'print(True or False)',choices:['True','False','None','Error'],ans:0,expl:'True or False = True'},
+  {cat:'Python基礎',diff:'easy',type:'choice',q:'次のコードの出力は？',code:'x = 5\nx += 3\nprint(x)',choices:['5','3','8','53'],ans:2,expl:'x += 3 は x = x + 3 = 8'},
+  {cat:'リスト',diff:'easy',type:'choice',q:'次のコードの出力は？',code:'a = [1, 2, 3]\na.insert(1, 10)\nprint(a)',choices:['[1, 10, 2, 3]','[10, 1, 2, 3]','[1, 2, 10, 3]','Error'],ans:0,expl:'insert(1, 10) でインデックス1に10を挿入'},
+  {cat:'文字列',diff:'easy',type:'choice',q:'次のコードの出力は？',code:'print("Python".startswith("Py"))',choices:['True','False','Py','Error'],ans:0,expl:'"Python"は"Py"で始まる → True'},
+  {cat:'比較',diff:'easy',type:'choice',q:'次の式の結果は？',code:'print(3 > 2 > 1)',choices:['True','False','Error','None'],ans:0,expl:'Pythonでは連鎖比較が可能 → True'},
+  {cat:'リスト',diff:'easy',type:'choice',q:'次のコードの出力は？',code:'print(min([5, 3, 8, 1, 4]))',choices:['1','3','5','8'],ans:0,expl:'min() で最小値 = 1'},
+  {cat:'Python基礎',diff:'easy',type:'fill',q:'次のコードの出力は？（数字のみ）',code:'print(abs(-8))',ans:'8',expl:'abs() で絶対値 = 8'},
+  {cat:'リスト',diff:'easy',type:'fill',q:'次のコードの出力は？（数字のみ）',code:'print(len("Hello"))',ans:'5',expl:'文字列の長さ = 5'},
+  {cat:'演算',diff:'easy',type:'fill',q:'次のコードの出力は？（数字のみ）',code:'print(2 + 3 * 4)',ans:'14',expl:'掛け算が先: 3*4=12, 2+12=14'},
+  {cat:'文字列',diff:'easy',type:'fill',q:'次のコードの出力は？',code:'print("abc"[2])',ans:'c',expl:'インデックス2は3番目の文字 = c'},
+  {cat:'bool',diff:'easy',type:'fill',q:'次のコードの出力は？',code:'print(10 > 5)',ans:'True',expl:'10 > 5 は True'},
 ];
 
 // ═══════════════════════════════════
