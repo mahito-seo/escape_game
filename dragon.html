@@ -252,6 +252,8 @@
   #pause-screen h1 { font-family:'Cinzel Decorative',serif; font-size:48px; color:#88ffaa; text-shadow:0 0 30px rgba(0,255,65,.6); margin-bottom:16px; letter-spacing:6px; }
   #pause-screen p { font-size:16px; color:#66aa88; letter-spacing:3px; margin-bottom:32px; }
   .pause-btn { font-family:'Cinzel',serif; font-size:14px; letter-spacing:3px; color:#000; background:linear-gradient(135deg,#88ffaa,#00aa41); border:none; padding:12px 36px; cursor:pointer; border-radius:3px; margin:6px; pointer-events:all; }
+  .pause-btn-save { background:linear-gradient(135deg,#4488ff,#0044aa); color:#fff; }
+  .pause-btn-tutorial { background:linear-gradient(135deg,#ffcc44,#aa8800); color:#000; }
 
   /* ── Tutorial Screen ── */
   #tutorial-screen { position:fixed; inset:0; background:rgba(0,0,0,.95); display:none; flex-direction:column; align-items:center; justify-content:flex-start; z-index:110; overflow-y:auto; padding:40px 20px; }
@@ -589,6 +591,8 @@
   <h1>⏸ PAUSE</h1>
   <p>ESCキーで再開</p>
   <button class="pause-btn" onclick="togglePause()">▶ 再開</button>
+  <button class="pause-btn pause-btn-save" onclick="pauseSave()">💾 セーブ</button>
+  <button class="pause-btn pause-btn-tutorial" onclick="openTutorialFromPause()">📖 説明書</button>
 </div>
 
 <!-- Mob Programming Timer -->
@@ -3384,6 +3388,33 @@ function togglePause(){
     document.getElementById('pause-screen').classList.add('show');
   }
 }
+function pauseSave(){
+  saveProgress();
+  // 一時的にフラッシュメッセージをポーズ画面上に表示
+  const p=document.getElementById('pause-screen');
+  const msg=document.createElement('div');
+  msg.textContent='✅ セーブしました！';
+  msg.style.cssText='color:#88ffaa;font-size:14px;letter-spacing:2px;margin-top:8px;animation:fadeIn .3s ease;';
+  p.appendChild(msg);
+  setTimeout(()=>msg.remove(),2000);
+}
+
+function openTutorialFromPause(){
+  // ポーズを維持したまま（タイマー停止中）チュートリアルを表示
+  document.getElementById('pause-screen').classList.remove('show');
+  const tut=document.getElementById('tutorial-screen');
+  tut.classList.add('show');
+  // 「閉じる」ボタンをチュートリアルのスタートボタンに差し替え
+  const btn=tut.querySelector('.tutorial-start-btn');
+  btn.textContent='✕ 閉じてポーズに戻る';
+  btn.onclick=()=>{
+    tut.classList.remove('show');
+    btn.textContent='▶ ミッション開始';
+    btn.onclick=()=>closeTutorial();
+    document.getElementById('pause-screen').classList.add('show');
+  };
+}
+
 document.addEventListener('keydown',e=>{
   keys[e.code]=true;
   if(e.code==='Escape'){
