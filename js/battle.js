@@ -1,7 +1,7 @@
 // Battle System - Python Quiz Battles
 let battleActive=false, battleEnemy=null, battleQList=[], battleQIdx=0;
-let battleTimer=30, battleTimerInt=null, totalStreak=0, roundCorrect=0;
-const BATTLE_QCOUNT=3, BATTLE_TIME=30;
+let battleTimer=45, battleTimerInt=null, totalStreak=0, roundCorrect=0;
+const BATTLE_QCOUNT=3, BATTLE_TIME=45;
 
 function pickQuestions(fl,enemyDiff){
   // Match questions to enemy difficulty

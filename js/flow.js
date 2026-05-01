@@ -112,6 +112,24 @@ function showBreakReminder(){
   setTimeout(function(){el.remove();},10000);
 }
 
+function pauseSave(){
+  saveProgress();
+  var p=document.getElementById('pause-screen');
+  var msg=document.createElement('div');
+  msg.textContent='\u2705 \u30BB\u30FC\u30D6\u3057\u307E\u3057\u305F\uFF01';
+  msg.style.cssText='color:#88ffaa;font-size:14px;letter-spacing:2px;margin-top:8px;animation:fadeIn .3s ease;';
+  p.appendChild(msg);
+  setTimeout(function(){msg.remove();},2000);
+}
+
+var tutFromPause=false;
+function openTutorialFromPause(){
+  document.getElementById('pause-screen').classList.remove('show');
+  document.getElementById('tutorial-screen').classList.add('show');
+  tutFromPause=true;
+  tutCurrentPage=0;tutPage(0);
+}
+
 function resetToTitle(){
   // Close any open modals
   document.getElementById('battle-modal').classList.remove('open');

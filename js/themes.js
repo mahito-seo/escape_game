@@ -1,9 +1,9 @@
 // Floor Themes - Per-stage visual settings + decorations
 const FLOOR_THEMES=[
   {name:'古代遺跡',
-   wall:0x6a5a40,floor:0x3a2a18,ceil:0x2a2010,
-   fog:0x0d0a06,fogNear:12,fogFar:45,
-   ambient:0x665540,ambientI:1.1,torch:0xff8800,torchI:2.5,
+   wall:0x8a7a5a,floor:0x5a4528,ceil:0x3a3018,
+   fog:0x1a140a,fogNear:20,fogFar:70,
+   ambient:0x9a8870,ambientI:2.0,torch:0xffaa44,torchI:3.4,
    // Decorations: crumbled pillars, old crates, stone tablets
    decos:[
      {type:'pillar',col:0x8a7a60,h:1.5,w:.3,chance:.3},

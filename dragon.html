@@ -225,7 +225,11 @@
   #code-editor { width:100%; height:280px; font-size:14px; }
   .code-output-wrap { display:none; background:#0a0505; border:1px solid #3a1a1a; border-radius:4px; padding:10px 12px; margin-bottom:14px; }
   .code-output-wrap.show { display:block; }
-  .code-output-label { font-size:10px; color:#aa6644; letter-spacing:2px; margin-bottom:4px; }
+  .code-output-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
+  .code-output-label { font-size:10px; color:#aa6644; letter-spacing:2px; }
+  #code-output-copy-btn { background:#2a1a4a; border:1px solid #4a3a8a; border-radius:3px; padding:2px 10px; font-family:'Source Code Pro',monospace; font-size:11px; color:#aabbff; cursor:pointer; pointer-events:all; }
+  #code-output-copy-btn:hover { background:#3a2a6a; }
+  #code-output-copy-btn.copied { background:#2a6a2a; border-color:#3a8a3a; color:#aaffaa; }
   #code-output { font-family:'Source Code Pro',monospace; font-size:13px; color:#ffaa88; white-space:pre-wrap; }
 
   .stage-clear-banner { position:fixed; top:0; left:0; right:0; z-index:300; background:linear-gradient(180deg,rgba(0,60,20,.95),rgba(0,0,0,0)); padding:40px 20px; text-align:center; animation:bannerSlide .5s ease; pointer-events:none; }
@@ -256,7 +260,7 @@
   #pause-screen.show { display:flex; }
   #pause-screen h1 { font-family:'Cinzel Decorative',serif; font-size:48px; color:#88ffaa; text-shadow:0 0 30px rgba(0,255,65,.6); margin-bottom:16px; letter-spacing:6px; }
   #pause-screen p { font-size:16px; color:#66aa88; letter-spacing:3px; margin-bottom:32px; }
-  .pause-btn { font-family:'Cinzel',serif; font-size:14px; letter-spacing:3px; color:#000; background:linear-gradient(135deg,#88ffaa,#00aa41); border:none; padding:12px 36px; cursor:pointer; border-radius:3px; margin:6px; pointer-events:all; }
+  .pause-btn { font-family:'Cinzel',serif; font-size:14px; letter-spacing:3px; color:#000; background:linear-gradient(135deg,#88ffaa,#00aa41); border:none; padding:14px 48px; cursor:pointer; border-radius:4px; margin:6px; pointer-events:all; min-width:220px; text-align:center; }
   .pause-btn-save { background:linear-gradient(135deg,#4488ff,#0044aa); color:#fff; }
   .pause-btn-tutorial { background:linear-gradient(135deg,#ffcc44,#aa8800); color:#000; }
 
@@ -490,14 +494,28 @@ var tutCurrentPage=0;
 var tutTotalPages=6;
 function tutPage(dir){
   tutCurrentPage+=dir;
-  if(tutCurrentPage>=tutTotalPages){closeTutorial();return;}
+  if(tutCurrentPage>=tutTotalPages){
+    // From pause → return to pause, otherwise start game
+    if(typeof tutFromPause!=='undefined'&&tutFromPause){
+      tutFromPause=false;
+      document.getElementById('tutorial-screen').classList.remove('show');
+      document.getElementById('pause-screen').classList.add('show');
+    }else{closeTutorial();}
+    return;
+  }
   if(tutCurrentPage<0)tutCurrentPage=0;
   var pages=document.querySelectorAll('.tutorial-page');
   for(var i=0;i<pages.length;i++)pages[i].classList.toggle('active',i===tutCurrentPage);
   document.getElementById('tut-prev').disabled=tutCurrentPage===0;
   var nb=document.getElementById('tut-next');
-  if(tutCurrentPage===tutTotalPages-1){nb.textContent='\u25B6 \u30DF\u30C3\u30B7\u30E7\u30F3\u958B\u59CB';nb.className='tutorial-nav-btn start';}
-  else{nb.textContent='\u6B21\u3078 \u25B6';nb.className='tutorial-nav-btn';}
+  var isLast=tutCurrentPage===tutTotalPages-1;
+  if(isLast&&typeof tutFromPause!=='undefined'&&tutFromPause){
+    nb.textContent='\u2716 \u9589\u3058\u308B';nb.className='tutorial-nav-btn';
+  }else if(isLast){
+    nb.textContent='\u25B6 \u30DF\u30C3\u30B7\u30E7\u30F3\u958B\u59CB';nb.className='tutorial-nav-btn start';
+  }else{
+    nb.textContent='\u6B21\u3078 \u25B6';nb.className='tutorial-nav-btn';
+  }
   var dots=document.getElementById('tut-dots').children;
   for(var i=0;i<dots.length;i++)dots[i].classList.toggle('active',i===tutCurrentPage);
 }
@@ -588,7 +606,10 @@ function tutPage(dir){
         <div id="code-editor"></div>
       </div>
       <div class="code-output-wrap" id="code-output-wrap">
-        <div class="code-output-label">OUTPUT</div>
+        <div class="code-output-header">
+          <span class="code-output-label">OUTPUT</span>
+          <button id="code-output-copy-btn" onclick="copyCodeOutput()">📋 コピー</button>
+        </div>
         <div id="code-output"></div>
       </div>
       <div class="cipher-input-row" id="cm-input-row">
@@ -640,7 +661,7 @@ function tutPage(dir){
   <p>ESCキーで再開</p>
   <button class="pause-btn" onclick="togglePause()">▶ 再開</button>
   <button class="pause-btn pause-btn-save" onclick="pauseSave()">💾 セーブ</button>
-  <button class="pause-btn pause-btn-tutorial" onclick="openTutorialFromPause()">📖 説明書</button>
+  <button class="pause-btn pause-btn-tutorial" onclick="openTutorialFromPause()">📖 遊び方ガイド</button>
 </div>
 
 <!-- Mob Programming Timer -->

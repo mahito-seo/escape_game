@@ -194,7 +194,7 @@ function openBossBattle(){
       document.getElementById('code-output').style.color='#ff6666';
     }
   };
-  clearInterval(cipherTimerInt);cipherTimerVal=600;
+  clearInterval(cipherTimerInt);cipherTimerVal=900;
   var el=document.getElementById('cipher-timer');el.classList.remove('danger');
   var fmtT=function(s){var m=Math.floor(s/60);return m>0?m+':'+('0'+s%60).slice(-2):String(s);};
   el.textContent=fmtT(cipherTimerVal);

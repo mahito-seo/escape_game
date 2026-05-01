@@ -615,8 +615,12 @@ function openRepairChallenge(rt){
   document.getElementById('code-editor-wrap').classList.add('show');
   initAceEditor();setEditorCode(ch.template);setEditorReadOnly(false);
   document.getElementById('code-output-wrap').classList.remove('show');
+  // Wipe any leftover output text from a previous run / previous terminal
+  var _coOut=document.getElementById('code-output');
+  _coOut.textContent='';_coOut.style.color='';
   document.getElementById('cm-input-row').style.display='none';
-  document.getElementById('c-result').style.display='none';
+  var _cR=document.getElementById('c-result');
+  _cR.style.display='none';_cR.className='';
   document.getElementById('c-continue-btn').style.display='none';
   document.getElementById('secret-reveal').classList.remove('show');
   document.getElementById('agent-phase').classList.remove('show');
@@ -626,6 +630,11 @@ function openRepairChallenge(rt){
   closeBtn.onclick=closeRepairModal;
   // Run button
   document.getElementById('code-run-btn').onclick=function(){
+    // Clear stale state from any previous run before evaluating fresh code
+    document.getElementById('code-output').textContent='';
+    document.getElementById('code-output').style.color='';
+    var _cr=document.getElementById('c-result');
+    _cr.style.display='none';_cr.className='';
     try{
       var code=getEditorCode();
       var result=miniPyEval(code);
@@ -662,18 +671,43 @@ function openRepairChallenge(rt){
       document.getElementById('code-output').style.color='#ff6666';
     }
   };
-  // Timer (10 min)
-  clearInterval(cipherTimerInt);cipherTimerVal=600;
-  var el=document.getElementById('cipher-timer');el.classList.remove('danger');
-  var fmtT=function(s){var m=Math.floor(s/60);return m>0?m+':'+String(s%60).padStart(2,'0'):String(s);};
-  el.textContent=fmtT(cipherTimerVal);
-  cipherTimerInt=setInterval(function(){
-    cipherTimerVal--;el.textContent=fmtT(cipherTimerVal);
-    if(cipherTimerVal<=30)el.classList.add('danger');
-    if(cipherTimerVal<=0){clearInterval(cipherTimerInt);closeRepairModal();showMessage('\u23F0 \u6642\u9593\u5207\u308C\u2026 \u307E\u305F\u6765\u3088\u3046','#ff8844');}
-  },1000);
+  // No time limit for repair terminals — let players take their time on coding
+  clearInterval(cipherTimerInt);cipherTimerInt=null;
+  var el=document.getElementById('cipher-timer');
+  el.classList.remove('danger');
+  el.textContent='∞';
   document.getElementById('cipher-modal').classList.add('open');
   // Don't auto-focus editor — user clicks to start typing
+}
+
+// ── Copy code output text (errors, test output) to clipboard ──
+function copyCodeOutput(){
+  var out=document.getElementById('code-output');
+  var btn=document.getElementById('code-output-copy-btn');
+  if(!out||!btn)return;
+  var text=out.textContent||'';
+  if(!text){return;}
+  var done=function(ok){
+    var orig='📋 コピー';
+    btn.textContent=ok?'✅ コピーしました':'❌ 失敗';
+    btn.classList.toggle('copied',ok);
+    setTimeout(function(){btn.textContent=orig;btn.classList.remove('copied');},1500);
+  };
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){done(true);},function(){done(fallbackCopy(text));});
+  }else{
+    done(fallbackCopy(text));
+  }
+}
+function fallbackCopy(text){
+  try{
+    var ta=document.createElement('textarea');
+    ta.value=text;ta.style.position='fixed';ta.style.left='-9999px';
+    document.body.appendChild(ta);ta.select();
+    var ok=document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  }catch(e){return false;}
 }
 
 // ── Show hint on button click ──

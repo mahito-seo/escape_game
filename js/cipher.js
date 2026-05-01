@@ -70,7 +70,7 @@ function openCipherModal(){
   startCipherTimer();
 }
 function startCipherTimer(){
-  clearInterval(cipherTimerInt);cipherTimerVal=300+currentCipherStage*60; // 5min base + 1min per stage
+  clearInterval(cipherTimerInt);cipherTimerVal=450+currentCipherStage*90; // 7.5min base + 1.5min per stage
   const el=document.getElementById('cipher-timer');el.classList.remove('danger');
   const fmtTime=(s)=>{const m=Math.floor(s/60);return m>0?`${m}:${String(s%60).padStart(2,'0')}`:String(s);};
   el.textContent=fmtTime(cipherTimerVal);
@@ -175,6 +175,9 @@ async function submitAgentAnswer(){
   const s=CIPHER_STAGES[currentCipherStage],h=await sha256(v);
   const r=document.getElementById('agent-result');
   if(h===s.ansHash){
+    // Stop the timer immediately on success so a stale timeout can't fire
+    // while the player reads the success message / clicks 次へ進む.
+    stopCipherTimer();
     r.style.display='flex';r.className='correct-res';
     document.getElementById('ar-icon').textContent='✅';
     document.getElementById('ar-msg').innerHTML=`<strong>正解！</strong> 次のステージへ進みます…`;
@@ -221,6 +224,7 @@ function tickAgentLockout(){
 document.getElementById('agent-input').addEventListener('keydown',e=>{if(e.key==='Enter')submitAgentAnswer();});
 
 function agentComplete(){
+  stopCipherTimer();
   closeCipherModal();
   const b=document.createElement('div');b.className='stage-clear-banner';
   b.innerHTML=`<h2>\uD83D\uDD13 STAGE ${currentCipherStage+1} CLEAR!</h2><p>${CIPHER_STAGES[currentCipherStage].name} \u2014 \u5B8C\u5168\u89E3\u8AAD</p>`;
@@ -239,20 +243,44 @@ function agentComplete(){
 
 function cipherTimeOut(){
   document.getElementById('c-input').disabled=true;document.getElementById('c-submit').disabled=true;
+  // Capture the mission text and the user's code BEFORE closing the modal,
+  // so we can show them on the review overlay (otherwise the player only sees a countdown).
+  const _stage=CIPHER_STAGES[currentCipherStage]||{};
+  const _missionText=(document.getElementById('cm-mission').textContent||_stage.mission||'').trim();
+  const _hintText=(document.getElementById('cm-hint').textContent||_stage.hint||'').trim();
+  let _userCode='';
+  try{_userCode=(typeof getEditorCode==='function')?getEditorCode():'';}catch(e){_userCode='';}
+  if(!_userCode&&_stage.template)_userCode=_stage.template;
+  const _esc=(s)=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   closeCipherModal();
   // 3 minute review time
   gameState='dead';document.exitPointerLock();
   document.getElementById('overlay-title').textContent='⏰ 時間切れ';
   document.getElementById('overlay-title').style.color='#ffcc00';
   document.getElementById('overlay-btn').style.display='none';
+  // Render static content (problem + code) once so the countdown tick
+  // doesn't reset the code-block scroll position every second.
+  document.getElementById('overlay-sub').innerHTML=
+    `<span style="font-size:16px;color:#ffcc00;">暗号の制限時間を超えました</span><br><br>`+
+    `<span id="cipher-rest-countdown" style="font-size:48px;font-family:'Cinzel Decorative',serif;color:#ffcc00;">3:00</span><br><br>`+
+    `<span style="color:#aaa;font-size:14px;">📝 プログラムを見直す時間です！</span><br><br>`+
+    `<div style="max-width:760px;margin:0 auto;text-align:left;letter-spacing:0;">`+
+      `<div style="background:rgba(40,30,0,.6);border:1px solid #aa8800;border-radius:6px;padding:12px 16px;margin-bottom:12px;">`+
+        `<div style="font-size:13px;color:#ffcc44;letter-spacing:2px;margin-bottom:6px;">📜 問題</div>`+
+        `<div style="font-size:13px;color:#e8e0c0;line-height:1.6;white-space:pre-wrap;">${_esc(_missionText)}</div>`+
+        (_hintText?`<div style="margin-top:8px;font-size:12px;color:#ffcc88;line-height:1.5;">💡 ${_esc(_hintText)}</div>`:'')+
+      `</div>`+
+      `<div style="background:rgba(0,20,30,.7);border:1px solid #4488aa;border-radius:6px;padding:12px 16px;">`+
+        `<div style="font-size:13px;color:#88ccff;letter-spacing:2px;margin-bottom:6px;">💻 あなたのコード</div>`+
+        `<pre style="font-family:'SF Mono','Menlo','Consolas',monospace;font-size:12px;color:#cce8ff;line-height:1.5;margin:0;white-space:pre-wrap;word-break:break-word;max-height:280px;overflow-y:auto;">${_esc(_userCode||'(コードなし)')}</pre>`+
+      `</div>`+
+    `</div>`;
   const endTime=Date.now()+180000;
   const revInt=setInterval(()=>{
     const rem=Math.max(0,Math.ceil((endTime-Date.now())/1000));
     const m=Math.floor(rem/60),s=rem%60;
-    document.getElementById('overlay-sub').innerHTML=
-      `<span style="font-size:16px;color:#ffcc00;">暗号の制限時間を超えました</span><br><br>`+
-      `<span style="font-size:48px;font-family:'Cinzel Decorative',serif;color:#ffcc00;">${m}:${String(s).padStart(2,'0')}</span><br><br>`+
-      `<span style="color:#aaa;font-size:14px;">📝 プログラムを見直す時間です！<br>stage${Math.min(currentCipherStage+1,6)}.py のコードを確認しましょう。<br>ヒントを読み直してみてください。</span>`;
+    const cdEl=document.getElementById('cipher-rest-countdown');
+    if(cdEl)cdEl.textContent=`${m}:${String(s).padStart(2,'0')}`;
     if(rem<=0){
       clearInterval(revInt);
       totalPausedMs+=180000;
@@ -272,6 +300,9 @@ function cipherTimeOut(){
 }
 
 function closeCipherModal(){
+  // Always kill the timer on close — leaving it running can fire cipherTimeOut
+  // after the puzzle was already solved, triggering a spurious 休憩 overlay.
+  stopCipherTimer();
   cipherActive=false;cipherPhase=1;
   document.getElementById('cipher-modal').classList.remove('open');
   document.getElementById('code-editor-wrap').classList.remove('show');

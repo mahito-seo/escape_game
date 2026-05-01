@@ -125,9 +125,23 @@ function miniPyEval(code){
     js=result.join('\n');
 
     const __out=[];
-    const fn=new Function('__out',js);
-    fn(__out);
-    output=__out;
+    // Snapshot existing globals so we can wipe any implicit globals leaked by user code.
+    // Without this, an undeclared variable like `result = ""` inside a Python function
+    // becomes a JS implicit global and carries over to the next run, contaminating it.
+    const __globalBefore=Object.keys(globalThis);
+    try{
+      const fn=new Function('__out',js);
+      fn(__out);
+      output=__out;
+    }finally{
+      const __after=Object.keys(globalThis);
+      for(var __i=0;__i<__after.length;__i++){
+        var __k=__after[__i];
+        if(__globalBefore.indexOf(__k)<0){
+          try{delete globalThis[__k];}catch(e){}
+        }
+      }
+    }
   }catch(e){
     output=['Error: '+e.message];
   }
@@ -304,8 +318,8 @@ function openCodingChallenge(ct){
     }
   };
 
-  // Timer (5 min) — timeout removes terminal permanently
-  const CHALLENGE_TIME=300;
+  // Timer (7.5 min) — timeout removes terminal permanently
+  const CHALLENGE_TIME=450;
   clearInterval(cipherTimerInt);cipherTimerVal=CHALLENGE_TIME;
   const el=document.getElementById('cipher-timer');el.classList.remove('danger');
   const fmtT=(s)=>{const m=Math.floor(s/60);return m>0?`${m}:${String(s%60).padStart(2,'0')}`:String(s);};

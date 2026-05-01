@@ -203,14 +203,19 @@ document.addEventListener('keydown',e=>{
   if(gameState!=='battle'&&gameState!=='cipher')e.preventDefault();
 });
 document.addEventListener('keyup',e=>keys[e.code]=false);
+// Clear stuck keys when window loses focus (Mac alt-tab can drop keyup events)
+window.addEventListener('blur',()=>{for(var k in keys)keys[k]=false;});
 var pointerLockJustAcquired=0; // timestamp to ignore initial spike
 document.addEventListener('mousemove',e=>{
   if(!pointerLocked||gameState!=='playing')return;
-  // Ignore mouse spike right after pointer lock (Windows bug)
+  // Ignore mouse spike right after pointer lock
   if(Date.now()-pointerLockJustAcquired<200)return;
   var dx=e.movementX,dy=e.movementY;
-  // Dead zone: ignore tiny movements (Windows phantom drift)
-  if(Math.abs(dx)<2&&Math.abs(dy)<2)return;
+  // Per-axis soft dead zone — filters Mac trackpad/mouse drift that was causing W to curve right
+  var DZ=3;
+  if(Math.abs(dx)<DZ)dx=0;else dx-=Math.sign(dx)*DZ;
+  if(Math.abs(dy)<DZ)dy=0;else dy-=Math.sign(dy)*DZ;
+  if(dx===0&&dy===0)return;
   // Clamp extreme values
   dx=Math.max(-60,Math.min(60,dx));
   dy=Math.max(-60,Math.min(60,dy));
