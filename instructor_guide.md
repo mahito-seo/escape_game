@@ -96,6 +96,80 @@ Floor 6 (不死鳥の炉)  : EXTRA 暗号 + ボス戦 PHOENIX GUARDIAN
 
 ---
 
+## 🚨 緊急対応 — サーバー落ち / データ消失への備え
+
+### 自動スナップショット（各 PC 内に保存）
+
+各 PC のブラウザの **localStorage に直近 100 件のスナップショット** が自動保存されています:
+- `saveProgress()` が呼ばれるたび（ステージクリア、レベルアップ、修理完了など）
+- 1 分ごとの定期保存
+
+サーバーが落ちても、各クライアントのローカルデータは無事です。
+
+### 講師の介入手段: Admin コンソール（各 PC で実行可能）
+
+学生または講師が **DevTools のコンソール** (`F12` / `Cmd+Opt+I` → Console タブ) で次のコマンドを実行できます:
+
+```js
+admin.help()           // 全コマンド一覧
+admin.state()          // 現在の状態を表示
+```
+
+#### よく使う復旧コマンド
+
+| コマンド | 用途 |
+|---|---|
+| `admin.setLevel(5)` | レベルを 5 に |
+| `admin.setHP(100)` | HP を 100 に |
+| `admin.setKills(20)` | キル数を 20 に |
+| `admin.setStage(3)` | 暗号ステージを 3 に（1〜6） |
+| `admin.setFloor(3)` | フロアを 3 に |
+| `admin.unlock("attack", 3)` | 特定機能を★★★で解放 |
+| `admin.unlockAll(3)` | 全 14 機能を★★★で解放 |
+| `admin.solveCipher()` | 現ステージの暗号をクリア扱い |
+| `admin.skipFloor()` | 次の階層へ強制移動 |
+| `admin.heal()` | HP/MP 全回復 |
+| `admin.god()` | 無敵モード（HP/MP/攻撃 9999） |
+
+#### バックアップ・復元
+
+| コマンド | 用途 |
+|---|---|
+| `admin.exportLog()` | スナップショット履歴を JSON ファイルでダウンロード |
+| `admin.exportSave()` | 現セーブを JSON 文字列で取得（コピーして別 PC に移植可） |
+| `admin.importSave(text)` | エクスポートした JSON を別 PC で復元 |
+| `admin.rollback(1)` | 1 つ前のスナップショットに戻す |
+| `admin.history()` | 過去スナップショット一覧 |
+
+### 障害対応の推奨手順
+
+#### ケース 1: 講師サーバー（tracker）が落ちた
+1. **各チームは続行可能** — ローカル localStorage に保存されているため
+2. サーバーを再起動 → ダッシュボードは空だが、各チームのゲーム内データは無事
+3. 次の `saveProgress()` 時に再アップロードされて復活
+
+#### ケース 2: 1 チームのブラウザがクラッシュ
+1. クラッシュ前の最後の状態は localStorage に残っているので、再読み込みで復活
+2. localStorage まで失われた場合（プライベートウィンドウ等）:
+   - 別 PC で `admin.exportSave()` してコピー → 戻したい PC で `admin.importSave(コピーした文字列)`
+   - もしくは `admin.setStage(n)` / `admin.setFloor(n)` / `admin.unlockAll(3)` で手動復元
+
+#### ケース 3: 周回遅れのチームを救済
+- `admin.setStage(N)` と `admin.unlockAll(2)` で一気に追いつかせる
+- 強敵が辛ければ `admin.setLevel(N)` も併用
+
+#### ケース 4: 全体的に不安な場合
+- セッション開始時に各チームに **`admin.exportLog()` を 30 分ごとに実行** してもらう
+- ダウンロードされた JSON を Slack / メールで講師に送信してもらえば、最悪の場合でも復元可能
+
+### Admin コマンドの注意
+
+- これは**チート防止機能ではなく緊急復旧ツール**です。学生にも公開しています
+- 学生が誤って `admin.clear()` を実行するとセーブが消えます（先に `admin.exportLog()` を促すと安全）
+- ゲーム本体（`window.player` / `window.features` 等）に直接アクセスもできるので、上級ユーザーは細かい操作も可能
+
+---
+
 ## ファイル構成
 
 ```
@@ -107,6 +181,9 @@ js/stages.js                ← 暗号ステージ定義
 js/repair.js                ← 修理ターミナル定義
 js/boss.js                  ← ボス問題定義
 js/questions.js             ← モブクイズ全 90 問
+js/admin.js                 ← Admin コンソールコマンド（緊急復旧用）
+tracker/server.js           ← 進捗トラッカーサーバー
+tracker/dashboard.html      ← 講師用ダッシュボード
 ```
 
 > 旧ドキュメント（`CIPHER_REFERENCE.md` / `PROBLEMS_SUMMARY.md` / `REPAIR_ANSWERS.md` / `REPAIR_TERMINALS_SPEC.md` / `BOSS_ANSWERS.md`）は上記 3 つに統合済み。整理のため削除推奨。
