@@ -156,8 +156,19 @@ function updateEnemies(dt){
   }
 }
 
+function repairsRemaining(){
+  if(typeof repairTerminals==='undefined')return 0;
+  var n=0;for(var i=0;i<repairTerminals.length;i++)if(!repairTerminals[i].solved)n++;
+  return n;
+}
 function checkTerminal(){
   if(cipherSolved||cipherActive||battleActive)return;
+  // Hide cipher terminal mesh until all repair terminals on this floor are solved.
+  var pendingRepair=repairsRemaining();
+  if(terminalMesh)terminalMesh.visible=(pendingRepair===0);
+  if(terminalLight)terminalLight.visible=(pendingRepair===0);
+  if(terminalGlow)terminalGlow.visible=(pendingRepair===0);
+  if(pendingRepair>0)return; // can't even approach until repairs done
   const dx=terminalX-player.x,dz=terminalZ-player.z,dist=Math.sqrt(dx*dx+dz*dz);
   if(dist<3.5&&!approachTarget)approachTarget='terminal';
   if(dist<2.0){
@@ -195,7 +206,7 @@ function checkStair(){
     currentCipherStage++;
     // Stage 5 clear (index 5) = normal ending, Stage 6 clear (index 6+) = extra ending
     if(currentCipherStage>=5){gameComplete();return;}
-    floor++;cipherSolved=false;escapeCount=0;
+    floor++;cipherSolved=false;cipherPhase1Solved=false;escapeCount=0;
     playSound('portal');
     const nextTheme=FLOOR_THEMES[(floor-1)%FLOOR_THEMES.length];
     const storyMsg=['','','さらに深くへ… データの核心に近づいている','連絡プロトコルが見えてきた… あと少しだ','最深部だ。すべてがここで繋がる'];

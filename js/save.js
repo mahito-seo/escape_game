@@ -6,6 +6,8 @@ function saveProgress(){
   const data={floor,currentCipherStage,cipherSolved,player:{level:player.level,xp:player.xp,xpNext:player.xpNext,hp:player.hp,maxHp:player.maxHp,mp:player.mp,maxMp:player.maxMp,kills:player.kills,attackPower:player.attackPower,defense:player.defense},totalStreak,startTime};
   localStorage.setItem('cipherDungeonSave',JSON.stringify(data));
   saveFeatures();
+  // ピギーバック: 進捗トラッカーが設定されていればアップロード（失敗しても無視）
+  if(typeof uploadProgress==='function')uploadProgress();
 }
 function loadProgress(){
   const raw=localStorage.getItem('cipherDungeonSave');

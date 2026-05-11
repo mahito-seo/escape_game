@@ -25,12 +25,22 @@ const REPAIR_CHALLENGES=[
   {id:'mpBar',name:'MPバー修理',icon:'\uD83D\uDCA7',floor:1,
    color:0x4488ff,emissive:0x0044ff,diff:'EASY',xp:40,
    mission:
-'【故障】MPバーが壊れて表示されない！\n\n'+
-'calc_mp_percent 関数を完成させよ。\n'+
-'MPの残り割合(%)を計算して返す。\n\n'+
+'【目的】MP の残量を 0〜100 のパーセンテージで返す！\n'+
+'\n'+
+'calc_mp_percent(mp, max_mp) を完成させよ。\n'+
+'\n'+
+'■ ヒント\n'+
+'・mp が max_mp の何%か、整数で返す\n'+
+'・int() を使って小数を切り捨てる\n'+
+'\n'+
+'■ 期待出力\n'+
+'・(30, 50)   → 60\n'+
+'・(0, 100)   → 0\n'+
+'・(100, 100) → 100\n'+
+'\n'+
 '修理するとMPバーが表示され、スキルが使えるようになる。',
    hint:'',
-   hintDetail:'/ (割り算) / * (掛け算) / int()',
+   hintDetail:'int / / / * / mp / max_mp',
    template:
 'def calc_mp_percent(mp, max_mp):\n'+
 '    # MPの割合(%)を整数で返せ\n'+
@@ -47,7 +57,11 @@ const REPAIR_CHALLENGES=[
 'print(calc_mp_percent(100, 100))\n',
    evaluate:function(out){
      var L=out.trim().split('\n');if(L.length<3)return 0;
-     return numClose(L[0],60)&&numClose(L[1],0)&&numClose(L[2],100)?3:0;
+     var p=0;
+     if(numClose(L[0],60))p++;
+     if(numClose(L[1],0))p++;
+     if(numClose(L[2],100))p++;
+     return partialStar(p,3);
    },
    effectDesc:['','','','MPバーが表示される'],
    unlockMsg:'\uD83D\uDCA7 MPバーが復活した！'},
@@ -55,12 +69,22 @@ const REPAIR_CHALLENGES=[
   {id:'enemyName',name:'敵識別システム修理',icon:'\uD83D\uDC79',floor:1,
    color:0xaa44ff,emissive:0x6622cc,diff:'EASY',xp:50,
    mission:
-'【故障】敵の名前もHPも「???」で見えない！\n\n'+
-'decode_name 関数を完成させよ。\n'+
-'ASCIIコードのリストを文字列に変換する。\n\n'+
-'修理すると敵の名前とHP残量が表示されるようになる。',
+'【目的】ASCIIコードのリストを文字列に戻す！\n'+
+'\n'+
+'decode_name(codes) を完成させよ。\n'+
+'\n'+
+'■ ヒント\n'+
+'・各要素は ASCII コード（数値）。1文字ずつに変換して連結\n'+
+'・例: 65 → "A", 66 → "B"\n'+
+'\n'+
+'■ 期待出力\n'+
+'・[71, 111, 98, 108, 105, 110] → "Goblin"\n'+
+'・[79, 114, 99]                → "Orc"\n'+
+'・[68, 101, 109, 111, 110]     → "Demon"\n'+
+'\n'+
+'修理すると敵の名前と HP 残量が見えるようになる。',
    hint:'',
-   hintDetail:'chr() / for / +=',
+   hintDetail:'for / in / chr / += / result',
    template:
 'def decode_name(codes):\n'+
 '    # ASCIIコードのリストを文字列に変換して返せ\n'+
@@ -77,7 +101,11 @@ const REPAIR_CHALLENGES=[
 'print(decode_name([68, 101, 109, 111, 110]))\n',
    evaluate:function(out){
      var L=out.trim().split('\n');if(L.length<3)return 0;
-     return L[0]==='Goblin'&&L[1]==='Orc'&&L[2]==='Demon'?3:0;
+     var p=0;
+     if(L[0]==='Goblin')p++;
+     if(L[1]==='Orc')p++;
+     if(L[2]==='Demon')p++;
+     return partialStar(p,3);
    },
    effectDesc:['','','','敵の名前とHPが見える'],
    unlockMsg:'\uD83D\uDC79 敵識別システムが復活した！'},
@@ -85,12 +113,22 @@ const REPAIR_CHALLENGES=[
   {id:'itemEffect',name:'アイテム効果ブースト',icon:'\uD83E\uDDEA',floor:2,
    color:0x44ff88,emissive:0x00aa44,diff:'NORMAL',xp:60,
    mission:
-'【強化】アイテムの回復効果を強化せよ！\n\n'+
-'calc_heal 関数を完成させよ。\n'+
-'回復後HPがmax_hpを超えないように！\n\n'+
+'【目的】回復後 HP を返す（max_hp を超えない）！\n'+
+'\n'+
+'calc_heal(hp, max_hp, amount) を完成させよ。\n'+
+'\n'+
+'■ ヒント\n'+
+'・基本は hp + amount を返す\n'+
+'・ただし max_hp を超える場合は max_hp で頭打ち（オーバーフロー禁止）\n'+
+'\n'+
+'■ 期待出力\n'+
+'・(70, 100, 50) → 100  （120 だが max_hp で頭打ち）\n'+
+'・(90, 100, 5)  → 95\n'+
+'・(50, 100, 30) → 80\n'+
+'\n'+
 '修理するとアイテムの回復量がアップする。',
    hint:'',
-   hintDetail:'min() / + ',
+   hintDetail:'min / + / hp / max_hp / amount',
    template:
 'def calc_heal(hp, max_hp, amount):\n'+
 '    # 回復後のHPを返せ（max_hpを超えない！）\n'+
@@ -106,123 +144,154 @@ const REPAIR_CHALLENGES=[
 'print(calc_heal(50, 100, 30))\n',
    evaluate:function(out){
      var L=out.trim().split('\n');if(L.length<3)return 0;
-     return numClose(L[0],100)&&numClose(L[1],95)&&numClose(L[2],80)?3:0;
+     var p=0;
+     if(numClose(L[0],100))p++;
+     if(numClose(L[1],95))p++;
+     if(numClose(L[2],80))p++;
+     return partialStar(p,3);
    },
    effectDesc:['','','','アイテム回復量 1.5倍！'],
    unlockMsg:'\uD83E\uDDEA アイテム効果がブーストされた！'},
 
   // ══════ FLOOR 2: 戦闘強化（コードで強さが変わる！）══════
-  {id:'attack',name:'攻撃力ブーストを設計せよ',icon:'\u2694\uFE0F',floor:3,
+  {id:'attack',name:'攻撃力ブースト',icon:'\u2694\uFE0F',floor:3,
    color:0xff8844,emissive:0xff4400,diff:'NORMAL',xp:70,
    mission:
-'【強化】バトルの攻撃力をブーストせよ！\n\n'+
-'calc_damage 関数を完成させよ。\n'+
-'※ テスト3はボーナステスト！\n'+
-'streak や level を活用すれば高得点 → 強い攻撃倍率に！\n\n'+
-'\u2605\u2606\u2606  20未満  → 攻撃力 1.0倍（変化なし）\n'+
-'\u2605\u2605\u2606  20〜49 → 攻撃力 1.5倍\n'+
-'\u2605\u2605\u2605  50以上  → 攻撃力 2.0倍！',
+'【目的】ダメージ計算式を実装して攻撃力をブースト！\n'+
+'\n'+
+'calc_damage(attack, defense, streak, level) を完成させよ。\n'+
+'\n'+
+'■ ヒント\n'+
+'・基本ダメージは attack と defense から（防御が高いと減る、最低1）\n'+
+'・streak と level の両方をボーナスとして加算する\n'+
+'・level=1 / streak=0 のときボーナスは 0 になるよう調整\n'+
+'\n'+
+'■ 期待出力\n'+
+'・(25, 10, 0, 1) → 15\n'+
+'・(5,  20, 0, 1) → 1\n'+
+'・(30, 10, 5, 1) → 40\n'+
+'・(30, 10, 0, 5) → 40\n'+
+'\n'+
+'※ 各係数は期待出力から逆算しよう。\n'+
+'※ 4 テスト全一致で ★★★（攻撃力 2.0倍）',
    hint:'',
-   hintDetail:'max() / - / * ',
+   hintDetail:'return max(attack - defense, 1) + streak * 4 + (level - 1) * 5',
    template:
 'def calc_damage(attack, defense, streak, level):\n'+
-'    # ダメージを計算して返せ（最低1）\n'+
-'    # streak, level を使えばボーナスダメージ！\n'+
-'    # ===== この中を自由に書き換えよう！ =====\n'+
+'    # ダメージを返す関数を完成させよ。\n'+
+'    # 期待出力（下のテスト行）と一致するよう実装する。\n'+
+'    # ===== ここを書く =====\n'+
 '    \n'+
 '    return 0\n'+
-'    # =========================================\n'+
+'    # ======================\n'+
 '\n'+
 '# ▼▼▼ テスト（変更禁止！）▼▼▼\n'+
-'print(calc_damage(25, 10, 0, 1))   # 基本: 15が正解\n'+
-'print(calc_damage(5, 20, 0, 1))    # 防御>攻撃でも最低1\n'+
-'print(calc_damage(30, 10, 5, 3))   # ★ボーナステスト！高いほど強い\n',
+'print(calc_damage(25, 10, 0, 1))   # 期待: 15\n'+
+'print(calc_damage(5, 20, 0, 1))    # 期待: 1\n'+
+'print(calc_damage(30, 10, 5, 1))   # 期待: 40\n'+
+'print(calc_damage(30, 10, 0, 5))   # 期待: 40\n'+
+'',
    evaluate:function(out){
-     var L=out.trim().split('\n');if(L.length<3)return 0;
-     var v1=parseFloat(L[0]),v2=parseFloat(L[1]),v3=parseFloat(L[2]);
-     if(isNaN(v1)||isNaN(v2)||isNaN(v3))return 0;
-     if(!numClose(v1,15))return 0; // Basic must be exact
-     if(v2<1)return 0;             // Min damage
-     // Power based on bonus test
-     if(v3>=50)return 3;
-     if(v3>=20)return 2;
-     return 1;
+     var L=out.trim().split('\n');if(L.length<4)return 0;
+     var p=0;
+     if(numClose(L[0],15))p++;
+     if(numClose(L[1],1))p++;
+     if(numClose(L[2],40))p++;
+     if(numClose(L[3],40))p++;
+     return partialStar(p,4);
    },
    effectDesc:['','攻撃力 1.0倍','攻撃力 1.5倍','攻撃力 2.0倍！'],
    unlockMsg:'\u2694\uFE0F 攻撃システムが復活した！'},
 
-  {id:'skillFire',name:'火炎スキルを設計せよ',icon:'\uD83D\uDD25',floor:2,
+  {id:'skillFire',name:'火炎スキル設計',icon:'\uD83D\uDD25',floor:2,
    color:0xff6600,emissive:0xff3300,diff:'NORMAL',xp:80,
    mission:
-'【故障】火炎スキルが壊れている！\n\n'+
-'calc_fire_damage 関数を完成させよ。\n'+
-'※ テスト2はボーナステスト！\n'+
-'level や floor を活用して高ダメージを狙え！\n\n'+
-'\u2605\u2606\u2606  50未満  → 火炎(弱)\n'+
-'\u2605\u2605\u2606  50〜99 → 火炎(中)\n'+
-'\u2605\u2605\u2605  100以上 → 火炎(強)',
+'【目的】火炎ダメージを実装！\n'+
+'\n'+
+'calc_fire_damage(base_damage, level, floor_num) を完成させよ。\n'+
+'\n'+
+'■ ヒント\n'+
+'・base_damage を level と floor_num で増幅させる\n'+
+'・level=1 かつ floor=1 のときは base_damage そのまま\n'+
+'・base_damage=0 なら結果も 0\n'+
+'\n'+
+'■ 期待出力\n'+
+'・(35, 1, 1) → 35\n'+
+'・(35, 5, 1) → 175\n'+
+'・(35, 1, 5) → 175\n'+
+'・(0,  5, 5) → 0\n'+
+'\n'+
+'※ 4 テスト全一致で ★★★（火炎(強)！）',
    hint:'',
-   hintDetail:'* / + / level / floor_num',
+   hintDetail:'return base_damage * level * floor_num',
    template:
 'def calc_fire_damage(base_damage, level, floor_num):\n'+
-'    # 火炎ダメージを計算して返せ\n'+
-'    # level, floor_num で強化できる！\n'+
-'    # ===== この中を自由に書き換えよう！ =====\n'+
+'    # 火炎ダメージを返す関数を完成させよ。\n'+
+'    # 期待出力（下のテスト行）と一致するよう実装する。\n'+
+'    # ===== ここを書く =====\n'+
 '    \n'+
 '    return 0\n'+
-'    # =========================================\n'+
+'    # ======================\n'+
 '\n'+
 '# ▼▼▼ テスト（変更禁止！）▼▼▼\n'+
-'print(calc_fire_damage(35, 1, 1))    # 基本: 35が正解\n'+
-'print(calc_fire_damage(35, 3, 2))    # ★ボーナス！高いほど強い\n'+
-'print(calc_fire_damage(0, 5, 5))     # 基礎0なら0\n',
+'print(calc_fire_damage(35, 1, 1))    # 期待: 35\n'+
+'print(calc_fire_damage(35, 5, 1))    # 期待: 175\n'+
+'print(calc_fire_damage(35, 1, 5))    # 期待: 175\n'+
+'print(calc_fire_damage(0, 5, 5))     # 期待: 0\n'+
+'',
    evaluate:function(out){
-     var L=out.trim().split('\n');if(L.length<3)return 0;
-     var v1=parseFloat(L[0]),v2=parseFloat(L[1]),v3=parseFloat(L[2]);
-     if(isNaN(v1)||isNaN(v2)||isNaN(v3))return 0;
-     if(!numClose(v1,35))return 0;
-     if(!numClose(v3,0))return 0;
-     if(v2>=100)return 3;
-     if(v2>=50)return 2;
-     return 1;
+     var L=out.trim().split('\n');if(L.length<4)return 0;
+     var p=0;
+     if(numClose(L[0],35))p++;
+     if(numClose(L[1],175))p++;
+     if(numClose(L[2],175))p++;
+     if(numClose(L[3],0))p++;
+     return partialStar(p,4);
    },
    effectDesc:['','\uD83D\uDD25火炎(弱)','\uD83D\uDD25火炎(中)','\uD83D\uDD25火炎(強)！'],
    unlockMsg:'\uD83D\uDD25 火炎スキルが復活した！'},
 
-  {id:'skillHeal',name:'回復スキルを設計せよ',icon:'\uD83D\uDC8A',floor:1,
+  {id:'skillHeal',name:'回復スキル設計',icon:'\uD83D\uDC8A',floor:1,
    color:0x88ff88,emissive:0x44aa44,diff:'NORMAL',xp:80,
    mission:
-'【故障】回復スキルが壊れている！\n\n'+
-'calc_heal_skill 関数を完成させよ。\n'+
-'※ テスト2はボーナステスト！\n'+
-'levelを活用して回復量UP！\n\n'+
-'\u2605\u2606\u2606  40未満  → HP 20%回復\n'+
-'\u2605\u2605\u2606  40〜69 → HP 30%回復\n'+
-'\u2605\u2605\u2605  70以上  → HP 40%回復',
+'【目的】回復量を実装！\n'+
+'\n'+
+'calc_heal_skill(max_hp, level) を完成させよ。\n'+
+'\n'+
+'■ ヒント\n'+
+'・max_hp の一定割合 + レベルボーナス\n'+
+'・整数で返す（int / // を使う）\n'+
+'・期待出力から各係数を逆算しよう\n'+
+'\n'+
+'■ 期待出力\n'+
+'・(100, 1) → 25\n'+
+'・(100, 5) → 45\n'+
+'・(500, 1) → 105\n'+
+'\n'+
+'※ 3 テスト全一致で ★★★（HP 40%回復！）',
    hint:'',
-   hintDetail:'int() / * / level',
+   hintDetail:'return max_hp // 5 + level * 5',
    template:
 'def calc_heal_skill(max_hp, level):\n'+
-'    # 回復量を整数で返せ\n'+
-'    # levelが高いほど多く回復させよう！\n'+
-'    # ===== この中を自由に書き換えよう！ =====\n'+
+'    # 回復量（整数）を返す関数を完成させよ。\n'+
+'    # 期待出力（下のテスト行）と一致するよう実装する。\n'+
+'    # ===== ここを書く =====\n'+
 '    \n'+
 '    return 0\n'+
-'    # =========================================\n'+
+'    # ======================\n'+
 '\n'+
 '# ▼▼▼ テスト（変更禁止！）▼▼▼\n'+
-'print(calc_heal_skill(100, 1))    # 基本: 20〜100の範囲\n'+
-'print(calc_heal_skill(100, 5))    # ★ボーナス！高いほど強い\n'+
-'print(calc_heal_skill(200, 3))    # 大きいHP\n',
+'print(calc_heal_skill(100, 1))    # 期待: 25\n'+
+'print(calc_heal_skill(100, 5))    # 期待: 45\n'+
+'print(calc_heal_skill(500, 1))    # 期待: 105\n'+
+'',
    evaluate:function(out){
      var L=out.trim().split('\n');if(L.length<3)return 0;
-     var v1=parseFloat(L[0]),v2=parseFloat(L[1]),v3=parseFloat(L[2]);
-     if(isNaN(v1)||isNaN(v2)||isNaN(v3))return 0;
-     if(v1<10||v1>150)return 0; // Sanity check
-     if(v3<10)return 0;
-     if(v2>=70)return 3;
-     if(v2>=40)return 2;
-     return 1;
+     var p=0;
+     if(numClose(L[0],25))p++;
+     if(numClose(L[1],45))p++;
+     if(numClose(L[2],105))p++;
+     return partialStar(p,3);
    },
    effectDesc:['','HP 20%回復','HP 30%回復','HP 40%回復！'],
    unlockMsg:'\uD83D\uDC8A 回復スキルが復活した！'},
@@ -231,11 +300,21 @@ const REPAIR_CHALLENGES=[
   {id:'minimap',name:'ミニマップ修理',icon:'\uD83D\uDDFA\uFE0F',floor:3,
    color:0x44aaff,emissive:0x0066cc,diff:'NORMAL',xp:80,
    mission:
-'【故障】ミニマップが壊れている！\n\n'+
-'calc_map_pixel 関数を完成させよ。\n'+
-'3D座標をマップ上のピクセル座標に変換する。',
+'【目的】3D 座標をマップ表示用ピクセル座標に変換！\n'+
+'\n'+
+'calc_map_pixel(pos, tile_size, cells, display) を完成させよ。\n'+
+'\n'+
+'■ ヒント\n'+
+'・pos はワールド座標（実距離）、display は表示サイズ（ピクセル）\n'+
+'・ワールド全体の幅は tile_size と cells から計算できる\n'+
+'・線形変換でピクセル位置にマッピング\n'+
+'\n'+
+'■ 期待出力（int で囲ってテストされます）\n'+
+'・(24.0, 2.0, 40, 120) → 36\n'+
+'・(0.0,  2.0, 40, 120) → 0\n'+
+'・(80.0, 2.0, 40, 120) → 120',
    hint:'',
-   hintDetail:'/ (割り算) / * (掛け算)',
+   hintDetail:'/ / * / pos / tile_size / cells / display',
    template:
 'def calc_map_pixel(pos, tile_size, cells, display):\n'+
 '    # 3D座標をマップのピクセル座標に変換して返せ\n'+
@@ -251,44 +330,56 @@ const REPAIR_CHALLENGES=[
 'print(int(calc_map_pixel(80.0, 2.0, 40, 120)))\n',
    evaluate:function(out){
      var L=out.trim().split('\n');if(L.length<3)return 0;
-     return numClose(L[0],36)&&numClose(L[1],0)&&numClose(L[2],120)?3:0;
+     var p=0;
+     if(numClose(L[0],36))p++;
+     if(numClose(L[1],0))p++;
+     if(numClose(L[2],120))p++;
+     return partialStar(p,3);
    },
    effectDesc:['','','','マップが正確に表示される'],
    unlockMsg:'\uD83D\uDDFA\uFE0F ミニマップが復活した！'},
 
-  {id:'skillLightning',name:'雷撃スキルを設計せよ',icon:'\u26A1',floor:3,
+  {id:'skillLightning',name:'雷撃スキル設計',icon:'\u26A1',floor:3,
    color:0x8888ff,emissive:0x4444ff,diff:'HARD',xp:100,
    mission:
-'【故障】雷撃スキルが壊れている！\n\n'+
-'calc_lightning 関数を完成させよ。\n'+
-'ダメージリストの最大値を見つけて返す。\n'+
-'※ テスト2はボーナス！levelを活用して高得点を狙え！\n\n'+
-'\u2605\u2606\u2606  100未満  → 雷撃(弱)\n'+
-'\u2605\u2605\u2606  100〜149 → 雷撃(中)\n'+
-'\u2605\u2605\u2605  150以上  → 雷撃(強)',
+'【目的】雷撃ダメージを実装！\n'+
+'\n'+
+'calc_lightning(damages, level) を完成させよ。\n'+
+'\n'+
+'■ ヒント\n'+
+'・damages の中の最大値をベースにする\n'+
+'・level でボーナスを加算\n'+
+'・期待出力から係数を逆算\n'+
+'\n'+
+'■ 期待出力\n'+
+'・([55, 20, 80, 35], 1) → 100\n'+
+'・([55, 20, 80, 35], 5) → 180\n'+
+'・([10], 1)             → 30\n'+
+'\n'+
+'※ 3 テスト全一致で ★★★（雷撃(強)！）',
    hint:'',
-   hintDetail:'max() / + / level',
+   hintDetail:'return max(damages) + level * 20',
    template:
 'def calc_lightning(damages, level):\n'+
-'    # ダメージリストの最大値 + レベルボーナスを返せ\n'+
-'    # ===== この中を自由に書き換えよう！ =====\n'+
+'    # 雷撃ダメージを返す関数を完成させよ。\n'+
+'    # 期待出力（下のテスト行）と一致するよう実装する。\n'+
+'    # ===== ここを書く =====\n'+
 '    \n'+
 '    return 0\n'+
 '    # =========================================\n'+
 '\n'+
 '# ▼▼▼ テスト（変更禁止！）▼▼▼\n'+
-'print(calc_lightning([55, 20, 80, 35], 1))    # 基本: 80\n'+
-'print(calc_lightning([55, 20, 80, 35], 5))    # ★ボーナス！\n'+
-'print(calc_lightning([10], 1))                 # 単一要素\n',
+'print(calc_lightning([55, 20, 80, 35], 1))    # 期待: 100\n'+
+'print(calc_lightning([55, 20, 80, 35], 5))    # 期待: 180\n'+
+'print(calc_lightning([10], 1))                # 期待: 30\n'+
+'',
    evaluate:function(out){
      var L=out.trim().split('\n');if(L.length<3)return 0;
-     var v1=parseFloat(L[0]),v2=parseFloat(L[1]),v3=parseFloat(L[2]);
-     if(isNaN(v1)||isNaN(v2)||isNaN(v3))return 0;
-     if(v1<80)return 0;
-     if(v3<10)return 0;
-     if(v2>=150)return 3;
-     if(v2>=100)return 2;
-     return 1;
+     var p=0;
+     if(numClose(L[0],100))p++;
+     if(numClose(L[1],180))p++;
+     if(numClose(L[2],30))p++;
+     return partialStar(p,3);
    },
    effectDesc:['','\u26A1雷撃(弱)','\u26A1雷撃(中)','\u26A1雷撃(強)！'],
    unlockMsg:'\u26A1 雷撃スキルが復活した！'},
@@ -296,31 +387,64 @@ const REPAIR_CHALLENGES=[
   {id:'levelUp',name:'レベルアップ強化',icon:'\u2B06\uFE0F',floor:3,
    color:0xffdd00,emissive:0xaa8800,diff:'HARD',xp:100,
    mission:
-'【強化】レベルアップ時のステータス上昇量を強化せよ！\n\n'+
-'calc_level 関数を完成させよ。\n'+
-'XPが閾値以上ある限りレベルアップし、\n閾値は毎回1.5倍になる。\n\n'+
-'修理するとレベルアップ時のHP/MP/攻撃力の上昇量がアップ。',
+'【目的】合計 XP からプレイヤーの到達レベルを計算！\n'+
+'\n'+
+'calc_level(total_xp, base_threshold) を完成させよ。\n'+
+'\n'+
+'■ アルゴリズム\n'+
+'  1. 初期値: level = 1, xp = total_xp, threshold = base_threshold\n'+
+'  2. xp が threshold 以上の間、以下を繰り返す:\n'+
+'     - xp から threshold を引く（昇格に消費した XP を減らす）\n'+
+'     - level を 1 増やす\n'+
+'     - threshold を 1.5 倍にする（次の昇格は厳しくなる）\n'+
+'     ※ threshold は int() で整数化\n'+
+'  3. ループを抜けたら level を返す\n'+
+'\n'+
+'■ 動きの例: total_xp=250, base_threshold=100\n'+
+'  ループ1回目: xp=250 ≥ 100 → xp=150, level=2, threshold=150\n'+
+'  ループ2回目: xp=150 ≥ 150 → xp=0,   level=3, threshold=225\n'+
+'  ループ3回目: xp=0  < 225  → 終了\n'+
+'  → 答え: 3\n'+
+'\n'+
+'■ 期待出力\n'+
+'・(250, 100) → 3\n'+
+'・(50, 100)  → 1   （最初から条件未達でループしない）\n'+
+'・(0, 100)   → 1\n'+
+'\n'+
+'■ やること\n'+
+'while ループの骨格は用意済み。3 つの _____ を埋めるだけ。\n'+
+'\n'+
+'修理すると Lv アップ時の HP/MP/攻撃力 上昇量がアップ。',
    hint:'',
-   hintDetail:'while / >= / -= / int() / * 1.5',
+   hintDetail:'3つの _____ を埋める：\n・1つめ: threshold（消費した XP を引く）\n・2つめ: 1（レベルを 1 増やす）\n・3つめ: 1.5（次の閾値を 1.5 倍に）',
    template:
 'def calc_level(total_xp, base_threshold):\n'+
-'    # total_xpからレベルを計算して返せ\n'+
-'    # 閾値はレベルアップごとに1.5倍\n'+
+'    # 初期化（変更不要）\n'+
 '    level = 1\n'+
 '    xp = total_xp\n'+
 '    threshold = base_threshold\n'+
-'    # ===== この中を自由に書き換えよう！ =====\n'+
 '    \n'+
-'    # =========================================\n'+
+'    # ===== 3つの _____ を埋めよう =====\n'+
+'    while xp >= threshold:\n'+
+'        xp = xp - _____               # ← 昇格に消費する量（threshold 分）\n'+
+'        level = level + _____         # ← 1 段階レベルアップ\n'+
+'        threshold = int(threshold * _____)   # ← 次の閾値は何倍？\n'+
+'    # ===================================\n'+
+'    \n'+
 '    return level\n'+
 '\n'+
 '# ▼▼▼ テスト（変更禁止！）▼▼▼\n'+
-'print(calc_level(250, 100))\n'+
-'print(calc_level(50, 100))\n'+
-'print(calc_level(0, 100))\n',
+'print(calc_level(250, 100))   # 期待: 3\n'+
+'print(calc_level(50, 100))    # 期待: 1\n'+
+'print(calc_level(0, 100))     # 期待: 1\n'+
+'',
    evaluate:function(out){
      var L=out.trim().split('\n');if(L.length<3)return 0;
-     return numClose(L[0],3)&&numClose(L[1],1)&&numClose(L[2],1)?3:0;
+     var p=0;
+     if(numClose(L[0],3))p++;
+     if(numClose(L[1],1))p++;
+     if(numClose(L[2],1))p++;
+     return partialStar(p,3);
    },
    effectDesc:['','','','Lvアップ時 HP+30/MP+15/攻撃+10！'],
    unlockMsg:'\u2B06\uFE0F レベルアップが強化された！'},
@@ -329,28 +453,44 @@ const REPAIR_CHALLENGES=[
   {id:'itemDrop',name:'ドロップ率ブースト',icon:'\uD83D\uDC8E',floor:4,
    color:0xff88ff,emissive:0xaa44aa,diff:'HARD',xp:100,
    mission:
-'【強化】敵撃破時のアイテムドロップ率を上げよ！\n\n'+
-'get_drop_item 関数を完成させよ。\n'+
-'roll値(0-99)に応じてアイテムを振り分ける。\n\n'+
-'修理するとドロップ率が40%→75%にアップ！',
+'【目的】ロールで決まるドロップアイテム種別を返す！\n'+
+'\n'+
+'get_drop_item(roll) を完成させよ。\n'+
+'\n'+
+'■ 仕様（API 契約）\n'+
+'・引数 roll は 0〜99 の整数\n'+
+'・25 未満       → "hp"\n'+
+'・25〜49        → "mp"\n'+
+'・50 以上       → "xp"\n'+
+'\n'+
+'■ 期待出力\n'+
+'・get_drop_item(15) → "hp"\n'+
+'・get_drop_item(42) → "mp"\n'+
+'・get_drop_item(75) → "xp"\n'+
+'\n'+
+'修理するとドロップ率が 40% → 75% にアップ！',
    hint:'',
-   hintDetail:'if / elif / else / < (比較)',
+   hintDetail:'if / elif / else / < / return / "hp" / "mp" / "xp"',
    template:
 'def get_drop_item(roll):\n'+
-'    # roll(0-99)に応じてアイテム種類を返せ\n'+
-'    # "hp", "mp", "xp" のどれかを返す\n'+
-'    # ===== この中を自由に書き換えよう！ =====\n'+
+'    # roll(0-99) に応じてアイテム種類の文字列を返せ。\n'+
+'    # 25未満 → "hp" / 25〜49 → "mp" / 50以上 → "xp"\n'+
+'    # ===== ここを書く =====\n'+
 '    \n'+
 '    return ""\n'+
-'    # =========================================\n'+
+'    # ======================\n'+
 '\n'+
 '# ▼▼▼ テスト（変更禁止！）▼▼▼\n'+
-'print(get_drop_item(15))\n'+
-'print(get_drop_item(42))\n'+
-'print(get_drop_item(75))\n',
+'print(get_drop_item(15))   # → hp\n'+
+'print(get_drop_item(42))   # → mp\n'+
+'print(get_drop_item(75))   # → xp\n',
    evaluate:function(out){
      var L=out.trim().split('\n');if(L.length<3)return 0;
-     return L[0]==='hp'&&L[1]==='mp'&&L[2]==='xp'?3:0;
+     var p=0;
+     if(L[0]==='hp')p++;
+     if(L[1]==='mp')p++;
+     if(L[2]==='xp')p++;
+     return partialStar(p,3);
    },
    effectDesc:['','','','ドロップ率 75%！'],
    unlockMsg:'\uD83D\uDC8E ドロップ率がブーストされた！'},
@@ -358,27 +498,44 @@ const REPAIR_CHALLENGES=[
   {id:'scoreCalc',name:'スコア計算を実装せよ',icon:'\uD83C\uDFC6',floor:4,
    color:0xffdd44,emissive:0xccaa00,diff:'HARD',xp:120,
    mission:
-'【強化】クリア時のスコア＆ランク表示を有効にせよ！\n\n'+
-'calc_score 関数を完成させよ。\n'+
-'スコア = level×35 + kills×8 + streak×12\n\n'+
-'修理するとクリア画面で詳細スコアとランクが表示される。',
+'【目的】3 要素の重み付けスコア計算を実装！\n'+
+'\n'+
+'calc_score(level, kills, streak) を完成させよ。\n'+
+'\n'+
+'■ ヒント\n'+
+'・level / kills / streak を、それぞれ異なる重みで足す\n'+
+'・期待出力 (1, 0, 0) → 35 から level の係数が分かる\n'+
+'・残り 2 つの係数は他のテストから連立で逆算\n'+
+'\n'+
+'■ 期待出力\n'+
+'・(5, 12, 8)   → 367\n'+
+'・(1, 0, 0)    → 35\n'+
+'・(10, 50, 20) → 990\n'+
+'\n'+
+'修理するとクリア画面に詳細スコア＋ランクが表示される。',
    hint:'',
-   hintDetail:'* (掛け算) / + (足し算)',
+   hintDetail:'* / + / level / kills / streak',
    template:
 'def calc_score(level, kills, streak):\n'+
-'    # 3つの要素からスコアを計算して返せ\n'+
-'    # ===== この中を自由に書き換えよう！ =====\n'+
+'    # 3要素の重み付けスコアを返す。\n'+
+'    # 各要素の係数は期待出力から逆算しよう。\n'+
+'    # ===== ここを書く =====\n'+
 '    \n'+
 '    return 0\n'+
 '    # =========================================\n'+
 '\n'+
 '# ▼▼▼ テスト（変更禁止！）▼▼▼\n'+
-'print(calc_score(5, 12, 8))\n'+
-'print(calc_score(1, 0, 0))\n'+
-'print(calc_score(10, 50, 20))\n',
+'print(calc_score(5, 12, 8))     # 期待: 367\n'+
+'print(calc_score(1, 0, 0))      # 期待: 35\n'+
+'print(calc_score(10, 50, 20))   # 期待: 990\n'+
+'',
    evaluate:function(out){
      var L=out.trim().split('\n');if(L.length<3)return 0;
-     return numClose(L[0],367)&&numClose(L[1],35)&&numClose(L[2],990)?3:0;
+     var p=0;
+     if(numClose(L[0],367))p++;
+     if(numClose(L[1],35))p++;
+     if(numClose(L[2],990))p++;
+     return partialStar(p,3);
    },
    effectDesc:['','','','スコア＋ランク詳細表示！'],
    unlockMsg:'\uD83C\uDFC6 スコア計算が有効になった！'},
@@ -387,48 +544,58 @@ const REPAIR_CHALLENGES=[
   {id:'fireEvo',name:'火球 → 爆裂火球に進化',icon:'\uD83C\uDF0B',floor:4,
    color:0xff2200,emissive:0xcc0000,diff:'HARD',xp:120,
    mission:
-'【進化】火球スキルを「爆裂火球」に進化させよ！\n\n'+
-'calc_explosion 関数を完成させよ。\n'+
-'着弾点から半径内の全ての敵にダメージを与える。\n\n'+
-'進化後: 火球が着弾時に爆発し、範囲ダメージ！',
+'【目的】爆発の範囲ダメージを敵ごとに計算！\n'+
+'\n'+
+'calc_explosion(enemies, center_x, center_y, radius, base_dmg) を完成させよ。\n'+
+'\n'+
+'■ ヒント\n'+
+'・enemies は [[x, y], ...] の座標リスト\n'+
+'・各敵について中心からの距離 dist を計算（dist = sqrt(dx^2 + dy^2)）\n'+
+'・dist が radius 以下ならダメージ、それ以外は 0\n'+
+'・中心に近いほどダメージ大（線形に減衰させる）\n'+
+'・結果は敵と同じ順序のダメージ値リスト\n'+
+'\n'+
+'■ 期待出力（例）\n'+
+'・enemies=[[0,0],[3,0],[10,0]], center=(0,0), r=5, base=100\n'+
+'　→ [100, 40, 0]',
    hint:'',
-   hintDetail:'for / ** (二乗) / ** 0.5 (平方根) / append() / if',
+   hintDetail:'(dx**2 + dy**2) ** 0.5  /  int(base_dmg * (1 - dist/radius))',
    template:
 'def calc_explosion(enemies, center_x, center_y, radius, base_dmg):\n'+
-'    # 爆発の範囲ダメージを計算せよ\n'+
-'    # enemies: [[x, y], ...] 敵の座標リスト\n'+
-'    # center_x, center_y: 爆発の中心\n'+
-'    # radius: 爆発の半径\n'+
-'    # base_dmg: 基礎ダメージ\n'+
-'    # 戻り値: 各敵へのダメージのリスト\n'+
-'    #   半径内→ダメージ、半径外→ 0\n'+
-'    # ===== この中を自由に書き換えよう！ =====\n'+
 '    results = []\n'+
-'    \n'+
+'    for enemy in enemies:\n'+
+'        ex = enemy[0]\n'+
+'        ey = enemy[1]\n'+
+'        dx = ex - center_x\n'+
+'        dy = ey - center_y\n'+
+'\n'+
+'        # ① 距離 dist を計算（公式: (dx**2 + dy**2) ** 0.5）\n'+
+'        dist = _____\n'+
+'\n'+
+'        # ② 半径内ならダメージ計算、半径外なら 0\n'+
+'        if dist <= radius:\n'+
+'            damage = _____   # ← int(base_dmg * (1 - dist/radius))\n'+
+'            results.append(damage)\n'+
+'        else:\n'+
+'            results.append(0)\n'+
 '    return results\n'+
-'    # =========================================\n'+
 '\n'+
 '# ▼▼▼ テスト（変更禁止！）▼▼▼\n'+
-'print(calc_explosion([[0,0],[3,0],[10,0]], 0, 0, 5, 100))\n'+
-'print(calc_explosion([[1,1]], 0, 0, 2, 50))\n'+
-'print(calc_explosion([[10,10]], 0, 0, 3, 80))\n',
+'print(calc_explosion([[0,0],[3,0],[10,0]], 0, 0, 5, 100))   # → [100, 40, 0]\n'+
+'print(calc_explosion([[1,1]], 0, 0, 2, 50))                  # → 中央寄り 1 つ\n'+
+'print(calc_explosion([[10,10]], 0, 0, 3, 80))                # → [0]\n',
    evaluate:function(out){
      var L=out.trim().split('\n');if(L.length<3)return 0;
-     // Test 1: [0,0]=hit(100), [3,0]=hit(>0), [10,0]=miss(0)
+     var p=0;
      try{
        var r1=JSON.parse(L[0].replace(/'/g,'"'));
-       if(!Array.isArray(r1)||r1.length!==3)return 0;
-       if(r1[0]<80||r1[2]!==0)return 0;
-       // Test 2: [1,1] within radius 2 → hit
+       if(Array.isArray(r1)&&r1.length===3&&r1[0]>=80&&r1[2]===0)p++;
        var r2=JSON.parse(L[1].replace(/'/g,'"'));
-       if(!Array.isArray(r2)||r2.length!==1||r2[0]<=0)return 0;
-       // Test 3: [10,10] outside radius 3 → 0
+       if(Array.isArray(r2)&&r2.length===1&&r2[0]>0)p++;
        var r3=JSON.parse(L[2].replace(/'/g,'"'));
-       if(!Array.isArray(r3)||r3.length!==1||r3[0]!==0)return 0;
-       // Star based on distance-scaling
-       if(r1[1]>0&&r1[1]<r1[0])return 3; // Distance-scaled damage
-       return 3;
-     }catch(e){return 0;}
+       if(Array.isArray(r3)&&r3.length===1&&r3[0]===0)p++;
+     }catch(e){}
+     return partialStar(p,3);
    },
    effectDesc:['','','','\uD83C\uDF0B 爆裂火球！着弾時に範囲爆発！'],
    unlockMsg:'\uD83C\uDF0B 火球が「爆裂火球」に進化した！'},
@@ -436,47 +603,49 @@ const REPAIR_CHALLENGES=[
   {id:'lightningEvo',name:'雷撃 → 連鎖雷撃に進化',icon:'\u26A1\u26A1',floor:4,
    color:0x4444ff,emissive:0x2222cc,diff:'HARD',xp:120,
    mission:
-'【進化】雷撃スキルを「連鎖雷撃」に進化させよ！\n\n'+
-'calc_chain 関数を完成させよ。\n'+
-'最初の敵に当たった後、近くの敵に連鎖する。\n'+
-'連鎖するたびにダメージは70%に減衰する。\n\n'+
-'進化後: 雷撃が敵から敵へ3回まで連鎖！',
+'【目的】連鎖ごとに減衰するダメージリストを作る！\n'+
+'\n'+
+'calc_chain(base_dmg, chain_count, decay) を完成させよ。\n'+
+'\n'+
+'■ ヒント\n'+
+'・最初のダメージは base_dmg\n'+
+'・連鎖するたびに decay 倍に減衰させて次のダメージを計算\n'+
+'・各ダメージは int で記録、合計 chain_count 個のリストを返す\n'+
+'\n'+
+'■ 期待出力\n'+
+'・(100, 3, 0.7) → [100, 70, 49]\n'+
+'・(80, 4, 0.5)  → [80, 40, 20, 10]\n'+
+'・(50, 1, 0.7)  → [50]',
    hint:'',
-   hintDetail:'for / range() / int() / * decay / append()',
+   hintDetail:'damages.append(int(current))  /  current *= decay',
    template:
 'def calc_chain(base_dmg, chain_count, decay):\n'+
-'    # 連鎖ダメージのリストを返せ\n'+
-'    # base_dmg: 最初のダメージ\n'+
-'    # chain_count: 連鎖回数（最初の1発含む）\n'+
-'    # decay: 減衰率（0.7 = 70%に減衰）\n'+
-'    # ===== この中を自由に書き換えよう！ =====\n'+
 '    damages = []\n'+
-'    \n'+
+'    current = base_dmg\n'+
+'    for i in range(chain_count):\n'+
+'        # ① 今の current を int にして damages に追加\n'+
+'        damages.append(_____)\n'+
+'\n'+
+'        # ② current を decay 倍にして減衰\n'+
+'        current = _____\n'+
 '    return damages\n'+
-'    # =========================================\n'+
 '\n'+
 '# ▼▼▼ テスト（変更禁止！）▼▼▼\n'+
-'print(calc_chain(100, 3, 0.7))\n'+
-'print(calc_chain(80, 4, 0.5))\n'+
-'print(calc_chain(50, 1, 0.7))\n',
+'print(calc_chain(100, 3, 0.7))   # → [100, 70, 49]\n'+
+'print(calc_chain(80, 4, 0.5))    # → [80, 40, 20, 10]\n'+
+'print(calc_chain(50, 1, 0.7))    # → [50]\n',
    evaluate:function(out){
      var L=out.trim().split('\n');if(L.length<3)return 0;
+     var p=0;
      try{
        var r1=JSON.parse(L[0].replace(/'/g,'"'));
-       // [100, 70, 49]
-       if(!Array.isArray(r1)||r1.length!==3)return 0;
-       if(r1[0]!==100)return 0;
-       if(Math.abs(r1[1]-70)>1)return 0;
-       if(Math.abs(r1[2]-49)>1)return 0;
+       if(Array.isArray(r1)&&r1.length===3&&r1[0]===100&&Math.abs(r1[1]-70)<=1&&Math.abs(r1[2]-49)<=1)p++;
        var r2=JSON.parse(L[1].replace(/'/g,'"'));
-       // [80, 40, 20, 10]
-       if(!Array.isArray(r2)||r2.length!==4)return 0;
-       if(r2[0]!==80)return 0;
+       if(Array.isArray(r2)&&r2.length===4&&r2[0]===80)p++;
        var r3=JSON.parse(L[2].replace(/'/g,'"'));
-       // [50]
-       if(!Array.isArray(r3)||r3.length!==1||r3[0]!==50)return 0;
-       return 3;
-     }catch(e){return 0;}
+       if(Array.isArray(r3)&&r3.length===1&&r3[0]===50)p++;
+     }catch(e){}
+     return partialStar(p,3);
    },
    effectDesc:['','','','\u26A1\u26A1 連鎖雷撃！敵から敵へ3回連鎖！'],
    unlockMsg:'\u26A1\u26A1 雷撃が「連鎖雷撃」に進化した！'},
@@ -484,39 +653,47 @@ const REPAIR_CHALLENGES=[
   {id:'healEvo',name:'回復 → リジェネに進化',icon:'\uD83D\uDC9A',floor:4,
    color:0x22ff88,emissive:0x11aa44,diff:'HARD',xp:120,
    mission:
-'【進化】回復スキルを「リジェネ」に進化させよ！\n\n'+
-'calc_regen 関数を完成させよ。\n'+
-'一度に全回復ではなく、毎ターン少しずつ回復する。\n'+
-'合計回復量を計算せよ。\n\n'+
-'進化後: 回復スキルが持続回復（5ターンHP回復）に！',
+'【目的】複数ターン回復の合計回復量を計算（max_hp で頭打ち）！\n'+
+'\n'+
+'calc_regen(hp, max_hp, heal_per_turn, turns) を完成させよ。\n'+
+'\n'+
+'■ ヒント\n'+
+'・毎ターン heal_per_turn だけ回復させる\n'+
+'・ただし HP は max_hp を超えてはいけない（はみ出した分は捨てる）\n'+
+'・turns 回繰り返した合計回復量を返す\n'+
+'\n'+
+'■ 期待出力\n'+
+'・(80, 100, 10, 5)  → 20  （max=100で打ち止め）\n'+
+'・(95, 100, 10, 5)  → 5\n'+
+'・(50, 200, 20, 3)  → 60',
    hint:'',
-   hintDetail:'for / range() / min() / += ',
+   hintDetail:'heal = min(heal_per_turn, max_hp - hp)  /  hp += heal  /  total_healed += heal',
    template:
 'def calc_regen(hp, max_hp, heal_per_turn, turns):\n'+
-'    # リジェネの合計回復量を返せ\n'+
-'    # hp: 現在HP\n'+
-'    # max_hp: 最大HP\n'+
-'    # heal_per_turn: 1ターンあたりの回復量\n'+
-'    # turns: 持続ターン数\n'+
-'    # ===== この中を自由に書き換えよう！ =====\n'+
 '    total_healed = 0\n'+
-'    \n'+
+'    for i in range(turns):\n'+
+'        # ① 今ターンの回復量を計算（max_hp を超える分はカット）\n'+
+'        heal = _____   # ← min(heal_per_turn, max_hp - hp)\n'+
+'\n'+
+'        # ② 現在HPを増やす\n'+
+'        hp = _____     # ← hp + heal\n'+
+'\n'+
+'        # ③ 合計回復量に加算\n'+
+'        total_healed = _____  # ← total_healed + heal\n'+
 '    return total_healed\n'+
-'    # =========================================\n'+
 '\n'+
 '# ▼▼▼ テスト（変更禁止！）▼▼▼\n'+
-'print(calc_regen(80, 100, 10, 5))\n'+
-'print(calc_regen(95, 100, 10, 5))\n'+
-'print(calc_regen(50, 200, 20, 3))\n',
+'print(calc_regen(80, 100, 10, 5))   # → 20  （max=100で頭打ち）\n'+
+'print(calc_regen(95, 100, 10, 5))   # → 5\n'+
+'print(calc_regen(50, 200, 20, 3))   # → 60\n',
    evaluate:function(out){
      var L=out.trim().split('\n');if(L.length<3)return 0;
-     // Test 1: hp=80, max=100, 10/turn, 5turns → heals 20 (capped at max)
-     // Test 2: hp=95, max=100, 10/turn, 5turns → heals 5 (capped at max)
-     // Test 3: hp=50, max=200, 20/turn, 3turns → heals 60
      var v1=parseFloat(L[0]),v2=parseFloat(L[1]),v3=parseFloat(L[2]);
-     if(isNaN(v1)||isNaN(v2)||isNaN(v3))return 0;
-     if(numClose(v1,20)&&numClose(v2,5)&&numClose(v3,60))return 3;
-     return 0;
+     var p=0;
+     if(numClose(v1,20))p++;
+     if(numClose(v2,5))p++;
+     if(numClose(v3,60))p++;
+     return partialStar(p,3);
    },
    effectDesc:['','','','\uD83D\uDC9A \u30EA\u30B8\u30A7\u30CD\uFF015\u30BF\u30FC\u30F3\u6301\u7D9AHP\u56DE\u5FA9\uFF01'],
    unlockMsg:'\uD83D\uDC9A 回復が「リジェネ」に進化した！'},
@@ -527,6 +704,14 @@ function numClose(s,expected){
   var v=parseFloat(String(s).trim());
   if(isNaN(v))return false;
   return Math.abs(v-expected)<0.5;
+}
+// Helper: convert (passed-count, total-count) to ★ tier (0..3).
+//   全部一致 → ★★★ / ≥66% → ★★ / 1つでも通れば → ★ / 0なら失敗
+function partialStar(passed,total){
+  if(passed>=total)return 3;
+  if(passed*3>=total*2)return 2;
+  if(passed>=1)return 1;
+  return 0;
 }
 
 // ═══════════════════════════════════
@@ -541,10 +726,26 @@ function spawnRepairTerminal(rm,challengeIdx){
   var ch=REPAIR_CHALLENGES[challengeIdx];
   if(!ch||features[ch.id]>0)return;
   var cx=(rm.x+~~(rm.w/2))*TILE,cz=(rm.y+~~(rm.h/2))*TILE;
-  var ox=(Math.random()-.5)*rm.w*.3*TILE;
-  var oz=(Math.random()-.5)*rm.h*.3*TILE;
-  var px=cx+ox,pz=cz+oz;
-  if(isWall(px,pz)){px=cx;pz=cz;}
+  // Avoid stair (exit portal) and cipher terminal positions — at least 3 tiles away.
+  var sx=dungeon.stairX*TILE,sz=dungeon.stairY*TILE;
+  var tx=dungeon.termX*TILE,tz=dungeon.termY*TILE;
+  function tooClose(x,z){
+    var ds=(x-sx)*(x-sx)+(z-sz)*(z-sz);
+    var dt=(x-tx)*(x-tx)+(z-tz)*(z-tz);
+    return ds<9*TILE*TILE||dt<9*TILE*TILE; // < 3 tiles
+  }
+  var px=0,pz=0,ok=false;
+  for(var attempt=0;attempt<25;attempt++){
+    var ox=(Math.random()-.5)*rm.w*.5*TILE;
+    var oz=(Math.random()-.5)*rm.h*.5*TILE;
+    px=cx+ox;pz=cz+oz;
+    if(!isWall(px,pz)&&!tooClose(px,pz)){ok=true;break;}
+  }
+  if(!ok){
+    // Center fallback — but only if the center is also clear of stair/terminal.
+    px=cx;pz=cz;
+    if(isWall(px,pz)||tooClose(px,pz))return; // skip this terminal if no safe spot
+  }
   var tg=new THREE.Group();
   var base=new THREE.Mesh(new THREE.CylinderGeometry(.45,.55,.15,6),
     new THREE.MeshStandardMaterial({color:ch.color,emissive:ch.emissive,emissiveIntensity:.5,metalness:.4}));
@@ -587,6 +788,7 @@ function openRepairChallenge(rt){
   if(gameState!=='playing')return;
   repairActive=true;currentRepair=rt;
   gameState='cipher';document.exitPointerLock();muteBGM();
+  if(typeof uploadProgress==='function')uploadProgress();
   var ch=rt.challenge;
   document.getElementById('cm-avatar').textContent=ch.icon;
   document.getElementById('cm-name').textContent='\uD83D\uDD27 修理ターミナル';
@@ -726,6 +928,7 @@ function showRepairHint(){
 // ── Close repair modal ──
 function closeRepairModal(){
   clearInterval(cipherTimerInt);repairActive=false;currentRepair=null;
+  if(typeof uploadProgress==='function')uploadProgress();
   document.getElementById('cipher-modal').classList.remove('open');
   document.getElementById('code-editor-wrap').classList.remove('show');
   document.getElementById('code-output-wrap').classList.remove('show');
@@ -817,16 +1020,47 @@ function clearFeatures(){
   for(var k in features)features[k]=0;
 }
 
+// Prerequisites — challenge X only spawns once all features in REPAIR_REQUIRES[X]
+// are unlocked (>0). Skill-attack and heal terminals are gated behind the
+// physical attack feature so the order is: 物理攻撃 → 各スキル → 進化。
+const REPAIR_REQUIRES={
+  // Attack-boosting skills require physical attack to be unlocked first.
+  skillFire:['attack'],
+  skillLightning:['attack'],
+  // Heal skill is fine to unlock early — players need it for survival.
+  // Evolutions still require their base skill.
+  fireEvo:['skillFire'],
+  lightningEvo:['skillLightning'],
+  healEvo:['skillHeal'],
+};
+function repairPrereqMet(id){
+  var req=REPAIR_REQUIRES[id];
+  if(!req)return true;
+  for(var i=0;i<req.length;i++)if((features[req[i]]||0)<=0)return false;
+  return true;
+}
+
 // ── Spawn repair terminals for current floor + carry-over from previous ──
 function spawnFloorRepairTerminals(rooms){
   var floorChallenges=[];
   for(var i=0;i<REPAIR_CHALLENGES.length;i++){
     var ch=REPAIR_CHALLENGES[i];
-    // Spawn if: this floor's challenge OR unsolved from a previous floor
-    if(features[ch.id]<=0&&ch.floor<=floor)floorChallenges.push(i);
+    // Spawn if: unsolved AND this floor or earlier AND prerequisites met
+    if(features[ch.id]<=0&&ch.floor<=floor&&repairPrereqMet(ch.id))floorChallenges.push(i);
   }
   if(!floorChallenges.length)return;
-  var available=rooms.length>3?rooms.slice(2):rooms.slice(1);
+  // Exclude the spawn room, the cipher terminal room, and the stair (exit) room
+  // so repair terminals never overlap with those critical fixtures.
+  function roomContains(rm,gx,gy){return gx>=rm.x&&gx<rm.x+rm.w&&gy>=rm.y&&gy<rm.y+rm.h;}
+  var available=[];
+  for(var ri=1;ri<rooms.length;ri++){
+    var rm=rooms[ri];
+    if(roomContains(rm,dungeon.stairX,dungeon.stairY))continue;
+    if(roomContains(rm,dungeon.termX,dungeon.termY))continue;
+    available.push(rm);
+  }
+  // Fallback: if filtering left no room (very small dungeons), allow non-spawn rooms.
+  if(!available.length)available=rooms.slice(1);
   for(var ci=0;ci<floorChallenges.length;ci++){
     var rmIdx=ci%available.length;
     spawnRepairTerminal(available[rmIdx],floorChallenges[ci]);

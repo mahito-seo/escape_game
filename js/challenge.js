@@ -26,33 +26,53 @@ function miniPyEval(code){
       }
       return line;
     }).join('\n');
+    // Strip Python module imports (base64 etc — we provide JS shims below).
+    js=js.replace(/^\s*import\s+\w+(\s+as\s+\w+)?\s*$/gm,'');
+    js=js.replace(/^\s*from\s+\S+\s+import\s+.+$/gm,'');
+    // base64 module shims using atob/btoa
+    js=js.replace(/base64\.b64decode\(([^)]+)\)\.decode\([^)]*\)/g,'atob($1)');
+    js=js.replace(/base64\.b64decode\(([^)]+)\)/g,'atob($1)');
+    js=js.replace(/base64\.b64encode\(([^)]+)\)\.decode\([^)]*\)/g,'btoa($1)');
     // Convert common Python to JS
     js=js
       .replace(/\bTrue\b/g,'true').replace(/\bFalse\b/g,'false').replace(/\bNone\b/g,'null').replace(/^\s*pass\s*$/gm,'')
       .replace(/\band\b/g,'&&').replace(/\bor\b/g,'||').replace(/\bnot\s+/g,'!')
       .replace(/\blen\((.+?)\)/g,'($1).length')
       .replace(/\bstr\((.+?)\)/g,'String($1)')
+      // int() with optional base argument: int(x, 16) → parseInt(x, 16)
+      .replace(/\bint\(([^,()]+(?:\([^)]*\))?[^,]*),\s*(\d+)\)/g,'parseInt($1, $2)')
       .replace(/\bint\((.+?)\)/g,'parseInt($1)')
       .replace(/\bfloat\((.+?)\)/g,'parseFloat($1)')
       .replace(/\bchr\((.+?)\)/g,'String.fromCharCode($1)')
       .replace(/\bord\((.+?)\)/g,'($1).charCodeAt(0)')
       .replace(/\babs\((.+?)\)/g,'Math.abs($1)')
-      .replace(/\bmax\((.+?)\)/g,'Math.max($1)')
-      .replace(/\bmin\((.+?)\)/g,'Math.min($1)')
+      // max/min: detect single-array form (Python: max([1,2,3])) vs varargs (max(a,b))
+      // — Math.max([1,2,3]) returns NaN, so we wrap and spread when given a single array.
+      .replace(/\bmax\((.+?)\)/g,'((__a)=>__a.length===1&&Array.isArray(__a[0])?Math.max.apply(null,__a[0]):Math.max.apply(null,__a))([$1])')
+      .replace(/\bmin\((.+?)\)/g,'((__a)=>__a.length===1&&Array.isArray(__a[0])?Math.min.apply(null,__a[0]):Math.min.apply(null,__a))([$1])')
       .replace(/\bsum\((.+?)\)/g,'($1).reduce((a,b)=>a+b,0)')
       .replace(/\bsorted\((.+?),\s*reverse\s*=\s*true\)/gi,'[...$1].sort((a,b)=>b-a)')
       .replace(/\bsorted\((.+?)\)/g,'[...$1].sort((a,b)=>a>b?1:a<b?-1:0)')
+      // String/list slicing s[a:b] → s.slice(a,b). Run BEFORE range/[::-1] handling.
+      .replace(/(\w+)\[([^\[\]:]+):([^\[\]:]+)\]/g,'$1.slice($2,$3)')
+      // enumerate(X) → Array.from(X.entries()) (no extra brackets so the list-comp regex doesn't get confused by the inner [])
+      .replace(/\benumerate\(([^)]+)\)/g,'Array.from(($1).entries())')
+      // range() — constrained to a single line and no nested parens, otherwise it gobbles
+      // across function calls (e.g. for i in range(N): ... print(calc(1,2,3)) would match).
+      .replace(/\brange\(([^,()\n]+?),\s*([^,()\n]+?),\s*([^()\n]+?)\)/g,'Array.from({length:Math.max(0,Math.ceil((($2)-($1))/($3)))},(_,__i)=>($1)+__i*($3))')
       .replace(/\brange\((\d+),\s*(\d+)\)/g,'Array.from({length:$2-$1},(_,i)=>i+$1)')
+      .replace(/\brange\(([^,()\n]+),\s*([^()\n]+)\)/g,'Array.from({length:Math.max(0,($2)-($1))},(_,__i)=>($1)+__i)')
       .replace(/\brange\((\d+)\)/g,'Array.from({length:$1},(_,i)=>i)')
+      .replace(/\brange\(([^()\n]+)\)/g,'Array.from({length:($1)},(_,__i)=>__i)')
+      // list.append(x) → list.push(x)
+      .replace(/\.append\(/g,'.push(')
       .replace(/\.upper\(\)/g,'.toUpperCase()')
       .replace(/\.lower\(\)/g,'.toLowerCase()')
       .replace(/\.count\((.+?)\)/g,'.split($1).length-1')
       .replace(/\.sort\(\)/g,'.sort((a,b)=>a>b?1:a<b?-1:0)')
       .replace(/\.replace\((.+?),\s*(.+?)\)/g,'.split($1).join($2)')
       .replace(/\.split\((.+?)\)/g,'.split($1)')
-      .replace(/\.join\((.+?)\)/g,'($1).join(this)')
-      .replace(/"([^"]*)"\.join/g,'((s)=>(x)=>x.join(s))("$1")')
-      .replace(/'([^']*)'\.join/g,"((s)=>(x)=>x.join(s))('$1')")
+      // .join() handled via _replaceJoin() below (paren-balanced)
       .replace(/\.items\(\)/g,'.entries ? Object.entries($0_dict) : []') // partial
       .replace(/\.values\(\)/g,'.values ? Object.values($0_dict) : []') // partial
       .replace(/\.keys\(\)/g,'.keys ? Object.keys($0_dict) : []') // partial
@@ -66,14 +86,38 @@ function miniPyEval(code){
       .replace(/(\d+)\s*\*\*\s*(\d+)/g,'Math.pow($1,$2)')
       // // integer division
       .replace(/(\w+)\s*\/\/\s*(\w+)/g,'Math.floor($1/$2)')
+      // list comprehension with tuple-unpacking: [expr for i, n in iter]
+      .replace(/\[(.+?)\s+for\s+(\w+)\s*,\s*(\w+)\s+in\s+(.+?)\s+if\s+(.+?)\]/g,'($4).filter(([$2,$3])=>$5).map(([$2,$3])=>$1)')
+      .replace(/\[(.+?)\s+for\s+(\w+)\s*,\s*(\w+)\s+in\s+(.+?)\]/g,'($4).map(([$2,$3])=>$1)')
       // list comprehension: [expr for x in iter]
       .replace(/\[(.+?)\s+for\s+(\w+)\s+in\s+(.+?)\s+if\s+(.+?)\]/g,'($3).filter($2=>$4).map($2=>$1)')
       .replace(/\[(.+?)\s+for\s+(\w+)\s+in\s+(.+?)\]/g,'($3).map($2=>$1)')
       // Python join: ",".join(list) → list.join(",")
       ;
-    // Fix join pattern: "x".join(y) → y.join("x")
-    js=js.replace(/"([^"]*)"\s*\.\s*join\s*\(\s*(\w+)\s*\)/g,'$2.join("$1")');
-    js=js.replace(/'([^']*)'\s*\.\s*join\s*\(\s*(\w+)\s*\)/g,"$2.join('$1')");
+    // Fix "X".join(arg) where arg can have nested parens — paren-balanced scan.
+    function _replaceJoin(code,quote){
+      var out='',i=0;
+      while(i<code.length){
+        var rest=code.substring(i);
+        var m=rest.match(new RegExp('('+quote+')([^'+quote+']*?)\\1\\s*\\.\\s*join\\s*\\('));
+        if(!m){out+=rest;break;}
+        out+=rest.substring(0,m.index);
+        var sep=m[2];
+        var argStart=m.index+m[0].length;
+        var depth=1,j=argStart;
+        while(j<rest.length&&depth>0){
+          if(rest[j]==='(')depth++;
+          else if(rest[j]===')')depth--;
+          if(depth>0)j++;
+        }
+        var arg=rest.substring(argStart,j);
+        out+='('+arg+').join('+quote+sep+quote+')';
+        i+=j+1;
+      }
+      return out;
+    }
+    js=_replaceJoin(js,'"');
+    js=_replaceJoin(js,"'");
     // Convert print() — match balanced parens per line
     js=js.split('\n').map(function(ln){
       var m=ln.match(/^(\s*)print\((.+)\)\s*$/);
@@ -89,12 +133,15 @@ function miniPyEval(code){
     js=js.replace(/^(\s*)for\s+(\w+)\s+in\s+range\((\d+)\)\s*:/gm,
       '$1for(let $2=0;$2<$3;$2++){');
     // for x in variable: → for(const x of ...)
-    js=js.replace(/^(\s*)for\s+(\w+)\s+in\s+(\w+)\s*:/gm,'$1for(const $2 of (Array.isArray($3)?$3:Object.keys($3))){');
-    js=js.replace(/^(\s*)for\s+(\w+)\s+in\s+(.+?)\s*:/gm,'$1for(const $2 of $3){');
+    // — match up to the LAST `:` on the line so we don't snag colons inside e.g. {length: ...}
+    js=js.replace(/^(\s*)for\s+(\w+)\s+in\s+(\w+)\s*:\s*$/gm,'$1for(const $2 of (Array.isArray($3)||typeof $3==="string"?$3:Object.keys($3))){');
+    js=js.replace(/^(\s*)for\s+(\w+)\s+in\s+(.+):\s*$/gm,'$1for(const $2 of $3){');
     // if condition: → if(condition){
-    js=js.replace(/^(\s*)if\s+(.+?)\s*:/gm,'$1if($2){');
+    js=js.replace(/^(\s*)if\s+(.+):\s*$/gm,'$1if($2){');
+    // while condition: → while(condition){
+    js=js.replace(/^(\s*)while\s+(.+):\s*$/gm,'$1while($2){');
     // elif → }else if
-    js=js.replace(/^(\s*)elif\s+(.+?)\s*:/gm,'$1}else if($2){');
+    js=js.replace(/^(\s*)elif\s+(.+):\s*$/gm,'$1}else if($2){');
     // else: → }else{
     js=js.replace(/^(\s*)else\s*:/gm,'$1}else{');
     // Handle def/return
@@ -109,13 +156,18 @@ function miniPyEval(code){
       const line=lines[i];
       const trimmed=line.trimStart();
       const indent=line.length-trimmed.length;
+      // Lines from converted `else:` / `elif x:` start with `}` (e.g. `}else{`, `}else if(x){`).
+      // The leading `}` already closes the matching-indent block — don't add another one
+      // from the close-pass, otherwise we emit `}}else{` which is a JS syntax error.
+      const startsWithBrace=trimmed.startsWith('}');
       // Close blocks when indent decreases
       while(blockStack.length>0&&indent<=blockStack[blockStack.length-1]&&trimmed.length>0){
-        blockStack.pop();
+        const popped=blockStack.pop();
+        if(startsWithBrace&&popped===indent)continue;
         result.push(' '.repeat(indent)+'}');
       }
-      // Track block openers
-      if(trimmed.match(/^(for|if|else|function|def)\b/)&&line.includes('{')){
+      // Track block openers — also accept lines like `}else{` / `}else if(...){` from elif/else conversion.
+      if(trimmed.match(/^\}?\s*(for|while|if|else|function|def)\b/)&&line.includes('{')){
         blockStack.push(indent);
       }
       result.push(line);
@@ -123,6 +175,17 @@ function miniPyEval(code){
     // Close remaining blocks
     while(blockStack.length>0){blockStack.pop();result.push('}');}
     js=result.join('\n');
+
+    // Prelude: provide JS polyfills for Python builtins that the regex transforms
+    // can't always rewrite (e.g. range(0, len(x), 2) — nested parens defeat the
+    // inline regex, so the call has to resolve at runtime instead).
+    const __PRELUDE=
+      'function range(a,b,c){var s=0,e=a,st=1;'+
+      'if(c!==undefined){s=a;e=b;st=c;}else if(b!==undefined){s=a;e=b;}'+
+      'var r=[],n=Math.max(0,Math.ceil((e-s)/st));'+
+      'for(var __ri=0;__ri<n;__ri++)r.push(s+__ri*st);'+
+      'return r;}\n';
+    js=__PRELUDE+js;
 
     const __out=[];
     // Snapshot existing globals so we can wipe any implicit globals leaked by user code.

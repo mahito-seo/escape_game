@@ -29,15 +29,24 @@ function loop(ts){
   if(gameState!=='playing')return;
   const dt=Math.min((ts-lastTime)/1000,.05);lastTime=ts;
 
-  player.yaw-=mouse.dx*.002;
-  player.pitch=Math.max(-Math.PI/3,Math.min(Math.PI/3,player.pitch-mouse.dy*.002));
+  // ── 視点回転: マウス（dx/dy）と矢印キーの両方で操作可
+  player.yaw-=mouse.dx*MOUSE_SENSITIVITY;
+  player.pitch=Math.max(-Math.PI/3,Math.min(Math.PI/3,player.pitch-mouse.dy*MOUSE_SENSITIVITY));
   mouse.dx=0;mouse.dy=0;
+  // Arrow keys: 視点を一定速度で回す（マウスが効かない/使いたくない時用）
+  var ARROW_YAW_SPEED=1.0;   // rad/秒（左右）
+  var ARROW_PITCH_SPEED=0.7; // rad/秒（上下、ややゆっくり）
+  if(keys['ArrowLeft'])  player.yaw+=ARROW_YAW_SPEED*dt;
+  if(keys['ArrowRight']) player.yaw-=ARROW_YAW_SPEED*dt;
+  if(keys['ArrowUp'])    player.pitch=Math.min(Math.PI/3, player.pitch+ARROW_PITCH_SPEED*dt);
+  if(keys['ArrowDown'])  player.pitch=Math.max(-Math.PI/3, player.pitch-ARROW_PITCH_SPEED*dt);
 
   const spd=player.speed*(1+(player.level-1)*.12);
   let mx=0,mz=0;
   const fwd=player.yaw+Math.PI;
-  if(keys['KeyW']||keys['ArrowUp']){mx+=Math.sin(fwd)*spd;mz+=Math.cos(fwd)*spd;}
-  if(keys['KeyS']||keys['ArrowDown']){mx-=Math.sin(fwd)*spd;mz-=Math.cos(fwd)*spd;}
+  // 移動は WASD のみ。矢印キーは視点回転に振り直し。
+  if(keys['KeyW']){mx+=Math.sin(fwd)*spd;mz+=Math.cos(fwd)*spd;}
+  if(keys['KeyS']){mx-=Math.sin(fwd)*spd;mz-=Math.cos(fwd)*spd;}
   if(keys['KeyA']){mx+=Math.cos(fwd)*spd;mz-=Math.sin(fwd)*spd;} // right
   if(keys['KeyD']){mx-=Math.cos(fwd)*spd;mz+=Math.sin(fwd)*spd;} // left
   const nx=player.x+mx,nz=player.z+mz;
@@ -45,7 +54,7 @@ function loop(ts){
   if(!isWall(player.x,nz+(mz>0?.4:-.4)))player.z=nz;
 
   camera.position.set(player.x,1.2,player.z);
-  camera.rotation.order='YXZ';camera.rotation.y=player.yaw;camera.rotation.x=player.pitch;
+  camera.rotation.order='YXZ';camera.rotation.y=player.yaw;camera.rotation.x=player.pitch;camera.rotation.z=0;
 
   player.mp=Math.min(player.maxMp,player.mp+dt*1);
   updateEnemies(dt);updateProjectiles();checkTerminal();checkRepairTerminals();checkBoss();updateBossProjectiles();checkItems();checkStair();updateCDs(dt);
@@ -136,6 +145,12 @@ function togglePause(){
 }
 document.addEventListener('keydown',e=>{
   keys[e.code]=true;
+  // ゲーム中は矢印キーやスペースのデフォルト動作（ページスクロール）を抑止
+  if(gameState==='playing'){
+    if(e.code==='ArrowUp'||e.code==='ArrowDown'||e.code==='ArrowLeft'||e.code==='ArrowRight'||e.code==='Space'){
+      e.preventDefault();
+    }
+  }
   if(e.code==='Escape'){
     if(gameState==='playing'||gameState==='paused'){togglePause();e.preventDefault();return;}
   }
@@ -205,14 +220,28 @@ document.addEventListener('keydown',e=>{
 document.addEventListener('keyup',e=>keys[e.code]=false);
 // Clear stuck keys when window loses focus (Mac alt-tab can drop keyup events)
 window.addEventListener('blur',()=>{for(var k in keys)keys[k]=false;});
+// ── OS detection: Windows precision touchpads / high-DPI mice report larger
+// jittery deltas than Mac, so the dead zone has to be bigger or the player
+// silently rotates while pressing W and ends up walking diagonally.
+var IS_WINDOWS=/Win(dows|32|64)/i.test(navigator.userAgent)||/^Win/.test(navigator.platform||'');
+var IS_MAC=/Mac/i.test(navigator.platform||navigator.userAgent);
+// Windows reports persistent ~5-12px micro-deltas from precision touchpads /
+// high-DPI mice that silently drift yaw. The dead zone needs to be aggressive,
+// and we should request unadjustedMovement (raw, no OS pointer acceleration).
+var MOUSE_DEADZONE=IS_WINDOWS?12:3;
+var MOUSE_SENSITIVITY=IS_WINDOWS?0.0012:0.002;
+var POINTER_LOCK_COOLDOWN_MS=IS_WINDOWS?500:250;
 var pointerLockJustAcquired=0; // timestamp to ignore initial spike
+// Track stationary frames on Windows: if dx/dy stay below DZ for a while, also
+// drop accumulated micro-noise that snuck through.
+var lastSignificantMove=0;
 document.addEventListener('mousemove',e=>{
   if(!pointerLocked||gameState!=='playing')return;
   // Ignore mouse spike right after pointer lock
-  if(Date.now()-pointerLockJustAcquired<200)return;
+  if(Date.now()-pointerLockJustAcquired<POINTER_LOCK_COOLDOWN_MS)return;
   var dx=e.movementX,dy=e.movementY;
-  // Per-axis soft dead zone — filters Mac trackpad/mouse drift that was causing W to curve right
-  var DZ=3;
+  var DZ=MOUSE_DEADZONE;
+  // Soft dead zone: subtract DZ instead of hard clipping so genuine motion still scales.
   if(Math.abs(dx)<DZ)dx=0;else dx-=Math.sign(dx)*DZ;
   if(Math.abs(dy)<DZ)dy=0;else dy-=Math.sign(dy)*DZ;
   if(dx===0&&dy===0)return;
@@ -220,10 +249,39 @@ document.addEventListener('mousemove',e=>{
   dx=Math.max(-60,Math.min(60,dx));
   dy=Math.max(-60,Math.min(60,dy));
   mouse.dx+=dx;mouse.dy+=dy;
+  lastSignificantMove=Date.now();
 });
-canvas.addEventListener('click',()=>{if(gameState==='playing')canvas.requestPointerLock();});
+
+// Request pointer lock with unadjustedMovement to bypass OS pointer acceleration
+// (helps with Windows touchpad jitter that survives the dead zone).
+function requestLockOptions(){
+  return IS_WINDOWS?{unadjustedMovement:true}:undefined;
+}
+canvas.addEventListener('click',()=>{
+  if(gameState!=='playing')return;
+  try{var p=canvas.requestPointerLock(requestLockOptions());if(p&&p.catch)p.catch(()=>{});}catch(e){}
+});
+// Mouse buttons as alternate skill cast (左クリック=火球, 右クリック=雷撃) —
+// only when pointer is locked, so the very first click that acquires lock isn't consumed.
+canvas.addEventListener('mousedown',e=>{
+  if(gameState!=='playing'||!pointerLocked)return;
+  if(e.button===0){useSkill(0);e.preventDefault();}
+  else if(e.button===2){useSkill(1);e.preventDefault();}
+});
+// Suppress the browser context menu on the canvas so right-click can be used as an attack.
+canvas.addEventListener('contextmenu',e=>{e.preventDefault();});
 document.addEventListener('pointerlockchange',()=>{
   var wasLocked=pointerLocked;
   pointerLocked=document.pointerLockElement===canvas;
-  if(pointerLocked&&!wasLocked){pointerLockJustAcquired=Date.now();mouse.dx=0;mouse.dy=0;}
+  if(pointerLocked&&!wasLocked){
+    pointerLockJustAcquired=Date.now();
+    mouse.dx=0;mouse.dy=0;
+    lastSignificantMove=Date.now();
+  }
+});
+
+// Press 'R' to recenter view (pitch=0, yaw unchanged) — escape hatch if drift
+// has tilted the world before the player notices.
+document.addEventListener('keydown',function(e){
+  if(e.code==='KeyR'&&gameState==='playing'){player.pitch=0;mouse.dx=0;mouse.dy=0;}
 });

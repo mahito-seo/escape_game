@@ -1,280 +1,112 @@
 # 講師用ガイド — Python × Copilot Agent 脱出ゲーム
 
-## コンセプト
+このファイルは**索引ページ**です。詳細は各専用ガイドへ:
 
-**Agentのプロンプトを「成長」させるゲーム**です。
-
-各ステージで新しい暗号データが渡されますが、そのデータは**前ステージのデータと紐づいて**います。
-学生は Copilot Agent のプロンプトに情報を**蓄積**させ、複数データを**横断的に推論**させて答えを導きます。
-
-- Stage 1: データAだけで回答
-- Stage 2: A + B を SECTOR コードで紐づけて回答
-- Stage 3: A + B + C を横断して回答（逆方向推論あり）
-- Stage 4: A〜D の全チェーンを使って回答
-- Stage 5: A〜E を統合し、逆方向に全チェーンをたどって回答
-
-**「プロンプトを毎回リセットすると解けない」設計**になっています。
+| カテゴリ | 詳細ガイド | 内容 |
+|---|---|---|
+| 🔐 暗号ターミナル | [INSTRUCTOR_CIPHER.md](INSTRUCTOR_CIPHER.md) | 5 ステージ + EXTRA。Phase 1 コード / Phase 2 Agent / 復号データ |
+| 🔧 修理ターミナル | [INSTRUCTOR_REPAIR.md](INSTRUCTOR_REPAIR.md) | 全 14 問の仕様・解答・解説 |
+| 👹 ボス・モブ戦 | [INSTRUCTOR_BOSS.md](INSTRUCTOR_BOSS.md) | ボス 3 問の解答 + モブクイズ 90 問構成 |
 
 ---
 
-## データの紐づき構造
+## ゲーム概要
+
+**Python の文法学習 × Copilot Agent への推論プロンプト設計** をテーマにした脱出ゲーム。学生は 5 階層 (+ EXTRA) のダンジョンを進みながら以下をこなします:
+
+1. **修理ターミナル（黄色端末）** — Python の穴埋め問題でゲーム機能（攻撃力・スキル・マップ等）を解放
+2. **暗号ターミナル（緑端末）** — Phase 1 で Python パスフレーズ計算 → Phase 2 で Copilot Agent に機密データを渡して推論させ最終答えを入力
+3. **モブバトル** — 通路の敵に接触すると Python クイズが開始
+4. **ボス戦（EXTRA のみ）** — 3 問のコーディング問題でラスボスを倒す
+
+---
+
+## 階層構成
 
 ```
-機密情報A (1層)             機密情報B (2層)              機密情報C (3層)
-ROT13                      ROT13→Base64               ROT13→Base64→hex
-エージェント → SECTOR  ──→  SECTOR → 都市・作戦  ──→  作戦 → 優先度
-                                                          │
-機密情報E (5層)             機密情報D (4層)               │
-ROT13→Base64→hex           ROT13→Base64→hex→reverse      │
-→reverse→Atbash            優先度 → 連絡コード＆チャンネル ←┘
-最終指令         ←──────────────────────────────────────────┘
-```
-
-### 暗号の累積構造
-| Stage | 暗号層 | 復号手順 |
-|-------|-------|---------|
-| 1 | ROT13 | ROT13 |
-| 2 | ROT13 → Base64 | Base64 → ROT13 |
-| 3 | ROT13 → Base64 → hex | hex → Base64 → ROT13 |
-| 4 | ROT13 → Base64 → hex → reverse | reverse → hex → Base64 → ROT13 |
-| 5 | ROT13 → Base64 → hex → reverse → Atbash | Atbash → reverse → hex → Base64 → ROT13 |
-
-ステージが進むごとに暗号の層が1つずつ増えます。
-Agentへの復号指示も累積的に複雑になるため、プロンプト設計力が段階的に鍛えられます。
-
-**SECTOR コード（S7, S3, S12, S9）** が情報A↔Bのリンク、**作戦コード** が情報B↔Cのリンクです。
-各データを個別に復号しても、紐づけがないと推論チェーンが成立しません。
-
----
-
-## ステージ別 出題内容
-
-### Stage 1 — リストの暗号
-
-| 項目 | 内容 |
-|------|------|
-| Python課題 | リスト＋for文でインデックスから文字を組み立てる |
-| 暗号データ | `indices = [5, 0, 11, 2, 14, 13]`, `alphabet = "ABC...Z"` |
-| 解法 | `result += alphabet[idx]` をfor文で回す |
-| パスフレーズ | `FALCON` |
-| 機密情報の暗号 | **1層**: ROT13（12件、うちACTIVE 4件） |
-| **講師の問い** | **「ACTIVE なエージェントのうち、SECTOR番号が一番小さいのは誰ですか？」** |
-| 必要な情報 | A のみ |
-| 正解 | **VIPER**（SECTOR:S3 が最小） |
-
-> **Agentに必要な処理**: ROT13復号 → ACTIVEをフィルタ → SECTOR番号を比較
-> 12件のROT13データを手作業で復号するのは非現実的。
-
----
-
-### Stage 2 — 数字の手紙
-
-| 項目 | 内容 |
-|------|------|
-| Python課題 | ASCII文字コードを chr() で文字に変換 |
-| 暗号データ | `codes = [67, 73, 80, 72, 69, 82]` |
-| 解法 | `result += chr(code)` をfor文で回す |
-| パスフレーズ | `CIPHER` |
-| 機密情報の暗号 | **2層**: ROT13 → Base64（12行） |
-| **講師の問い** | **「FALCON が所属する SECTOR の都市で実行中の作戦コードは何ですか？」** |
-| 必要な情報 | A + B |
-| 正解 | **STORM** |
-
-> **推論チェーン**: (A) FALCON → S7 → (B) S7 → TOKYO → STORM
-> 情報Bは2層暗号（Base64→ROT13）。復号すると `S7:TOKYO:STORM:ACTIVE` だが、`S7`がFALCONだと知るには情報Aが必要。
-
----
-
-### Stage 3 — 辞書の暗号
-
-| 項目 | 内容 |
-|------|------|
-| Python課題 | 辞書を sorted + lambda でvalueソートし、keyを結合 |
-| 暗号データ | `cipher = {'D': 1, 'E': 2, 'L': 3, 'T': 4, 'A': 5}` |
-| 解法 | `sorted(cipher.items(), key=lambda x: x[1])` → keyをjoin |
-| パスフレーズ | `DELTA` |
-| 機密情報の暗号 | **3層**: ROT13 → Base64 → hex（JSONデータ） |
-| **講師の問い** | **「優先度が最も高い（数値が最も小さい）ACTIVE作戦を担当するエージェントは誰ですか？」** |
-| 必要な情報 | A + B + C |
-| 正解 | **WOLF** |
-
-> **推論チェーン（逆方向）**:
-> (C) 最小優先度 = FROST(1) → (B) FROST → S12 → (A) S12 → WOLF
->
-> ACTIVEな作戦（STORM/BLAZE/FROST/SHADE）の中から最小を見つけ、
-> 逆方向にSECTOR→エージェントと辿る必要がある。
-
----
-
-### Stage 4 — 文字列パズル
-
-| 項目 | 内容 |
-|------|------|
-| Python課題 | split + リスト内包表記のフィルタ + join |
-| 暗号データ | `encoded = "S-x-H-x-A-x-D-x-O-x-W"` |
-| 解法 | split("-") → "x"を除外 → join |
-| パスフレーズ | `SHADOW` |
-| 機密情報の暗号 | **4層**: ROT13 → Base64 → hex → reverse |
-| **講師の問い** | **「EAGLE に緊急連絡する際のチャンネルは何ですか？」** |
-| 必要な情報 | A + B + C + D |
-| 正解 | **BRAVO-3** |
-
-> **推論チェーン**:
-> (A) EAGLE → S9 → (B) S9 → SHADE → (C) SHADE → 優先度4 → (D) 優先度3-4 → BRAVO-3
->
-> 「連絡コード」ではなく「チャンネル」を聞いている点に注意。
-> 情報DにはCONTACT_CODEとCHANNELの両方がある。
-
----
-
-### Stage 5 — 関数パイプライン
-
-| 項目 | 内容 |
-|------|------|
-| Python課題 | 関数定義(to_letter) + map + sorted + 逆順の多段処理 |
-| 暗号データ | `data = [14, 12, 4, 6, 0]`（0=A, 1=B, ...） |
-| 解法 | sorted→map(chr(n+65))→join→[::-1] = OMEGA |
-| パスフレーズ | `OMEGA` |
-| 機密情報の暗号 | **5層**: ROT13 → Base64 → hex → reverse → Atbash |
-| **講師の問い** | **「最終脱出コードは何ですか？」** |
-| 必要な情報 | A + B + C + D + E（全て） |
-| 正解 | **OMEGA-1** |
-
-> **推論チェーン**:
-> 1. (E復号) 指令: 「ACTIVE作戦で最大の優先度値を持つエージェントのチャンネルが脱出コード」
-> 2. (C) 最大優先度値 = BLAZE(5)
-> 3. (B) BLAZE → S3
-> 4. (A) S3 → VIPER
-> 5. (C) BLAZE → 優先度5
-> 6. (D) 優先度5 → チャンネル OMEGA-1
->
-> **ポイント**: 指令の解釈 → 優先度の最大値検索 → 逆方向チェーン → チャンネル特定
-> プロンプトに全データが正しく蓄積されていないと絶対に解けない。
-
----
-
-## 復号済みデータ一覧（講師確認用）
-
-### 情報A（ROT13復号後） — ACTIVE のみ抜粋
-| NAME | SECTOR |
-|------|--------|
-| FALCON | S7 |
-| VIPER | S3 |
-| WOLF | S12 |
-| EAGLE | S9 |
-
-### 情報B（Base64デコード後） — ACTIVE のみ抜粋
-| SECTOR | CITY | MISSION | STATUS |
-|--------|------|---------|--------|
-| S7 | TOKYO | STORM | ACTIVE |
-| S3 | OSAKA | BLAZE | ACTIVE |
-| S12 | FUKUOKA | FROST | ACTIVE |
-| S9 | SAPPORO | SHADE | ACTIVE |
-
-### 情報C（hexデコード後のJSON） — ACTIVE作戦のみ抜粋
-| MISSION | PRIORITY |
-|---------|----------|
-| STORM | 3 |
-| BLAZE | 5 |
-| FROST | 1 |
-| SHADE | 4 |
-
-### 情報D（reverse復元後）
-| PRIORITY | CONTACT_CODE | CHANNEL |
-|----------|-------------|---------|
-| 1-2 | SILENT | ALPHA-7 |
-| 3-4 | URGENT | BRAVO-3 |
-| 5 | CRITICAL | OMEGA-1 |
-
-### 情報E（Atbash復号後）
-```
-FINAL DIRECTIVE:
-THE ESCAPE CODE IS THE CHANNEL OF THE AGENT WHOSE ACTIVE MISSION
-HAS THE LARGEST PRIORITY VALUE.
+Floor 1 (古代遺跡)    : Stage 1 暗号 / 基本修理 (mpBar/enemyName/itemEffect/skillHeal)
+Floor 2 (氷の洞窟)    : Stage 2 暗号 / 戦闘修理 (skillFire)
+Floor 3 (溶岩の回廊)  : Stage 3 暗号 / 戦闘核 (attack/minimap/skillLightning/levelUp)
+Floor 4 (闇の森)      : Stage 4 暗号 / メタ・進化系 (itemDrop/scoreCalc/各evo)
+Floor 5 (深淵の神殿)  : Stage 5 暗号（最終ステージ）
+Floor 6 (不死鳥の炉)  : EXTRA 暗号 + ボス戦 PHOENIX GUARDIAN
 ```
 
 ---
 
-## 運営上の注意
+## モブプログラミングのルール（[js/flow.js](js/flow.js)）
 
-- 各ステージの問いは**必ず口頭で出題**してください
-- **「前のステージの情報も残して」** が最重要ポイント。プロンプトをリセットする学生がいたら助言してください
-- Stage 4 は「連絡コード(URGENT)」ではなく「チャンネル(BRAVO-3)」を聞いています。引っかけポイントです
-- Stage 5 は「最大の優先度**値**」（数字が一番大きい = 5）です。「最も優先度が高い = 1」と混同しないよう注意
-- つまずく学生への最大のヒント: **「SECTOR コードがデータ同士をつなぐ鍵だよ」**
+- **3 人 1 組** で進行
+- **5 分ごと** にドライバー交代（自動通知）
+- 役割例: 操作担当 / コード担当 / Agent 担当
 
 ---
 
-## EXTRA STAGE — 不死鳥の暗号（エクストラステージ）
+## 暗号 → Agent 推論チェーン早見表
 
-> Stage 5 クリア後に「🔥 EXTRA STAGE へ挑む 🔥」ボタンが表示されます。
-> 時間に余裕があるチーム向けの上級チャレンジです。
+| Stage | Phase 1 答え | Phase 2 答え | 必要データ |
+|---|---|---|---|
+| 1 | `FALCON` | `VIPER` | A のみ |
+| 2 | `CIPHER` | `STORM` | A + B |
+| 3 | `DELTA` | `WOLF` | A + B + C |
+| 4 | `SHADOW` | `BRAVO-3` | A + B + C + D |
+| 5 | `OMEGA` | `OMEGA-1` | A + B + C + D + E |
+| EXTRA | `PHOENIX` | `ALPHA-7` | A〜E + F |
 
-### Python課題（stage_extra.py）
-
-| 項目 | 内容 |
-|------|------|
-| 暗号方式 | **カスタム暗号（5ステップ）** |
-| 暗号化手順 | 元の単語→ASCII変換→位置ベース鍵加算(i*7+3)→hex変換→Base64→逆順 |
-| 暗号データ | `=UDOmZDZ2QWNwYjM1MTN` |
-| パスフレーズ | **`PHOENIX`** |
-
-#### 復号の詳細手順（講師確認用）
-
-```
-Step 1: 逆順に戻す
-  =UDOmZDZ2QWNwYjM1MTN → NTM1MjYwNWQ2ZDZmODU=
-
-Step 2: Base64デコード
-  NTM1MjYwNWQ2ZDZmODU= → 5352605d6d6f85
-
-Step 3: hex を2文字ずつ分割して整数に
-  53, 52, 60, 5d, 6d, 6f, 85 → [83, 82, 96, 93, 109, 111, 133]
-
-Step 4: 位置ベース鍵を減算（鍵 = index * 7 + 3）
-  83-(0*7+3)=80, 82-(1*7+3)=72, 96-(2*7+3)=79,
-  93-(3*7+3)=69, 109-(4*7+3)=78, 111-(5*7+3)=73, 133-(6*7+3)=88
-  → [80, 72, 79, 69, 78, 73, 88]
-
-Step 5: ASCII文字に変換
-  80=P, 72=H, 79=O, 69=E, 78=N, 73=I, 88=X → PHOENIX
-```
-
-### Agent課題
-
-| 項目 | 内容 |
-|------|------|
-| 機密情報Fの暗号 | ROT13（シンプルだが指令の解釈が難しい） |
-| 機密情報F（復号後） | "The agent with the ACTIVE mission of LOWEST priority (smallest number) is the one who can order the final evacuation. Find their CHANNEL and report it." |
-| **問い** | **「最終指令を復号し、A〜Fの全データを使って答えを導け」** |
-| 必要な情報 | A〜F（全て） |
-| 正解 | **ALPHA-7** |
-
-#### 推論チェーン（講師確認用）
-
-```
-1. (F復号) 指令: LOWEST priority（最小の数値）を持つACTIVE作戦のエージェントのCHANNEL
-2. (C) 最小優先度 = FROST (Priority 1)
-3. (B) FROST → S12
-4. (A) S12 → WOLF
-5. (C) FROST → Priority 1
-6. (D) Priority 1-2 → CHANNEL: ALPHA-7
-→ 答え: ALPHA-7
-```
-
-> **注意**: Stage 5 が「LARGEST priority value」だったのに対し、Extra Stage は「LOWEST priority」。
-> 混同しやすいので注意が必要です。
-
-### ダンジョン特徴
-
-- テーマ：「不死鳥の炉」（赤黒い溶岩風、赤い松明）
-- 敵のバトル問題は **hard のみ**
-- 敵の数も多め
+完全マッピング・暗号データ・復号手順は [INSTRUCTOR_CIPHER.md](INSTRUCTOR_CIPHER.md) を参照。
 
 ---
 
-## 運営上の注意（追記）
+## よくある詰まりポイント
 
-- **Extra Stage は時間に余裕があるチームのみ** に案内してください
-- Extra Stage のPython課題は「コードを自分で書く」レベルです。Copilot Agent に暗号化手順を伝えて復号コードを生成させるのが正攻法です
-- Stage 5 と Extra Stage で「最大/最小」が逆になっている点が引っかけポイントです
+| 現象 | 助言 |
+|---|---|
+| 「Copilot が答えを間違える」 | プロンプトをリセットしていないか確認。前ステージのデータも残すよう指示 |
+| 「Stage 4 で CONTACT_CODE と答えてしまう」 | 問題は **CHANNEL** を聞いている。情報 D の表を見直すよう促す |
+| 「Stage 5 と EXTRA が混同」 | Stage 5 は「**最大**優先度」、EXTRA は「**最小**優先度」。逆 |
+| 「修理で ★★★ が取れない」 | 期待出力と一致しているかテスト出力を確認。部分点でも機能は解放される |
+| 「`Unexpected identifier` / `Unexpected token` エラー」 | `miniPyEval` は Python のサブセットなので、タプルアンパック・f-string などは未対応。1 行 1 文に書き直す |
+| 「ボスの火球が痛い」 | 壁・柱を盾にしながら近づく。被弾 40〜64 ダメージなので HP 管理重要 |
+
+---
+
+## 制限時間まとめ
+
+| ターミナル | 制限時間 |
+|---|---|
+| 暗号ターミナル | `450 + ステージ番号 × 90` 秒（Stage 1: 9分、Stage 5: 15分） |
+| 修理ターミナル | **なし**（じっくり考えてOK） |
+| コーディングチャレンジ（金色端末） | 7.5 分 |
+| ボス戦 | 15 分 |
+
+---
+
+## 操作リファレンス（チュートリアル抜粋）
+
+| キー | 動作 |
+|---|---|
+| W/A/S/D | 前進・左右・後退 |
+| マウス | 視点移動 |
+| 2 / **左クリック** | 🔥 火球（MP 15） |
+| 3 / **右クリック** | ⚡ 雷撃（MP 25） |
+| 4 | 💊 回復（MP 20） |
+| 5 | 🗺️ マップ（MP 30） |
+| R | 視点リセット |
+| ESC | ポーズ |
+
+---
+
+## ファイル構成
+
+```
+instructor_guide.md         ← このファイル（索引）
+INSTRUCTOR_CIPHER.md        ← 暗号ターミナル詳細
+INSTRUCTOR_REPAIR.md        ← 修理ターミナル詳細
+INSTRUCTOR_BOSS.md          ← ボス・モブ戦詳細
+js/stages.js                ← 暗号ステージ定義
+js/repair.js                ← 修理ターミナル定義
+js/boss.js                  ← ボス問題定義
+js/questions.js             ← モブクイズ全 90 問
+```
+
+> 旧ドキュメント（`CIPHER_REFERENCE.md` / `PROBLEMS_SUMMARY.md` / `REPAIR_ANSWERS.md` / `REPAIR_TERMINALS_SPEC.md` / `BOSS_ANSWERS.md`）は上記 3 つに統合済み。整理のため削除推奨。

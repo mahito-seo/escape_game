@@ -3,9 +3,26 @@
 // ═══════════════════════════════════
 //  ACE EDITOR WRAPPER
 // ═══════════════════════════════════
+// Wrap requestPointerLock so SecurityError ("called too soon after exit")
+// doesn't surface as an Uncaught promise rejection in the console.
+(function(){
+  if(typeof Element==='undefined'||!Element.prototype.requestPointerLock)return;
+  var orig=Element.prototype.requestPointerLock;
+  Element.prototype.requestPointerLock=function(){
+    try{
+      var r=orig.apply(this,arguments);
+      if(r&&typeof r.catch==='function')r.catch(function(){});
+      return r;
+    }catch(e){/* swallow */}
+  };
+})();
+
 var aceEditor=null;
+// Track the initial template so the reset button can restore it.
+var aceInitialTemplate='';
 function initAceEditor(){
   if(aceEditor)return;
+  if(typeof ace==='undefined')return; // ace lib not loaded yet
   aceEditor=ace.edit('code-editor');
   aceEditor.setTheme('ace/theme/monokai');
   aceEditor.session.setMode('ace/mode/python');
@@ -20,6 +37,20 @@ function initAceEditor(){
     showGutter:true
   });
   aceEditor.setReadOnly(false);
+  // Disable copy/cut from the editor so players can't lift the Python template
+  // verbatim into Copilot. Paste stays enabled.
+  var blockCopyHandler=function(e){
+    if(e&&e.preventDefault)e.preventDefault();
+    if(typeof showMessage==='function')showMessage('コピーは無効化されています','#ff8844',1500);
+    return false;
+  };
+  var editorEl=document.getElementById('code-editor');
+  if(editorEl){
+    editorEl.addEventListener('copy',blockCopyHandler,true);
+    editorEl.addEventListener('cut',blockCopyHandler,true);
+  }
+  aceEditor.commands.addCommand({name:'noCopy',bindKey:{win:'Ctrl-C',mac:'Cmd-C'},exec:function(){blockCopyHandler();}});
+  aceEditor.commands.addCommand({name:'noCut',bindKey:{win:'Ctrl-X',mac:'Cmd-X'},exec:function(){blockCopyHandler();}});
 }
 
 // Compatibility layer: get/set code from Ace (replaces textarea .value)
@@ -29,7 +60,13 @@ function getEditorCode(){
   return el.value||el.textContent||'';
 }
 function setEditorCode(code){
-  if(aceEditor){aceEditor.setValue(code,-1);aceEditor.clearSelection();return;}
+  aceInitialTemplate=code; // remember for the reset button
+  if(aceEditor){
+    aceEditor.setValue(code,-1);aceEditor.clearSelection();
+    // Recompute layout — needed when the modal/wrapper width changed since last open.
+    setTimeout(function(){try{aceEditor.resize(true);}catch(e){}},0);
+    return;
+  }
   var el=document.getElementById('code-editor');
   if(el.value!==undefined)el.value=code;else el.textContent=code;
 }
@@ -38,6 +75,14 @@ function setEditorReadOnly(ro){
 }
 function focusEditor(){
   if(aceEditor)aceEditor.focus();
+}
+// Reset editor to the original template that was loaded for this challenge.
+// confirm() guards against misclicks so in-progress code isn't wiped.
+function resetEditorToTemplate(){
+  if(!aceInitialTemplate)return;
+  if(!confirm('エディタを初期状態に戻しますか？\n（現在のコードは破棄されます）'))return;
+  if(aceEditor){aceEditor.setValue(aceInitialTemplate,-1);aceEditor.clearSelection();aceEditor.focus();}
+  if(typeof showMessage==='function')showMessage('↺ 初期状態に戻しました','#bbaadd',1500);
 }
 
 // SHA-256 (with fallback for environments without crypto.subtle)

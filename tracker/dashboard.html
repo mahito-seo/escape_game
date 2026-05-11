@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>研修進捗ダッシュボード</title>
+<style>
+  body { font-family: -apple-system, 'Hiragino Sans', sans-serif; background: #0d1117; color: #e6edf3; margin: 0; padding: 24px; }
+  h1 { font-size: 22px; margin: 0 0 4px 0; color: #58a6ff; }
+  .sub { font-size: 12px; color: #8b949e; margin-bottom: 18px; }
+  .controls { margin-bottom: 14px; }
+  button { background: #21262d; color: #e6edf3; border: 1px solid #30363d; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; margin-right: 8px; }
+  button:hover { background: #30363d; }
+  button.danger { color: #ff7b72; border-color: #5a2828; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #30363d; font-size: 13px; }
+  th { background: #161b22; color: #8b949e; font-weight: 600; letter-spacing: 1px; font-size: 11px; text-transform: uppercase; }
+  tr:hover td { background: #161b22; }
+  .team-name { font-weight: 600; color: #58a6ff; font-size: 14px; }
+  .stage-badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .stage-1 { background: #1f3a1f; color: #7ee787; }
+  .stage-2 { background: #1f2f3a; color: #79c0ff; }
+  .stage-3 { background: #3a2a1f; color: #ffa657; }
+  .stage-4 { background: #3a1f3a; color: #d2a8ff; }
+  .stage-5 { background: #3a1f1f; color: #ffa198; }
+  .stage-6 { background: #3a3a1f; color: #ffe58a; }
+  .stage-clear { background: #1f3a3a; color: #56d4dd; }
+  .phase { font-size: 11px; color: #8b949e; }
+  .stale { opacity: 0.45; }
+  .progress-bar { background: #21262d; height: 8px; border-radius: 4px; overflow: hidden; min-width: 100px; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #238636, #2ea043); transition: width .3s; }
+  .empty { text-align: center; color: #6e7681; padding: 40px; font-size: 14px; }
+  .updated { font-size: 11px; color: #6e7681; }
+  .key { color: #ffa657; font-weight: 600; }
+</style>
+</head>
+<body>
+<h1>📊 研修進捗ダッシュボード</h1>
+<div class="sub">2秒ごとに自動更新 / <span id="team-count">0</span> チーム接続中 / 最終取得: <span id="last-fetch">—</span></div>
+
+<div class="controls">
+  <button onclick="manualRefresh()">🔄 今すぐ更新</button>
+  <button class="danger" onclick="resetAll()">🗑️ 全データクリア</button>
+</div>
+
+<table>
+  <thead>
+  <tr>
+    <th>チーム</th>
+    <th>状況</th>
+    <th>Stage</th>
+    <th>Floor</th>
+    <th>Lv</th>
+    <th>撃破</th>
+    <th>修理</th>
+    <th>経過</th>
+    <th>更新</th>
+  </tr>
+  </thead>
+  <tbody id="tbody"></tbody>
+</table>
+
+<script>
+const STALE_MS = 60000; // 1分以上更新がないチームは薄く表示
+
+function fmtTime(sec){
+  if (typeof sec !== 'number') return '—';
+  const m = Math.floor(sec/60), s = sec%60;
+  return `${m}分${String(s).padStart(2,'0')}秒`;
+}
+function fmtAgo(ts){
+  if (!ts) return '—';
+  const ago = Math.floor((Date.now() - ts)/1000);
+  if (ago < 5) return 'たった今';
+  if (ago < 60) return `${ago}秒前`;
+  if (ago < 3600) return `${Math.floor(ago/60)}分前`;
+  return `${Math.floor(ago/3600)}時間前`;
+}
+function stageLabel(t){
+  if (t.stage >= 6) return ['stage-6','EXTRA'];
+  if (t.gameComplete) return ['stage-clear','CLEAR'];
+  return ['stage-'+(t.stage||1), 'STAGE '+(t.stage||1)];
+}
+function phaseLabel(t){
+  if (t.gameComplete) return '🏆 ゲームクリア';
+  if (t.bossActive) return '👹 ボス戦';
+  if (t.cipherPhase === 'battle') return '⚔️ クイズバトル中';
+  if (t.cipherPhase === 'repair') return '🔧 修理ターミナル中';
+  if (t.cipherPhase === 'agent') return '🤖 Agent 推論中';
+  if (t.cipherPhase === 'coding') return '🐍 暗号コーディング中';
+  if (t.cipherPhase === 'paused') return '⏸ ポーズ';
+  if (t.cipherPhase === 'resting') return '☠ 強制休憩';
+  if (t.cipherSolved) return '🚪 脱出口へ';
+  if ((t.repairsRemaining||0) > 0) return '🔧 修理中（探索）';
+  return '🔍 探索中';
+}
+
+async function refresh(){
+  try {
+    const res = await fetch('/status', {cache: 'no-store'});
+    const data = await res.json();
+    document.getElementById('team-count').textContent = data.count;
+    document.getElementById('last-fetch').textContent = new Date().toLocaleTimeString('ja-JP');
+    const tbody = document.getElementById('tbody');
+    if (!data.teams.length) {
+      tbody.innerHTML = '<tr><td class="empty" colspan="9">まだ接続しているチームがありません。<br>ゲームの設定でチーム名とアップロード URL を設定してもらってください。</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.teams.map(t => {
+      const [cls, label] = stageLabel(t);
+      const stale = (Date.now() - (t.serverReceivedAt||0)) > STALE_MS;
+      const repairs = t.totalRepairs ? `${t.repairsSolved||0}/${t.totalRepairs}` : '—';
+      const repairPct = t.totalRepairs ? ((t.repairsSolved||0)/t.totalRepairs*100) : 0;
+      return `<tr class="${stale?'stale':''}">
+        <td><div class="team-name">${escapeHtml(t.teamName)}</div><div class="phase">${escapeHtml(t.clientIP||'')}</div></td>
+        <td><span class="phase">${escapeHtml(phaseLabel(t))}</span></td>
+        <td><span class="stage-badge ${cls}">${label}</span></td>
+        <td>${t.floor||1}</td>
+        <td>${t.level||1}</td>
+        <td>${t.kills||0}</td>
+        <td>${repairs} <div class="progress-bar"><div class="progress-fill" style="width:${repairPct}%"></div></div></td>
+        <td>${fmtTime(t.elapsed)}</td>
+        <td class="updated">${fmtAgo(t.serverReceivedAt)}</td>
+      </tr>`;
+    }).join('');
+  } catch (e) {
+    document.getElementById('last-fetch').textContent = '取得エラー: '+e.message;
+  }
+}
+function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function manualRefresh(){ refresh(); }
+async function resetAll(){
+  if (!confirm('全チームの記録を消去します。よろしいですか？')) return;
+  await fetch('/reset', {method:'POST'});
+  refresh();
+}
+
+refresh();
+setInterval(refresh, 2000);
+</script>
+</body>
+</html>

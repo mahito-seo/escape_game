@@ -2,6 +2,8 @@
 let battleActive=false, battleEnemy=null, battleQList=[], battleQIdx=0;
 let battleTimer=45, battleTimerInt=null, totalStreak=0, roundCorrect=0;
 const BATTLE_QCOUNT=3, BATTLE_TIME=45;
+// Per-difficulty time. Code questions get a +30s padding since they require reading code.
+const BATTLE_TIME_BY_DIFF={easy:45,normal:90,hard:150};
 
 function pickQuestions(fl,enemyDiff){
   // Match questions to enemy difficulty
@@ -89,7 +91,9 @@ function loadQ(){
 }
 
 function startBattleTimer(){
-  clearInterval(battleTimerInt); battleTimer=BATTLE_TIME;
+  clearInterval(battleTimerInt);
+  const q=battleQList[battleQIdx];
+  battleTimer=(q&&BATTLE_TIME_BY_DIFF[q.diff])||BATTLE_TIME;
   const el=document.getElementById('battle-timer');el.classList.remove('danger');el.textContent=battleTimer;
   battleTimerInt=setInterval(()=>{battleTimer--;el.textContent=battleTimer;if(battleTimer<=8)el.classList.add('danger');if(battleTimer<=0){clearInterval(battleTimerInt);bTimeOut();}},1000);
 }

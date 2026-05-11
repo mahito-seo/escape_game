@@ -3,10 +3,15 @@ const canvas=document.getElementById('canvas');
 const pCanvas=document.getElementById('particles');
 const pCtx=pCanvas.getContext('2d');
 let W=window.innerWidth,H=window.innerHeight;
-canvas.width=W;canvas.height=H;pCanvas.width=W;pCanvas.height=H;
+// Particle 2D canvas only — DON'T touch the WebGL canvas's width/height attribute
+// here, that bypasses Three.js setPixelRatio handling and yields blurry/skewed
+// output on high-DPI Windows displays.
+pCanvas.width=W;pCanvas.height=H;
 
-const renderer=new THREE.WebGLRenderer({canvas,antialias:false}); // antialias off for perf
-renderer.setSize(W,H);renderer.setPixelRatio(Math.min(devicePixelRatio,1.5)); // cap pixel ratio
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});
+// setPixelRatio MUST come before setSize so the drawing buffer size is correct.
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+renderer.setSize(W,H); // sets both the drawing buffer (W*pixelRatio) and CSS size (W px)
 renderer.shadowMap.enabled=false; // shadows off for perf
 renderer.toneMapping=THREE.ReinhardToneMapping;renderer.toneMappingExposure=2.0;
 

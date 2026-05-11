@@ -3,6 +3,7 @@ let cipherActive=false, currentCipherStage=0, cipherTimerVal=90, cipherTimerInt=
 let cipherWrongCount=0, cipherSolved=false, startTime=0;
 let cipherPhase=1; // 1=passphrase, 2=agent
 let agentWrongCount=0, agentLockoutEnd=0, agentLockoutTimer=null;
+let cipherPhase1Solved=false;
 const MAX_AGENT_WRONG=3, LOCKOUT_SEC=300;
 
 function openCipherModal(){
@@ -12,8 +13,11 @@ function openCipherModal(){
   document.getElementById('cm-avatar').textContent=s.avatar;
   document.getElementById('cm-name').textContent='暗号ターミナル';
   document.getElementById('cm-stage-sub').textContent=s.name;
+  var _p1lbl=document.getElementById('phase1-label');if(_p1lbl)_p1lbl.style.display='';
   document.getElementById('cm-mission').textContent=s.mission;
+  document.getElementById('cm-mission').style.display='';
   document.getElementById('cm-hint').textContent=s.hint;
+  document.getElementById('cm-hint').style.display='';
   document.getElementById('cm-footer').textContent=s.footer;
   document.getElementById('cipher-close-btn').style.display='none';
   cipherCodeRan=false; // must run code before submitting
@@ -37,7 +41,8 @@ function openCipherModal(){
           if(h===s.passHash){
             document.getElementById('code-output').style.color='#44ff88';
             document.getElementById('code-output').textContent=result+'\n\n✅ 正解！ このパスフレーズを下に入力してください';
-            document.getElementById('c-input').value=result.trim();
+            // Do NOT auto-fill the input — players should type the passphrase themselves
+            // so they understand what the program produced.
             document.getElementById('c-input').focus();
             playSound('correct');
           }else{
@@ -68,9 +73,46 @@ function openCipherModal(){
   cipherWrongCount=0;
   document.getElementById('cipher-modal').classList.add('open');
   startCipherTimer();
+  // Phase1 を一度通過していれば、コーディングをスキップして Agent から再開
+  if(cipherPhase1Solved){
+    enterAgentPhase(s);
+    showMessage('✅ Phase1 通過済み — Agentフェーズから再開','#44ff88');
+  }
+}
+
+function enterAgentPhase(s){
+  // Hide Phase 1 UI — including the label, problem statement, and hint —
+  // since they're about the Python coding step and would just confuse during Phase 2.
+  var p1lbl=document.getElementById('phase1-label');if(p1lbl)p1lbl.style.display='none';
+  document.getElementById('cm-mission').style.display='none';
+  document.getElementById('cm-data').style.display='none';
+  document.getElementById('cm-hint').style.display='none';
+  document.getElementById('code-editor-wrap').classList.remove('show');
+  document.getElementById('code-output-wrap').classList.remove('show');
+  document.getElementById('cm-input-row').style.display='none';
+  document.getElementById('c-result').style.display='none';
+  document.getElementById('c-input').disabled=true;
+  document.getElementById('c-submit').disabled=true;
+  // Show secret + agent phase
+  document.getElementById('secret-title').textContent=s.secretTitle;
+  document.getElementById('encoding-hint').textContent=s.encodingHint||'';
+  document.getElementById('secret-data').textContent=s.secretData;
+  document.getElementById('secret-instruction').textContent=s.secretInstruction||'';
+  document.getElementById('secret-reveal').classList.add('show');
+  document.getElementById('agent-instruction').textContent=s.agentInstruction;
+  document.getElementById('agent-phase').classList.add('show');
+  document.getElementById('agent-input').value='';
+  document.getElementById('agent-input').disabled=false;
+  document.getElementById('agent-submit').disabled=false;
+  document.getElementById('agent-result').style.display='none';
+  document.getElementById('agent-input-row').style.display='flex';
+  document.getElementById('agent-lockout').classList.remove('show');
+  agentWrongCount=0;
+  cipherPhase=2;
+  startCipherTimer();
 }
 function startCipherTimer(){
-  clearInterval(cipherTimerInt);cipherTimerVal=450+currentCipherStage*90; // 7.5min base + 1.5min per stage
+  clearInterval(cipherTimerInt);cipherTimerVal=1200+currentCipherStage*240; // 20min base + 4min per stage
   const el=document.getElementById('cipher-timer');el.classList.remove('danger');
   const fmtTime=(s)=>{const m=Math.floor(s/60);return m>0?`${m}:${String(s%60).padStart(2,'0')}`:String(s);};
   el.textContent=fmtTime(cipherTimerVal);
@@ -94,29 +136,11 @@ async function submitCipherAnswer(){
     document.getElementById('c-input').disabled=true;document.getElementById('c-submit').disabled=true;
     document.getElementById('cm-input-row').style.display='none';
     document.getElementById('c-continue-btn').style.display='none';
+    cipherPhase1Solved=true;
     spawnParticles(player.x,player.z,'#44ff88',20);
     showMessage(`✅ Phase1クリア！`,'#44ff88');
     // Show secret data + agent phase after delay
-    setTimeout(()=>{
-      document.getElementById('secret-title').textContent=s.secretTitle;
-      document.getElementById('encoding-hint').textContent=s.encodingHint||'';
-      document.getElementById('secret-data').textContent=s.secretData;
-      document.getElementById('secret-instruction').textContent=s.secretInstruction||'';
-      document.getElementById('secret-reveal').classList.add('show');
-      // Show agent phase
-      document.getElementById('agent-instruction').textContent=s.agentInstruction;
-      document.getElementById('agent-phase').classList.add('show');
-      document.getElementById('agent-input').value='';
-      document.getElementById('agent-input').disabled=false;
-      document.getElementById('agent-submit').disabled=false;
-      document.getElementById('agent-result').style.display='none';
-      document.getElementById('agent-input-row').style.display='flex';
-      agentWrongCount=0;
-      cipherPhase=2;
-      // Restart timer for Phase 2 (10 min)
-      startCipherTimer();
-      // User clicks to focus agent input
-    },700);
+    setTimeout(()=>{enterAgentPhase(s);},700);
   }else{
     cipherWrongCount++;r.style.display='flex';r.className='wrong-res';
     document.getElementById('cr-icon').textContent='❌';
@@ -176,16 +200,24 @@ async function submitAgentAnswer(){
   const r=document.getElementById('agent-result');
   if(h===s.ansHash){
     // Stop the timer immediately on success so a stale timeout can't fire
-    // while the player reads the success message / clicks 次へ進む.
+    // while the player reads the success message.
     stopCipherTimer();
     r.style.display='flex';r.className='correct-res';
     document.getElementById('ar-icon').textContent='✅';
     document.getElementById('ar-msg').innerHTML=`<strong>正解！</strong> 次のステージへ進みます…`;
     document.getElementById('agent-input').disabled=true;document.getElementById('agent-submit').disabled=true;
     document.getElementById('agent-input-row').style.display='none';
-    cipherSolved=true;agentWrongCount=0;
+    cipherSolved=true;agentWrongCount=0;cipherPhase1Solved=false;
     spawnParticles(player.x,player.z,'#44ff88',30);
     showMessage(`🔓 STAGE ${currentCipherStage+1} 完全クリア！`,'#44ff88');
+    if(typeof saveProgress==='function')saveProgress();
+    // Show 次へ進む button as a manual fallback (clear any inline display:none
+    // left over from a previous wrong attempt), but also guarantee progression
+    // by auto-calling agentComplete after a short delay so the player can never
+    // get stuck on "次のステージへ進みます…".
+    const _continueBtn=document.getElementById('agent-continue-btn');
+    if(_continueBtn){_continueBtn.style.display='inline-block';}
+    setTimeout(()=>{if(cipherSolved&&cipherActive)agentComplete();},1800);
   }else{
     agentWrongCount++;const remain=MAX_AGENT_WRONG-agentWrongCount;
     if(remain>0){
@@ -203,6 +235,18 @@ function startAgentLockout(){
   agentLockoutEnd=Date.now()+LOCKOUT_SEC*1000;
   document.getElementById('agent-input-row').style.display='none';
   document.getElementById('agent-lockout').classList.add('show');
+  // Show the agent question inside the lockout box so the player can review it.
+  const _stage=CIPHER_STAGES[currentCipherStage]||{};
+  const _q=(_stage.agentInstruction||'').trim();
+  const qBox=document.getElementById('lockout-question-box');
+  const qTxt=document.getElementById('lockout-question-text');
+  if(qBox&&qTxt){
+    if(_q){qTxt.textContent=_q;qBox.style.display='block';}
+    else qBox.style.display='none';
+  }
+  // Pause the Phase 2 cipher timer so it can't time out during lockout and
+  // force the player back to Phase 1 (re-coding) after the rest period.
+  stopCipherTimer();
   tickAgentLockout();
   if(agentLockoutTimer)clearInterval(agentLockoutTimer);
   agentLockoutTimer=setInterval(tickAgentLockout,1000);
@@ -218,6 +262,8 @@ function tickAgentLockout(){
     document.getElementById('agent-input').value='';document.getElementById('agent-input').disabled=false;
     document.getElementById('agent-submit').disabled=false;
     document.getElementById('agent-result').style.display='none';
+    // Resume Phase 2 timer with a fresh allotment so the player has time to retry.
+    startCipherTimer();
   }
 }
 
@@ -243,11 +289,14 @@ function agentComplete(){
 
 function cipherTimeOut(){
   document.getElementById('c-input').disabled=true;document.getElementById('c-submit').disabled=true;
-  // Capture the mission text and the user's code BEFORE closing the modal,
-  // so we can show them on the review overlay (otherwise the player only sees a countdown).
+  // Capture text BEFORE closing the modal so the review overlay can show it.
   const _stage=CIPHER_STAGES[currentCipherStage]||{};
+  const _wasPhase2=(cipherPhase===2);
   const _missionText=(document.getElementById('cm-mission').textContent||_stage.mission||'').trim();
   const _hintText=(document.getElementById('cm-hint').textContent||_stage.hint||'').trim();
+  const _agentInst=(_stage.agentInstruction||'').trim();
+  const _secretData=(_stage.secretData||'').trim();
+  const _secretInst=(_stage.secretInstruction||'').trim();
   let _userCode='';
   try{_userCode=(typeof getEditorCode==='function')?getEditorCode():'';}catch(e){_userCode='';}
   if(!_userCode&&_stage.template)_userCode=_stage.template;
@@ -258,22 +307,35 @@ function cipherTimeOut(){
   document.getElementById('overlay-title').textContent='⏰ 時間切れ';
   document.getElementById('overlay-title').style.color='#ffcc00';
   document.getElementById('overlay-btn').style.display='none';
-  // Render static content (problem + code) once so the countdown tick
-  // doesn't reset the code-block scroll position every second.
+  // Phase 2 (agent) timeout shows the agent question + secret data so the
+  // player can study what to ask the agent. Phase 1 shows mission + code.
+  const _phase2Block=
+    `<div style="background:rgba(30,0,40,.7);border:1px solid #aa44cc;border-radius:6px;padding:12px 16px;margin-bottom:12px;">`+
+      `<div style="font-size:13px;color:#cc88ff;letter-spacing:2px;margin-bottom:6px;">🤖 Agentへの問い</div>`+
+      `<div style="font-size:13px;color:#e8d8f0;line-height:1.6;white-space:pre-wrap;">${_esc(_agentInst||'(なし)')}</div>`+
+    `</div>`+
+    (_secretData?
+      `<div style="background:rgba(0,30,30,.7);border:1px solid #44aaaa;border-radius:6px;padding:12px 16px;margin-bottom:12px;">`+
+        `<div style="font-size:13px;color:#88ffee;letter-spacing:2px;margin-bottom:6px;">🔓 機密情報</div>`+
+        `<div style="font-size:13px;color:#cceeee;line-height:1.5;white-space:pre-wrap;font-family:'Source Code Pro',monospace;">${_esc(_secretData)}</div>`+
+        (_secretInst?`<div style="margin-top:8px;font-size:12px;color:#88ddcc;line-height:1.5;">${_esc(_secretInst)}</div>`:'')+
+      `</div>`:'');
+  const _phase1Block=
+    `<div style="background:rgba(40,30,0,.6);border:1px solid #aa8800;border-radius:6px;padding:12px 16px;margin-bottom:12px;">`+
+      `<div style="font-size:13px;color:#ffcc44;letter-spacing:2px;margin-bottom:6px;">📜 問題</div>`+
+      `<div style="font-size:13px;color:#e8e0c0;line-height:1.6;white-space:pre-wrap;">${_esc(_missionText)}</div>`+
+      (_hintText?`<div style="margin-top:8px;font-size:12px;color:#ffcc88;line-height:1.5;">💡 ${_esc(_hintText)}</div>`:'')+
+    `</div>`+
+    `<div style="background:rgba(0,20,30,.7);border:1px solid #4488aa;border-radius:6px;padding:12px 16px;">`+
+      `<div style="font-size:13px;color:#88ccff;letter-spacing:2px;margin-bottom:6px;">💻 あなたのコード</div>`+
+      `<pre style="font-family:'SF Mono','Menlo','Consolas',monospace;font-size:12px;color:#cce8ff;line-height:1.5;margin:0;white-space:pre-wrap;word-break:break-word;max-height:280px;overflow-y:auto;">${_esc(_userCode||'(コードなし)')}</pre>`+
+    `</div>`;
   document.getElementById('overlay-sub').innerHTML=
-    `<span style="font-size:16px;color:#ffcc00;">暗号の制限時間を超えました</span><br><br>`+
+    `<span style="font-size:16px;color:#ffcc00;">${_wasPhase2?'Agentフェーズの制限時間を超えました':'暗号の制限時間を超えました'}</span><br><br>`+
     `<span id="cipher-rest-countdown" style="font-size:48px;font-family:'Cinzel Decorative',serif;color:#ffcc00;">3:00</span><br><br>`+
-    `<span style="color:#aaa;font-size:14px;">📝 プログラムを見直す時間です！</span><br><br>`+
+    `<span style="color:#aaa;font-size:14px;">📝 ${_wasPhase2?'Agentへの問いを見直す時間です！':'プログラムを見直す時間です！'}</span><br><br>`+
     `<div style="max-width:760px;margin:0 auto;text-align:left;letter-spacing:0;">`+
-      `<div style="background:rgba(40,30,0,.6);border:1px solid #aa8800;border-radius:6px;padding:12px 16px;margin-bottom:12px;">`+
-        `<div style="font-size:13px;color:#ffcc44;letter-spacing:2px;margin-bottom:6px;">📜 問題</div>`+
-        `<div style="font-size:13px;color:#e8e0c0;line-height:1.6;white-space:pre-wrap;">${_esc(_missionText)}</div>`+
-        (_hintText?`<div style="margin-top:8px;font-size:12px;color:#ffcc88;line-height:1.5;">💡 ${_esc(_hintText)}</div>`:'')+
-      `</div>`+
-      `<div style="background:rgba(0,20,30,.7);border:1px solid #4488aa;border-radius:6px;padding:12px 16px;">`+
-        `<div style="font-size:13px;color:#88ccff;letter-spacing:2px;margin-bottom:6px;">💻 あなたのコード</div>`+
-        `<pre style="font-family:'SF Mono','Menlo','Consolas',monospace;font-size:12px;color:#cce8ff;line-height:1.5;margin:0;white-space:pre-wrap;word-break:break-word;max-height:280px;overflow-y:auto;">${_esc(_userCode||'(コードなし)')}</pre>`+
-      `</div>`+
+      (_wasPhase2?_phase2Block:_phase1Block)+
     `</div>`;
   const endTime=Date.now()+180000;
   const revInt=setInterval(()=>{

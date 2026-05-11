@@ -71,6 +71,9 @@ function playSound(name){
 // Try .mp3 first (Safari), then .ogg (Chrome/Firefox)
 const BGM_BASES=['audio/bgm1','audio/bgm2','audio/bgm3','audio/bgm4','audio/bgm5','audio/bgm6'];
 const BGM_VOL=0.15; // master BGM volume
+// Per-floor volume overrides (track-specific tweaks). bgm3 / bgm6 were reported too loud.
+const BGM_VOL_BY_FLOOR={3:0.07,6:0.045};
+function bgmVolFor(floorNum){return BGM_VOL_BY_FLOOR[floorNum]!==undefined?BGM_VOL_BY_FLOOR[floorNum]:BGM_VOL;}
 const BGM_VOL_MUTED=0.04; // during battle/cipher
 let bgmAudio=null;
 let bgmPlaying=false;
@@ -93,7 +96,7 @@ function startBGM(floorNum){
   function tryExt(i){
     if(i>=exts.length){bgmPlaying=false;return;}
     const a=new Audio(base+exts[i]);
-    a.loop=true;a.volume=BGM_VOL;
+    a.loop=true;a.volume=bgmVolFor(floorNum);
     a.play().then(()=>{bgmAudio=a;bgmPlaying=true;}).catch(()=>tryExt(i+1));
   }
   tryExt(0);
@@ -114,4 +117,4 @@ function setBGMVolume(vol){
 }
 
 function muteBGM(){setBGMVolume(BGM_VOL_MUTED);}
-function unmuteBGM(){setBGMVolume(BGM_VOL);}
+function unmuteBGM(){setBGMVolume(bgmVolFor(bgmCurrentFloor));}

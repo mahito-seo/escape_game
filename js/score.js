@@ -61,9 +61,17 @@ function gameComplete(){
       `<button onclick="startExtraStage()" style="font-family:'Cinzel',serif;font-size:14px;letter-spacing:3px;color:#000;background:linear-gradient(135deg,#ff8844,#cc4400);border:none;padding:12px 36px;cursor:pointer;border-radius:3px;box-shadow:0 0 20px rgba(255,100,0,.5);">🔥 EXTRA STAGE — 帰還指令を復号する 🔥</button></div>`;
     document.getElementById('overlay-btn').textContent='終了する';
     document.getElementById('overlay-btn').style.display='inline-block';
-    document.getElementById('overlay-btn').onclick=resetToTitle;
+    // Confirm before exiting — players have asked us to make sure they really
+    // read the result screen before going back to title.
+    document.getElementById('overlay-btn').onclick=function(){confirmExitToTitle();};
   }
   document.getElementById('overlay-screen').classList.add('show');
+}
+
+function confirmExitToTitle(){
+  if(confirm('本当に終了しますか？\nリザルトをしっかり読みましたか？\n\n（OK でタイトルに戻ります / キャンセルでこのまま結果を見られます）')){
+    resetToTitle();
+  }
 }
 
 function startExtraStage(){

@@ -144,7 +144,7 @@ function resetToTitle(){
   document.exitPointerLock();
   // Reset state
   floor=1;currentCipherStage=0;cipherSolved=false;totalStreak=0;battleCooldown=0;escapeCount=0;
-  player=mkPlayer();agentWrongCount=0;agentLockoutEnd=0;
+  player=mkPlayer();agentWrongCount=0;agentLockoutEnd=0;cipherPhase1Solved=false;
   clearFeatures();
   dungeon=genDungeon();buildScene();updateHUD();updateSkillsHUD();
   // Show title
@@ -156,7 +156,7 @@ function resetToTitle(){
 function restartGame(){
   document.getElementById('overlay-screen').classList.remove('show');
   if(deathTimerInt){clearInterval(deathTimerInt);deathTimerInt=null;}
-  floor=1;currentCipherStage=0;cipherSolved=false;totalStreak=0;battleCooldown=0;
+  floor=1;currentCipherStage=0;cipherSolved=false;cipherPhase1Solved=false;totalStreak=0;battleCooldown=0;
   player=mkPlayer();startTime=Date.now();
   clearFeatures();
   dungeon=genDungeon();buildScene();gameState='playing';canvas.requestPointerLock();
@@ -165,8 +165,11 @@ function restartGame(){
 
 window.addEventListener('resize',()=>{
   W=window.innerWidth;H=window.innerHeight;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
   renderer.setSize(W,H);camera.aspect=W/H;camera.updateProjectionMatrix();
-  canvas.width=W;canvas.height=H;pCanvas.width=W;pCanvas.height=H;
+  // Only the 2D particle canvas needs manual size updates — leave the WebGL
+  // canvas alone so renderer.setSize keeps its pixelRatio-aware drawing buffer.
+  pCanvas.width=W;pCanvas.height=H;
 });
 
 dungeon=genDungeon();buildScene();updateHUD();

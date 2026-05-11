@@ -236,6 +236,9 @@ function buildScene(){
     const ds=Math.abs(rcx-sxC)+Math.abs(rcy-syC);
     return dt<=4||ds<=4;
   }
+  // Pre-spawn repair terminals & decorations so mob spawn can avoid them.
+  spawnFloorRepairTerminals(rooms);
+  for(let i=1;i<rooms.length;i++)spawnDecorations(rooms[i]);
   for(let i=1;i<rooms.length;i++){
     const rm=rooms[i];
     const nearKey=isNearKey(rm);
@@ -245,7 +248,20 @@ function buildScene(){
     for(let j=0;j<cnt;j++){
       const ti=Math.min(~~(Math.random()*(1+floor*.8)),ETYPES.length-1);
       const t=ETYPES[ti];
-      const ex=(rm.x+1+Math.random()*(rm.w-2))*TILE,ez=(rm.y+1+Math.random()*(rm.h-2))*TILE;
+      // Pick a spawn point that is NOT inside a wall, decoration, terminal, or
+      // repair block. Without this check mobs can spawn pinned and never move.
+      let ex=0,ez=0,ok=false;
+      for(let attempt=0;attempt<20;attempt++){
+        ex=(rm.x+1+Math.random()*(rm.w-2))*TILE;
+        ez=(rm.y+1+Math.random()*(rm.h-2))*TILE;
+        if(!isWall(ex,ez)){ok=true;break;}
+      }
+      if(!ok){
+        // Fall back to room center; if even that is blocked, skip this spawn.
+        ex=(rm.x+~~(rm.w/2))*TILE;
+        ez=(rm.y+~~(rm.h/2))*TILE;
+        if(isWall(ex,ez))continue;
+      }
       const{body,leg1,leg2,arm1,arm2}=buildEnemyMesh(t);
       body.position.set(ex,t.sz*1.1,ez);scene.add(body);
       const sc=1+(floor-1)*.25; // HP scales 25% per floor
@@ -253,11 +269,7 @@ function buildScene(){
       enemies.push({mesh:body,x:ex,z:ez,name:t.name,avatar:t.avatar,diff:t.diff||'easy',hp:~~(t.hp*sc),maxHp:~~(t.hp*sc),atk:~~(t.atk*(1+(floor-1)*.15)),speed:t.spd*spdSc,xp:~~(t.xp*(1+(floor-1)*.1)),xpBonus:t.xpBonus,size:t.sz,state:'idle',attackTimer:0,leg1,leg2,arm1,arm2,legPhase:0,alertTimer:0,inBattle:false,dying:false});
     }
     if(Math.random()<.4)spawnItemInRoom(rm);
-    // Decorations
-    spawnDecorations(rm);
   }
-  // Spawn repair terminals for this floor
-  spawnFloorRepairTerminals(rooms);
 }
 
 // Room decoration spawner

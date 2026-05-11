@@ -14,10 +14,13 @@ function killEnemy(e){
     spawnItemAt(e.x,e.z,roll<.5?'mp':'xp');
   }
   e.hp=-1;
+  // Auto-save after every kill so a freeze doesn't wipe progress.
+  if(typeof saveProgress==='function')saveProgress();
 }
 
 function checkLevelUp(){
   // Base level-up always works; levelUp feature gives bonus stats
+  let leveled=false;
   while(player.xp>=player.xpNext){
     player.xp-=player.xpNext;player.level++;player.xpNext=~~(player.xpNext*1.5);
     const bonus=features.levelUp||0;
@@ -28,7 +31,9 @@ function checkLevelUp(){
     player.attackPower+=atkUp;player.defense+=2;
     showMessage(`\u2B06 LEVEL UP! Lv.${player.level}`,'#aaffaa');playSound('levelup');
     spawnParticles(player.x,player.z,'#88ff88',15);
+    leveled=true;
   }
+  if(leveled&&typeof saveProgress==='function')saveProgress();
 }
 
 function spawnParticles(x3,z3,color,n){
@@ -40,7 +45,7 @@ function spawnParticles(x3,z3,color,n){
 }
 function drawParticles(){
   pParticles=pParticles.filter(p=>p.life>0);
-  for(const p of pParticles){p.x+=p.vx;p.y+=p.vy;p.vy+=.15;p.life-=p.decay;pCtx.globalAlpha=p.life;pCtx.fillStyle=p.color;pCtx.beginPath();pCtx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2);pCtx.fill();}
+  for(const p of pParticles){p.x+=p.vx;p.y+=p.vy;p.vy+=.15;p.life-=p.decay;const _r=Math.max(0,p.size*p.life);pCtx.globalAlpha=Math.max(0,p.life);pCtx.fillStyle=p.color;pCtx.beginPath();pCtx.arc(p.x,p.y,_r,0,Math.PI*2);pCtx.fill();}
   pCtx.globalAlpha=1;
 }
 
@@ -63,14 +68,20 @@ function updateHUD(){
     document.getElementById('mp-text').textContent='??? / ???';
   }
   document.getElementById('xp-fill').style.width=(player.xp/player.xpNext*100)+'%';
-  // Mission display
+  // Mission display \u2014 sequential: repairs first, then cipher, then exit/boss.
   var missions=[];
-  // Count unsolved repair terminals on this floor
   var repairOnFloor=0;
   if(typeof repairTerminals!=='undefined'){for(var ri=0;ri<repairTerminals.length;ri++){if(!repairTerminals[ri].solved)repairOnFloor++;}}
-  if(repairOnFloor>0)missions.push('\uD83D\uDD27 \u4FEE\u7406\u30BF\u30FC\u30DF\u30CA\u30EB: \u6B8B\u308A'+repairOnFloor+'\u500B');
-  if(!cipherSolved)missions.push('\uD83D\uDD13 \u6697\u53F7\u30BF\u30FC\u30DF\u30CA\u30EB\u3067\u6697\u53F7\u3092\u89E3\u8AAD\u305B\u3088');
-  if(cipherSolved)missions.push('\u2728 \u8131\u51FA\u53E3\uFF08\u7DD1\u306E\u67F1\uFF09\u3078\u5411\u304B\u3048\uFF01');
+  if(repairOnFloor>0){
+    // Stage 1 of the loop: do all repairs
+    missions.push('\uD83D\uDD27 \u4FEE\u7406\u30BF\u30FC\u30DF\u30CA\u30EB\u3092\u5168\u3066\u4FEE\u5FA9\u305B\u3088\uFF08\u6B8B\u308A '+repairOnFloor+' \u500B\uFF09');
+  }else if(!cipherSolved){
+    // Stage 2: cipher
+    missions.push('\uD83D\uDD13 \u6697\u53F7\u30BF\u30FC\u30DF\u30CA\u30EB\u3067\u6697\u53F7\u3092\u89E3\u8AAD\u305B\u3088');
+  }else{
+    // Stage 3: exit / boss
+    missions.push('\u2728 \u8131\u51FA\u53E3\uFF08\u7DD1\u306E\u67F1\uFF09\u3078\u5411\u304B\u3048\uFF01');
+  }
   if(typeof bossEntity!=='undefined'&&bossEntity&&!bossEntity.defeated)missions.push('\uD83D\uDC79 \u30DC\u30B9\u3092\u5012\u305B\uFF01');
   var title=currentCipherStage>=CIPHER_STAGES.length?'ALL CLEAR':'FLOOR '+floor+' \u30DF\u30C3\u30B7\u30E7\u30F3';
   document.getElementById('stage-hint-title').textContent=title;

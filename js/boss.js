@@ -139,18 +139,28 @@ function openBossBattle(){
   if(gameState!=='playing'||!bossEntity)return;
   gameState='cipher';document.exitPointerLock();
   startBossBGM();
+  document.getElementById('cipher-modal').classList.add('open');
+  loadBossQuestion();
+}
+
+// Reload the modal UI for the current bossQIdx WITHOUT closing the modal \u2014
+// lets correct answers flow straight into the next problem.
+function loadBossQuestion(){
   var ch=BOSS_CHALLENGES[bossQIdx];
-  var modal=document.getElementById('cipher-modal');
+  if(!ch||!bossEntity)return;
   document.getElementById('cm-avatar').textContent='\uD83D\uDC79';
   document.getElementById('cm-name').textContent='PHOENIX GUARDIAN';
   document.getElementById('cm-stage-sub').textContent='\u30DC\u30B9\u30D0\u30C8\u30EB '+(bossQIdx+1)+'/'+BOSS_CHALLENGES.length+' \u2014 \u8981\u4EF6\u3092\u6E80\u305F\u3059\u95A2\u6570\u3092\u66F8\u3051';
   document.getElementById('cm-mission').textContent=ch.q;
+  document.getElementById('cm-mission').style.display='';
   document.getElementById('cm-data').style.display='none';
   document.getElementById('cm-hint').textContent='\u30D2\u30F3\u30C8: '+ch.hint;
+  document.getElementById('cm-hint').style.display='';
   document.getElementById('cm-footer').textContent='\uD83D\uDC79 \u30DC\u30B9 HP: '+bossEntity.hp+'/'+bossEntity.maxHp;
   document.getElementById('code-editor-wrap').classList.add('show');
   initAceEditor();setEditorCode(ch.template);setEditorReadOnly(false);
   document.getElementById('code-output-wrap').classList.remove('show');
+  document.getElementById('code-output').textContent='';
   document.getElementById('cm-input-row').style.display='none';
   document.getElementById('c-result').style.display='none';
   document.getElementById('c-continue-btn').style.display='none';
@@ -179,8 +189,9 @@ function openBossBattle(){
             showMessage('\uD83D\uDD25 PHOENIX GUARDIAN \u3092\u64C3\u7834\uFF01','#ff8800');
             showMessage('\u8131\u51FA\u53E3\u304C\u51FA\u73FE\u3057\u305F\uFF01','#44ffaa');},2500);
         }else{
-          document.getElementById('cr-msg').innerHTML='<strong>\u30C0\u30E1\u30FC\u30B8\uFF01 \u30DC\u30B9 HP: '+bossEntity.hp+'/'+bossEntity.maxHp+'</strong><br>\u6B21\u306E\u30C1\u30E3\u30EC\u30F3\u30B8\u3078\u2026';
-          setTimeout(function(){closeBossModal();battleCooldown=2;},2000);
+          document.getElementById('cr-msg').innerHTML='<strong>\u30C0\u30E1\u30FC\u30B8\uFF01 \u30DC\u30B9 HP: '+bossEntity.hp+'/'+bossEntity.maxHp+'</strong><br>\u6B21\u306E\u554F\u984C\u3078\u2026';
+          // Stay in the modal \u2014 load the next problem so the player doesn't have to walk back to the boss.
+          setTimeout(function(){loadBossQuestion();},1200);
         }
       }else if(result.indexOf('Error')===0){
         document.getElementById('code-output').style.color='#ff6666';
@@ -270,6 +281,6 @@ function unlockPortal(){
 function startBossBGM(){
   stopBGM();bgmCurrentFloor=-99;
   var a=new Audio('audio/bgm_boss.mp3');
-  a.loop=true;a.volume=BGM_VOL*1.5;
+  a.loop=true;a.volume=BGM_VOL*0.5; // boss track is mastered hot — keep below master
   a.play().then(function(){bgmAudio=a;bgmPlaying=true;}).catch(function(){});
 }

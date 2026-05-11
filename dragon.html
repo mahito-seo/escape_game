@@ -32,9 +32,10 @@
   #hp-fill { background:linear-gradient(90deg,#8b0000,#e82020,#ff5555); box-shadow:0 0 8px rgba(255,0,0,.5); }
   #mp-fill { background:linear-gradient(90deg,#00008b,#2020e8,#5599ff); box-shadow:0 0 8px rgba(0,100,255,.5); }
   .bar-text { font-size:11px; color:#ccc; min-width:60px; }
-  .stage-hint-box { background:rgba(0,0,0,.8); border:1px solid #00aa41; border-radius:4px; padding:8px 14px; max-width:320px; margin-top:4px; }
-  .stage-hint-title { font-size:10px; color:#00ff41; letter-spacing:2px; margin-bottom:2px; }
-  .stage-hint-text { font-size:11px; color:#88cc88; font-family:'Source Code Pro',monospace; line-height:1.6; white-space:pre-line; }
+  .stage-hint-box { background:rgba(0,0,0,.92); border:2px solid #44ff88; border-radius:6px; padding:12px 18px; max-width:360px; margin-top:6px; box-shadow:0 0 16px rgba(68,255,136,.45); animation:hintPulse 2.4s ease-in-out infinite; }
+  @keyframes hintPulse { 0%,100%{box-shadow:0 0 16px rgba(68,255,136,.45);} 50%{box-shadow:0 0 26px rgba(68,255,136,.75);} }
+  .stage-hint-title { font-size:13px; color:#88ffaa; letter-spacing:3px; margin-bottom:6px; font-weight:bold; }
+  .stage-hint-text { font-size:14px; color:#eaffe6; font-family:'Source Code Pro',monospace; line-height:1.7; white-space:pre-line; font-weight:bold; }
 
   #skills-hud { position:absolute; bottom:20px; right:20px; display:flex; gap:8px; }
   .skill-slot { width:56px; height:56px; background:rgba(0,0,0,.8); border:2px solid #2a5a2a; border-radius:4px; display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; cursor:pointer; pointer-events:all; transition:all .15s; }
@@ -161,7 +162,7 @@
   #cipher-modal { position:fixed; inset:0; z-index:200; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.92); }
   #cipher-modal.open { display:flex; animation:modalIn .35s ease; }
 
-  .cipher-wrap { width:min(860px,96vw); background:linear-gradient(160deg,#040a04,#0a120a 60%,#050a08); border:1px solid #00aa41; border-radius:8px; box-shadow:0 0 60px rgba(0,200,65,.35),inset 0 0 40px rgba(0,0,0,.6); overflow:hidden; display:flex; flex-direction:column; max-height:92vh; }
+  .cipher-wrap { width:min(1180px,96vw); background:linear-gradient(160deg,#040a04,#0a120a 60%,#050a08); border:1px solid #00aa41; border-radius:8px; box-shadow:0 0 60px rgba(0,200,65,.35),inset 0 0 40px rgba(0,0,0,.6); overflow:hidden; display:flex; flex-direction:column; max-height:92vh; }
   .cipher-header { display:flex; align-items:center; justify-content:space-between; padding:14px 24px; background:linear-gradient(90deg,#001a08,#000d04); border-bottom:1px solid #004a20; }
   .cipher-header-info { display:flex; align-items:center; gap:14px; }
   .cipher-avatar { font-size:44px; filter:drop-shadow(0 0 12px rgba(0,255,65,.7)); animation:termFloat 2s ease-in-out infinite; }
@@ -222,7 +223,7 @@
   .code-editor-header span { font-size:11px; color:#44aa44; letter-spacing:2px; }
   #code-run-btn { background:#2a6a2a; border:1px solid #3a8a3a; border-radius:3px; padding:4px 14px; font-family:'Source Code Pro',monospace; font-size:12px; color:#aaffaa; cursor:pointer; pointer-events:all; }
   #code-run-btn:hover { background:#3a8a3a; }
-  #code-editor { width:100%; height:280px; font-size:14px; }
+  #code-editor { width:100%; height:400px; font-size:14px; }
   .code-output-wrap { display:none; background:#0a0505; border:1px solid #3a1a1a; border-radius:4px; padding:10px 12px; margin-bottom:14px; }
   .code-output-wrap.show { display:block; }
   .code-output-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
@@ -367,6 +368,7 @@
   <div class="title-divider"></div>
   <button id="start-btn" onclick="startGame()">🔓 ENTER THE DUNGEON 🔓</button>
   <p class="title-desc">拠点が攻撃された。全データが暗号ロックされた。<br>地下施設を突破し、5つの暗号を解読して脱出せよ。</p>
+  <button id="tracker-btn" onclick="openTrackerSettings()" style="margin-top:18px;background:rgba(0,40,80,.6);border:1px solid #2868a8;color:#88ccff;padding:8px 22px;font-family:'Cinzel',serif;font-size:12px;letter-spacing:3px;cursor:pointer;border-radius:4px;pointer-events:all;">📡 進捗共有を設定</button>
 </div>
 
 <!-- Tutorial (paged) -->
@@ -415,15 +417,17 @@
       <div class="tutorial-section">
         <h3>🎮 操作方法</h3>
         <p><span class="key">W</span> 前進　<span class="key">S</span> 後退　<span class="key">A</span> 右移動　<span class="key">D</span> 左移動<br>
-        <span class="key">マウス</span> 視点移動　<span class="key">ESC</span> ポーズ</p>
+        <span class="key">マウス</span> 視点移動　<span class="key">←→</span> 左右を見る　<span class="key">↑↓</span> 上下を見る<br>
+        <span class="key">R</span> 視点リセット　<span class="key">ESC</span> ポーズ</p>
       </div>
       <div class="tutorial-section">
         <h3>⚡ スキル <span style="color:#ff4444;font-size:12px;">※最初は使用不可！修理が必要</span></h3>
-        <p><span class="key">2</span> 🔥 火球（MP15）<br>
-        <span class="key">3</span> ⚡ 雷撃（MP25）<br>
+        <p><span class="key">2</span> または <span class="key">左クリック</span> 🔥 火球（MP15）<br>
+        <span class="key">3</span> または <span class="key">右クリック</span> ⚡ 雷撃（MP25）<br>
         <span class="key">4</span> 💊 回復（MP20）<br>
         <span class="key">5</span> 🗺️ マップ（MP30）<br><br>
-        <span style="color:#ffcc00;">★の数でスキルの威力が変わる！</span></p>
+        <span style="color:#ffcc00;">★の数でスキルの威力が変わる！</span><br>
+        <span style="color:#88ccff;font-size:12px;">💡 マウスボタンは画面クリックで視点ロック中のみ反応</span></p>
       </div>
     </div>
 
@@ -431,7 +435,7 @@
     <div class="tutorial-page" data-page="3">
       <div class="tutorial-section">
         <h3>⚔ バトルシステム</h3>
-        <p>敵に接触すると<span style="color:#ff8844;">Pythonクイズバトル（3問）</span>が開始。<br><br>
+        <p>敵に接触すると<span style="color:#ff8844;">Pythonクイズバトル</span>が開始。<br><br>
         <span style="color:#44ff44;">正解</span> → 敵にダメージ<br>
         <span style="color:#ff4444;">不正解・時間切れ</span> → 自分にダメージ<br><br>
         敵を倒すと <span style="color:#44ff44;">XP獲得</span> + <span style="color:#ff6666;">HP自動回復</span><br><br>
@@ -594,6 +598,7 @@ function tutPage(dir){
       </div>
     </div>
     <div class="cipher-body">
+      <div class="agent-phase-label" id="phase1-label" style="color:#00ff41;">Phase 1 : Python でパスフレーズを解読</div>
       <div class="cipher-mission" id="cm-mission"></div>
       <div class="cipher-data-block" id="cm-data"></div>
       <div class="cipher-hint-block" id="cm-hint"></div>
@@ -601,7 +606,10 @@ function tutPage(dir){
       <div class="code-editor-wrap" id="code-editor-wrap">
         <div class="code-editor-header">
           <span>🐍 PYTHON EDITOR</span>
-          <button id="code-run-btn">▶ 実行</button>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button id="code-reset-btn" onclick="resetEditorToTemplate()" style="background:#3a2a4a;border:1px solid #5a4a7a;border-radius:3px;padding:4px 10px;font-family:'Source Code Pro',monospace;font-size:11px;color:#bbaadd;cursor:pointer;pointer-events:all;">↺ 初期状態</button>
+            <button id="code-run-btn">▶ 実行</button>
+          </div>
         </div>
         <div id="code-editor"></div>
       </div>
@@ -641,9 +649,13 @@ function tutPage(dir){
           <button id="agent-continue-btn" onclick="agentComplete()" style="background:linear-gradient(135deg,#4a2800,#2a1000);border:1px solid #8a4800;border-radius:4px;padding:8px 20px;font-family:'Cinzel',serif;font-size:13px;letter-spacing:2px;color:#ffcc88;cursor:pointer;pointer-events:all;white-space:nowrap;">次へ進む ▶</button>
         </div>
         <div class="agent-lockout" id="agent-lockout">
-          <h4>LOCKOUT - 5回不正解</h4>
+          <h4>LOCKOUT - 3回不正解</h4>
           <div class="lock-timer" id="lock-timer">5:00</div>
-          <p>5分間ロックされました。<br>休憩しつつ、Agentのプロンプトを見直しましょう。</p>
+          <p>5分間ロックされました。<br>休憩しつつ、Agentへの問いを見直しましょう。</p>
+          <div id="lockout-question-box" style="display:none;margin-top:12px;background:rgba(30,0,40,.5);border:1px solid #aa44cc;border-radius:4px;padding:10px 12px;text-align:left;">
+            <div style="font-size:11px;color:#cc88ff;letter-spacing:2px;margin-bottom:4px;">🤖 Agentへの問い</div>
+            <div id="lockout-question-text" style="font-size:12px;color:#e8d8f0;line-height:1.6;white-space:pre-wrap;"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -677,6 +689,7 @@ function tutPage(dir){
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.6/ace.min.js"></script>
 <script src="three.min.js"></script>
 <script src="js/util.js"></script>
+<script src="js/tracker.js"></script>
 <script src="js/questions.js"></script>
 <script src="js/stages.js"></script>
 <script src="js/engine.js"></script>
@@ -902,7 +915,7 @@ const CIPHER_STAGES=[
    encodingHint:"暗号方式: Stage2の暗号方式 + hex の3層暗号\n\nStage 2 の暗号方式に hex が加わりました。\n機密情報B の作戦コードと紐づけて初めて意味を持ちます。\nAgent に A・B を保持させたまま C を追加してください。",
    secretData:"65794a4752304a46576949364d79776954316c4f545649694f6a5573496c4e46516b5a48496a6f784c434a4756553551556949364e4377695231564951564653525349364e797769556c425a566b4e47556949364d6977695131564f51556443576949364f43776955555657553063694f6a5973496b6c4352556453537949364f5377695130685a526c49694f6a45774c434a61566b564f564649694f6a45784c434a47546b4652526b644352566f694f6a457966513d3d",
    secretInstruction:"↑ 機密情報A・B を保持したまま、このデータを Agent に追加してください。\nここまでで Agent は以下の推論チェーンが可能になるはずです：\n「エージェント名 → SECTOR → 都市・作戦コード → 優先度」",
-   agentInstruction:"講師が口頭で問いを出します。\nCopilot Agent に質問して、答えを入力してください。\n\nこの問いは A → B → C の推論チェーンを\n逆方向にも辿る必要があります。",
+   agentInstruction:"問題：ACTIVE のエージェントの中で、優先度の数字が一番小さい（最優先）のは誰？\n（答えはエージェント名）",
    ansHash:"7b8f72c65b9fbbf971301567da244175a694378f89f2bb33a7313ce752e9e8bd",
    footer:"💡 stage3.py の decode 関数を完成させよう"},
   {name:"Stage 4 — 闇の森：緊急連絡網",diff:"★★★★☆",avatar:"🛡️",
@@ -915,7 +928,7 @@ const CIPHER_STAGES=[
    encodingHint:"暗号方式: Stage3の暗号方式 + reverse の4層暗号\n\nStage 3 の暗号方式に reverse が加わりました。\n機密情報C の優先度と組み合わせて初めて使えます。\nAgent に A〜C を保持させたまま D を追加してください。",
    secretData:"d3d3144584a5652534a56525442497553424962574a465752565b64555a465257694552535135494a5a46515245355651524965574865494744655153525c6457654c65564a5132535655494639413253464b63474a46555342464948424c6458464b6151524355575c6c645a4249655a45355657695551534a5c62574a5c6757694653575465455f4243445a564b61576f6a65584a45515b4946515346454949314357535645515f4656455767784948486b6159524c645a59354949314965525a4545566465455f446551534246494633796e4767703257565b61575650315b45445c4f425c65516a454949314357535645515f465645576778494a55354557546b665642464949314965525a4545566465455f44655153424649463554494d446b66564a4b66564e4b634a7039615a45355250524350576b6c6552464b645652464948324972524a46465648654949314965525a4545566465455f446551534246494631545c4a714344584a5652534a56525440777e44743556544c6c64576034494a5a4651524535565152434667636551535c6c6657424350576946555342413858424c6458464b615152496f4970335d4767703257565b61575650315",
    secretInstruction:"↑ 機密情報A〜C を保持したまま、このデータを Agent に追加してください。\nここまでで Agent は以下の完全な推論チェーンが可能になるはずです：\n「エージェント名 → SECTOR → 作戦コード → 優先度 → 連絡コード＆チャンネル」",
-   agentInstruction:"講師が口頭で問いを出します。\nCopilot Agent に質問して、答えを入力してください。\n\nA〜D の全データを横断する推論チェーンが必要です。\n答えは「連絡コード」ではないかもしれません。注意！",
+   agentInstruction:"問題：FALCON が使う緊急連絡チャンネルは？\n（答えはチャンネル名、例: ALPHA-7）",
    ansHash:"7a88ab80cacfe078f92260beab1d15f0709df7889789030b1ceda09318422280",
    footer:"💡 stage4.py の decode 関数を完成させよう"},
   {name:"Stage 5 — 深淵の神殿：最終脱出指令",diff:"★★★★★",avatar:"🐉",
@@ -928,7 +941,7 @@ const CIPHER_STAGES=[
    encodingHint:"暗号方式: Stage4の暗号方式 + Atbash の5層暗号\n\n全ステージの暗号技術が結集しています。\nAgent に A〜D を全て保持させたまま E を追加してください。\nこの指令を復号し、A〜D の全情報を使って実行する必要があります。",
    secretData:"w343965594x6x645z424344584z5652534z565254424972574z46465645355757694656584249625u465649424z4y66574z5y66516249655z4z513251553549435z5y615650754948464y655555354943565132576w4x61576y6x6552464y64565246494356513257695y665769465553424649435v4y64515z5y65576946565842496u435x6y6658424x65564z5655576y6x64524z51355",
    secretInstruction:"↑ 機密情報A〜D を全て保持したまま、このデータを Agent に追加してください。\nAgent は指令を復号した上で、A〜D の全データを横断して\n逆方向の推論チェーンをたどり、答えを導き出す必要があります。\nこれが最後のプロンプト設計チャレンジです！",
-   agentInstruction:"講師が口頭で最後の問いを出します。\nCopilot Agent に質問して、答えを入力してください。\n\nA〜E のすべての情報を復号・統合した\n完全な逆方向推論チェーンが必要です。\nこれが最後の問題です！",
+   agentInstruction:"最終問題：ACTIVE のエージェントの中で、優先度の数字が一番大きい担当者の緊急連絡チャンネルは？\n（答えはチャンネル名、例: ALPHA-7）",
    ansHash:"ef787722842ffbf084fb4bc7a55d9173e1b2a2582acc6e0556e7521698eed953",
    footer:"💡 stage5.py の全関数を完成させよう"},
   // ── EXTRA STAGE ──
