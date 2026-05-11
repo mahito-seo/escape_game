@@ -39,8 +39,10 @@
 
 <div class="controls">
   <button onclick="manualRefresh()">🔄 今すぐ更新</button>
+  <button onclick="exportAll()" style="border-color:#2ea043;color:#7ee787;">📥 全チーム最新状態をダウンロード</button>
   <button class="danger" onclick="resetAll()">🗑️ 全データクリア</button>
 </div>
+<div class="sub" style="margin-top:-8px;">💡 緊急時用: 各行の「📋」でそのチームの復元コマンドをコピーできます</div>
 
 <table>
   <thead>
@@ -110,6 +112,9 @@ async function refresh(){
       const stale = (Date.now() - (t.serverReceivedAt||0)) > STALE_MS;
       const repairs = t.totalRepairs ? `${t.repairsSolved||0}/${t.totalRepairs}` : '—';
       const repairPct = t.totalRepairs ? ((t.repairsSolved||0)/t.totalRepairs*100) : 0;
+      const recoverBtn = t.hasSnapshot
+        ? `<button onclick="copyRecover('${encodeURIComponent(t.teamName)}')" title="復元コマンドをコピー" style="padding:2px 8px;font-size:11px;">📋</button>`
+        : '<span style="color:#6e7681;font-size:11px;">—</span>';
       return `<tr class="${stale?'stale':''}">
         <td><div class="team-name">${escapeHtml(t.teamName)}</div><div class="phase">${escapeHtml(t.clientIP||'')}</div></td>
         <td><span class="phase">${escapeHtml(phaseLabel(t))}</span></td>
@@ -119,7 +124,7 @@ async function refresh(){
         <td>${t.kills||0}</td>
         <td>${repairs} <div class="progress-bar"><div class="progress-fill" style="width:${repairPct}%"></div></div></td>
         <td>${fmtTime(t.elapsed)}</td>
-        <td class="updated">${fmtAgo(t.serverReceivedAt)}</td>
+        <td class="updated">${fmtAgo(t.serverReceivedAt)} ${recoverBtn}</td>
       </tr>`;
     }).join('');
   } catch (e) {
@@ -132,6 +137,32 @@ async function resetAll(){
   if (!confirm('全チームの記録を消去します。よろしいですか？')) return;
   await fetch('/reset', {method:'POST'});
   refresh();
+}
+function exportAll(){
+  // ブラウザに直接ダウンロードさせる
+  const a = document.createElement('a');
+  a.href = '/export-all';
+  a.download = '';
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>document.body.removeChild(a), 100);
+}
+async function copyRecover(teamNameEnc){
+  // 特定チームの snapshot を取得 → admin.importSave() に渡せるコマンドを生成 → クリップボードへ
+  try{
+    const res = await fetch('/export-team?name='+teamNameEnc);
+    if (!res.ok) { alert('スナップショットが見つかりませんでした'); return; }
+    const snapshot = await res.json();
+    const cmd = `admin.importSave(${JSON.stringify(JSON.stringify(snapshot))}); location.reload();`;
+    await navigator.clipboard.writeText(cmd);
+    alert('✅ 復元コマンドをクリップボードにコピーしました\n\n対象 PC で DevTools コンソール (F12 → Console) を開いて貼り付け → Enter で復元できます。');
+  }catch(e){
+    alert('コピー失敗: '+e.message+'\n\nコンソールに復元コマンドを出力します。');
+    try{
+      const res = await fetch('/export-team?name='+teamNameEnc);
+      const snapshot = await res.json();
+      console.log(`admin.importSave(${JSON.stringify(JSON.stringify(snapshot))}); location.reload();`);
+    }catch(_){}
+  }
 }
 
 refresh();

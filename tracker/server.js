@@ -30,7 +30,8 @@ const server = http.createServer((req, res) => {
 
   if (req.method === 'POST' && req.url === '/status') {
     let body = '';
-    req.on('data', c => { body += c; if (body.length > 10000) req.destroy(); });
+    // snapshot を含むので上限を 64KB に引き上げ（通常は 2KB 前後）
+    req.on('data', c => { body += c; if (body.length > 65536) req.destroy(); });
     req.on('end', () => {
       try {
         const data = JSON.parse(body);
@@ -47,10 +48,42 @@ const server = http.createServer((req, res) => {
   }
 
   if (req.method === 'GET' && req.url === '/status') {
-    return send(res, 200, JSON.stringify({
+    // ダッシュボード表示は軽量に — 大きい snapshot は省く
+    const lite = [...teams.values()].sort((a,b)=>(b.serverReceivedAt||0)-(a.serverReceivedAt||0))
+      .map(t => { const {snapshot, ...rest} = t; return {...rest, hasSnapshot: !!snapshot}; });
+    return send(res, 200, JSON.stringify({teams: lite, count: teams.size}));
+  }
+
+  // 全チームの完全スナップショット付き JSON をダウンロード（緊急復旧用バックアップ）
+  if (req.method === 'GET' && req.url === '/export-all') {
+    const stamp = new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+    const filename = `cipher-dungeon-all-teams-${stamp}.json`;
+    const data = {
+      exportedAt: Date.now(),
+      iso: new Date().toISOString(),
+      teamCount: teams.size,
       teams: [...teams.values()].sort((a,b)=>(b.serverReceivedAt||0)-(a.serverReceivedAt||0)),
-      count: teams.size,
-    }));
+    };
+    res.writeHead(200, {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Access-Control-Allow-Origin': '*',
+      'Cache-Control': 'no-store',
+    });
+    res.end(JSON.stringify(data, null, 2));
+    return;
+  }
+
+  // 特定チームの最新スナップショットを取得（個別復旧用）
+  // 例: /export-team?name=チームA
+  if (req.method === 'GET' && req.url.startsWith('/export-team')) {
+    const u = new URL(req.url, 'http://x');
+    const name = u.searchParams.get('name') || '';
+    const t = teams.get(name);
+    if (!t) return send(res, 404, JSON.stringify({error:'team not found', name}));
+    if (!t.snapshot) return send(res, 404, JSON.stringify({error:'no snapshot for team', name}));
+    // admin.importSave() がそのまま受け取れる形で返す
+    return send(res, 200, JSON.stringify(t.snapshot));
   }
 
   if (req.method === 'POST' && req.url === '/reset') {

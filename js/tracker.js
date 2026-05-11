@@ -39,12 +39,20 @@ function uploadProgress(){
     else if(gameState==='paused')phase='paused';
   }
   const elapsedSec=(typeof startTime!=='undefined'&&startTime)?Math.floor((Date.now()-startTime-(typeof totalPausedMs!=='undefined'?totalPausedMs:0))/1000):0;
+  // 完全復元用のスナップショット（admin.importSave() がそのまま受け取れる形式）
+  // 文字列のまま送ることで localStorage への書き戻しが容易になる
+  const snapshot={
+    save:localStorage.getItem('cipherDungeonSave'),
+    features:localStorage.getItem('cipherDungeonFeatures'),
+  };
   const payload={
     teamName:cfg.teamName,
     stage:(typeof currentCipherStage!=='undefined'?currentCipherStage+1:1),
     floor:(typeof floor!=='undefined'?floor:1),
     level:(typeof player!=='undefined'?player.level:1),
     kills:(typeof player!=='undefined'?player.kills:0),
+    hp:(typeof player!=='undefined'?player.hp:0),
+    maxHp:(typeof player!=='undefined'?player.maxHp:0),
     cipherSolved:(typeof cipherSolved!=='undefined'?!!cipherSolved:false),
     cipherPhase:phase,
     repairsSolved,totalRepairs,repairsRemaining,
@@ -52,6 +60,7 @@ function uploadProgress(){
     gameComplete:(typeof gameState!=='undefined'&&gameState==='complete'),
     elapsed:elapsedSec,
     clientTime:Date.now(),
+    snapshot,
   };
   try{
     fetch(cfg.url,{
