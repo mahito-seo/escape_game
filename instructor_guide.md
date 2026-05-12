@@ -4,6 +4,7 @@
 
 | カテゴリ | 詳細ガイド | 内容 |
 |---|---|---|
+| 📘 **当日の実行手順** | **[INSTRUCTOR_RUNBOOK.md](INSTRUCTOR_RUNBOOK.md)** | **サーバー起動からセッション終了まで全手順** |
 | 🔐 暗号ターミナル | [INSTRUCTOR_CIPHER.md](INSTRUCTOR_CIPHER.md) | 5 ステージ + EXTRA。Phase 1 コード / Phase 2 Agent / 復号データ |
 | 🔧 修理ターミナル | [INSTRUCTOR_REPAIR.md](INSTRUCTOR_REPAIR.md) | 全 14 問の仕様・解答・解説 |
 | 👹 ボス・モブ戦 | [INSTRUCTOR_BOSS.md](INSTRUCTOR_BOSS.md) | ボス 3 問の解答 + モブクイズ 90 問構成 |
