@@ -63,7 +63,7 @@ def decode_name(codes):
 
 ---
 
-## FLOOR 2 — アイテム強化・スキル設計
+## FLOOR 2 — アイテム強化・戦闘設計
 
 ### 3. 🧪 itemEffect（calc_heal）— NORMAL / XP 60
 
@@ -357,20 +357,22 @@ def calc_regen(hp, max_hp, heal_per_turn, turns):
 
 | # | ID | 関数 | フロア | 難易度 | キー技 |
 |---|---|---|---|---|---|
-| 1 | mpBar | calc_mp_percent | 1 | EASY | 割合計算 |
-| 2 | enemyName | decode_name | 1 | EASY | `chr` / 蓄積ループ |
-| 3 | itemEffect | calc_heal | 2 | NORMAL | `min` クランプ |
-| 4 | skillHeal | calc_heal_skill | 2 | NORMAL | 割合 + level |
-| 5 | skillFire | calc_fire_damage | 2 | NORMAL | base × level × floor |
-| 6 | attack | calc_damage | 3 | NORMAL | `max(a-d, 1)` + 重み |
-| 7 | minimap | calc_map_pixel | 3 | NORMAL | 線形変換 |
-| 8 | skillLightning | calc_lightning | 3 | HARD | `max(リスト)` + bonus |
-| 9 | levelUp | calc_level | 3 | HARD | `while` + 1.5倍 |
-| 10 | itemDrop | get_drop_item | 4 | HARD | `if/elif/else` |
-| 11 | scoreCalc | calc_score | 4 | HARD | 重み付き和 |
-| 12 | fireEvo | calc_explosion | 4 | HARD | 距離公式 + 範囲 |
-| 13 | lightningEvo | calc_chain | 4 | HARD | 等比減衰 |
-| 14 | healEvo | calc_regen | 4 | HARD | `min` + 累積 |
+| 1 | mpBar | calc_mp_percent | **1** | EASY | 割合計算 |
+| 2 | enemyName | decode_name | **1** | EASY | `chr` / 蓄積ループ |
+| 3 | skillHeal | calc_heal_skill | **1** | NORMAL | 割合 + level |
+| 4 | itemEffect | calc_heal | **2** | NORMAL | `min` クランプ |
+| 5 | attack | calc_damage | **2** | NORMAL | `max(a-d, 1)` + 重み |
+| 6 | skillFire | calc_fire_damage | **2** | NORMAL | base × level × floor |
+| 7 | minimap | calc_map_pixel | **3** | NORMAL | 線形変換 |
+| 8 | skillLightning | calc_lightning | **3** | HARD | `max(リスト)` + bonus |
+| 9 | levelUp | calc_level | **3** | HARD | `while` + 1.5倍 |
+| 10 | itemDrop | get_drop_item | **4** | HARD | `if/elif/else` |
+| 11 | scoreCalc | calc_score | **4** | HARD | 重み付き和 |
+| 12 | fireEvo | calc_explosion | **4** | HARD | 距離公式 + 範囲 |
+| 13 | lightningEvo | calc_chain | **4** | HARD | 等比減衰 |
+| 14 | healEvo | calc_regen | **4** | HARD | `min` + 累積 |
+
+> 配置: Floor 1=3 / Floor 2=3 / Floor 3=3 / Floor 4=5。Floor 4 は進化系 3 つを含むので少し多め。
 
 ---
 

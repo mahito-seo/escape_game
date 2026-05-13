@@ -87,25 +87,28 @@ ID:A006 NAME:WOLF    STATUS:ACTIVE  SECTOR:S12
 
 ## Stage 2 — 氷の洞窟：作戦データ ★★☆☆☆
 
-### Phase 1: Python コーディング
+### Phase 1: Python コーディング（辞書 + range）
 
-**テンプレート**
+**テンプレート（3 つの空欄を埋める）**
 ```python
-codes = [72, 78, 85, 77, 74, 87]
-offset = 5
+# 番号→文字 の暗号辞書
+# 番号 1〜6 の順に取り出すと CIPHER になる
+table = {6: "R", 4: "H", 2: "I", 1: "C", 5: "E", 3: "P"}
 
 result = ""
-for code in codes:
-    result += _____  # ← code から offset を引いて文字に変換
+for n in range(_____, _____):       # ← 開始番号と終了番号
+    result += table[_____]          # ← 辞書を何で引く？
 print(result)
 ```
 
-| 項目 | 値 |
+| 空欄 | 答え |
 |---|---|
-| 埋める箇所 | `chr(code - offset)` |
+| 1つめ | `1` |
+| 2つめ | `7`（range は終了値を含まないので +1） |
+| 3つめ | `n` |
 | 出力（パスフレーズ） | **`CIPHER`** |
 
-> 検算: 72-5=67="C", 78-5=73="I", 85-5=80="P", 77-5=72="H", 74-5=69="E", 87-5=82="R"
+> 検算: table[1]=C, [2]=I, [3]=P, [4]=H, [5]=E, [6]=R → CIPHER
 
 ### Phase 2: Agent 機密情報B
 
@@ -139,27 +142,27 @@ RjEyOlNIWEhCWE46U0VCRkc6TlBHVklS
 
 ## Stage 3 — 溶岩の回廊：優先度マップ ★★★☆☆
 
-### Phase 1: Python コーディング
+### Phase 1: Python コーディング（辞書 + sorted + keys）
 
 **テンプレート（3 つの空欄を埋める）**
 ```python
-# DELTA を作る
-# letters の 4,3,2,1,0 番目を順に取り出して連結する
-order = [4, 3, 2, 1, 0]
-letters = "ATLED"
+# 文字→番号 の辞書。番号の小さい順に文字を並べると DELTA になる
+table = {3: "L", 5: "A", 1: "D", 4: "T", 2: "E"}
 
-result = _____           # ← 空文字列で初期化 ("")
-for _____ in order:      # ← ループ変数の名前 (i)
-    result = result + letters[_____]   # ← 何番目の文字を取り出す？
+result = _____                        # ← 空文字列で初期化
+for k in sorted(table._____()):       # ← 辞書のキー一覧を取るメソッド
+    result += table[_____]            # ← ループ変数で値を取り出す
 print(result)
 ```
 
 | 空欄 | 答え |
 |---|---|
 | 1つめ | `""` |
-| 2つめ | `i` |
-| 3つめ | `i` |
+| 2つめ | `keys` |
+| 3つめ | `k` |
 | 出力（パスフレーズ） | **`DELTA`** |
+
+> 検算: sorted(keys) = [1,2,3,4,5] → D, E, L, T, A → DELTA
 
 ### Phase 2: Agent 機密情報C
 

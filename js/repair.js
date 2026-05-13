@@ -154,7 +154,7 @@ const REPAIR_CHALLENGES=[
    unlockMsg:'\uD83E\uDDEA アイテム効果がブーストされた！'},
 
   // ══════ FLOOR 2: 戦闘強化（コードで強さが変わる！）══════
-  {id:'attack',name:'攻撃力ブースト',icon:'\u2694\uFE0F',floor:3,
+  {id:'attack',name:'攻撃力ブースト',icon:'\u2694\uFE0F',floor:2,
    color:0xff8844,emissive:0xff4400,diff:'NORMAL',xp:70,
    mission:
 '【目的】ダメージ計算式を実装して攻撃力をブースト！\n'+
