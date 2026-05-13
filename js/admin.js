@@ -336,4 +336,44 @@ window.admin = {
 console.log('%c🛠️  Admin console ready. Type %cadmin.help()%c to see all commands.',
   'color:#88ff88;font-weight:bold;','color:#ffcc44;font-weight:bold;','color:#88ff88;');
 
+// ─── タイトル画面の「💾 セーブを復元」ボタンから呼ばれる ───
+// 自動ダウンロードした JSON ファイル or 講師から渡された JSON を
+// drag-drop / file input で受け取り、admin.importSave() に流す。
+window.restoreFromFile = function(event){
+  const file = event.target.files && event.target.files[0];
+  if(!file){return;}
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const text = e.target.result;
+      // exportLog() の出力（currentSave / currentFeatures を含む）に対応
+      // また、サーバー /export-all の出力（teams[].snapshot）から
+      // 自分のチームを選んで復元できるパターンにも対応
+      const data = JSON.parse(text);
+      let target = null;
+      if(data.currentSave || data.save){
+        target = data;
+      }else if(Array.isArray(data.teams)){
+        // /export-all 形式 — チーム選択
+        const names = data.teams.map(t => t.teamName).filter(Boolean);
+        if(!names.length){alert('❌ JSON 内にチームデータが見つかりません');return;}
+        const picked = prompt('復元するチーム名を入力してください:\n' + names.join(' / '));
+        if(!picked){return;}
+        const team = data.teams.find(t => t.teamName === picked);
+        if(!team || !team.snapshot){alert('❌ チーム「' + picked + '」のスナップショットが見つかりません');return;}
+        target = team.snapshot;
+      }else{
+        alert('❌ 認識できない JSON 形式です');
+        return;
+      }
+      const result = admin.importSave(target);
+      alert((result || '✅ 復元完了') + '\n\nページをリロードします。');
+      location.reload();
+    }catch(err){
+      alert('❌ ファイル読み込み失敗: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+};
+
 })();

@@ -369,6 +369,8 @@
   <button id="start-btn" onclick="startGame()">🔓 ENTER THE DUNGEON 🔓</button>
   <p class="title-desc">拠点が攻撃された。全データが暗号ロックされた。<br>地下施設を突破し、5つの暗号を解読して脱出せよ。</p>
   <button id="tracker-btn" onclick="openTrackerSettings()" style="margin-top:18px;background:rgba(0,40,80,.6);border:1px solid #2868a8;color:#88ccff;padding:8px 22px;font-family:'Cinzel',serif;font-size:12px;letter-spacing:3px;cursor:pointer;border-radius:4px;pointer-events:all;">📡 進捗共有を設定</button>
+  <button id="restore-btn" onclick="document.getElementById('restore-file-input').click()" style="margin-top:10px;background:rgba(80,40,0,.6);border:1px solid #a86828;color:#ffcc88;padding:8px 22px;font-family:'Cinzel',serif;font-size:12px;letter-spacing:3px;cursor:pointer;border-radius:4px;pointer-events:all;">💾 セーブを復元</button>
+  <input id="restore-file-input" type="file" accept=".json,application/json" style="display:none" onchange="restoreFromFile(event)">
 </div>
 
 <!-- Tutorial (paged) -->

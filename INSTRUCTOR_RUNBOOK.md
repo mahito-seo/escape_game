@@ -260,8 +260,16 @@ admin.skipFloor()                 // 強制的に次階層へ
    ```
 2. **新 URL** をメモ
 3. **新 URL を学生に再共有**（Slack 等）
-4. 学生は新 URL でゲームを開く → タイトル画面で「進捗共有を設定」を**再入力**
-5. 各チームの状態を **直近の `📥` JSON** または **ダッシュボードの 📋** から復元
+4. 学生は新 URL でゲームを開く → **タイトル画面の「💾 セーブを復元」ボタン**を押す
+5. 直前のステージクリア時にダウンロードされた `cipher-dungeon-log-*.json` をダウンロードフォルダから選ぶ
+6. 自動的にデータが復元されてリロードされる
+
+代替手段:
+- 講師がダッシュボードの **📋 ボタン** → 学生 PC の DevTools で貼り付け
+- 直近の `📥` ダウンロード JSON を学生に送り、各自「💾 セーブを復元」ボタンで読み込んでもらう（チーム名でフィルタされる）
+
+> 💡 これを避けるには **Tailscale Funnel** などで固定 URL にするのが根本対策。
+> 詳細は本ファイル末尾の「固定 URL 化（推奨）」セクションを参照。
 
 ### 状況 3: 完全に環境が死んだ
 
@@ -323,6 +331,45 @@ admin.skipFloor()                 // 強制的に次階層へ
 | **学生用アップロード先**（自動入力） | `https://xxx.trycloudflare.com/status` |
 | 全チーム JSON ダウンロード | ダッシュボードの 📥 ボタン |
 | 個別チーム復元コマンド | ダッシュボード各行の 📋 ボタン |
+
+---
+
+## 🌐 固定 URL 化（推奨・無料）
+
+quick tunnel は再起動するたびに URL が変わるため、毎回学生に共有が必要。
+**固定 URL** にすると以下が劇的に改善:
+- サーバーが落ちても **学生は単にリロードするだけで復活**（localStorage がそのまま）
+- 講師の事前共有が一度きりで済む
+
+### おすすめ: Tailscale Funnel（無料・個人利用 OK）
+
+```bash
+# 講師 PC で初回のみ
+brew install tailscale
+sudo tailscale up       # ブラウザで認証
+
+# Funnel を起動（バックグラウンド）
+sudo tailscale funnel --bg 9876
+```
+
+実行後に表示される `https://<your-mac>.tail-XXXX.ts.net` が固定 URL。
+**毎回同じ URL** なので、cloudflared 不要。学生は Tailscale 不要。
+
+停止:
+```bash
+sudo tailscale funnel --bg --https=443 off
+```
+
+### 代替: localtunnel（npm 一発で固定サブドメイン）
+
+```bash
+npm install -g localtunnel
+lt --port 9876 --subdomain escape-game-2026
+# → https://escape-game-2026.loca.lt
+```
+
+⚠️ 学生は**初回アクセス時に警告ページのクリックスルー**が必要。
+チーム数が多くないなら気になりません。
 
 ---
 
