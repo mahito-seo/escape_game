@@ -1,3 +1,6 @@
 .DS_Store
 __pycache__/
 *.pyc
+
+# Server-side persisted state (per-session data, not source)
+tracker/data/

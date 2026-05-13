@@ -71,7 +71,9 @@ setTimeout(()=>appendSnapshot('boot'), 1000);
 
 // ─── 重要な節目で localStorage が消えても困らないよう、
 //     プレイヤーの PC に JSON ファイルを自動ダウンロードする ───
-const AUTO_DOWNLOAD_INTERVAL_MS = 10 * 60 * 1000; // 10 分
+// サーバー側に永続化されるようになったので、定期ダウンロードは無効。
+// 重要な節目（ステージクリア / ゲームクリア）のみ呼ばれる。
+const AUTO_DOWNLOAD_INTERVAL_MS = 0; // 0 = 定期ダウンロード無効
 let lastAutoDownloadAt = 0;
 
 function isMeaningfulProgress(){
@@ -106,8 +108,10 @@ function autoDownload(reason){
   }
 }
 
-// 10 分ごとの定期バックアップ
-setInterval(()=>autoDownload('interval'), AUTO_DOWNLOAD_INTERVAL_MS);
+// 定期バックアップ（無効化中、節目イベントだけが呼ぶ）
+if (AUTO_DOWNLOAD_INTERVAL_MS > 0) {
+  setInterval(()=>autoDownload('interval'), AUTO_DOWNLOAD_INTERVAL_MS);
+}
 
 // 重要な節目: ステージクリア / ボス撃破 / ゲームクリア時
 // — saveProgress フックの中で reason を判定するのは難しいので、
@@ -283,8 +287,16 @@ window.admin = {
   importSave(json){
     try{
       const parsed = (typeof json==='string') ? JSON.parse(json) : json;
-      if(parsed.save) localStorage.setItem('cipherDungeonSave', parsed.save);
-      if(parsed.features) localStorage.setItem('cipherDungeonFeatures', parsed.features);
+      // 受け付ける形式:
+      //   { save, features }                       … exportSave() の出力
+      //   { currentSave, currentFeatures, ... }    … exportLog() の出力
+      const save = parsed.save || parsed.currentSave;
+      const features = parsed.features || parsed.currentFeatures;
+      if(!save && !features){
+        return '❌ 形式が不正です。save / features または currentSave / currentFeatures が必要';
+      }
+      if(save) localStorage.setItem('cipherDungeonSave', save);
+      if(features) localStorage.setItem('cipherDungeonFeatures', features);
       if(typeof loadProgress==='function') loadProgress();
       _hud();_skills();
       return '✅ インポート完了。ページを再読み込みすると確実に反映されます';

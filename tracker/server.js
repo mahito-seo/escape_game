@@ -14,6 +14,48 @@ const os = require('os');
 const PORT = process.env.PORT || 9876;
 const teams = new Map(); // teamName -> latest status object
 
+// ─── サーバー側ディスク永続化 ───
+// サーバー再起動で teams Map が消えても、起動時に復元できるよう
+// 受信のたびに JSON を書き出し、起動時に読み込む。
+const DATA_DIR = path.join(__dirname, 'data');
+const TEAMS_FILE = path.join(DATA_DIR, 'teams.json');
+let saveTimer = null;
+function persistTeams(){
+  // デバウンス: 短時間に複数チームから来るとファイル I/O が走りすぎるので
+  // 1 秒まとめて書く
+  if (saveTimer) return;
+  saveTimer = setTimeout(() => {
+    saveTimer = null;
+    try {
+      if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, {recursive: true});
+      const obj = {};
+      for (const [name, data] of teams) obj[name] = data;
+      // 一時ファイル経由でアトミック書き込み（書き込み中のクラッシュで破損しない）
+      const tmp = TEAMS_FILE + '.tmp';
+      fs.writeFileSync(tmp, JSON.stringify({savedAt: Date.now(), teams: obj}, null, 2));
+      fs.renameSync(tmp, TEAMS_FILE);
+    } catch (e) {
+      console.error('teams.json 書き出し失敗:', e.message);
+    }
+  }, 1000);
+}
+function loadPersistedTeams(){
+  try {
+    if (!fs.existsSync(TEAMS_FILE)) return 0;
+    const raw = fs.readFileSync(TEAMS_FILE, 'utf-8');
+    const obj = JSON.parse(raw);
+    let n = 0;
+    for (const name in (obj.teams || {})) {
+      teams.set(name, obj.teams[name]);
+      n++;
+    }
+    return n;
+  } catch (e) {
+    console.error('teams.json 読み込み失敗:', e.message);
+    return 0;
+  }
+}
+
 function send(res, status, body, type='application/json'){
   res.writeHead(status, {
     'Content-Type': type,
@@ -39,6 +81,7 @@ const server = http.createServer((req, res) => {
         data.serverReceivedAt = Date.now();
         data.clientIP = (req.socket.remoteAddress||'').replace(/^::ffff:/, '');
         teams.set(data.teamName, data);
+        persistTeams();
         send(res, 200, '{"ok":true}');
       } catch (e) {
         send(res, 400, JSON.stringify({error: e.message}));
@@ -88,6 +131,7 @@ const server = http.createServer((req, res) => {
 
   if (req.method === 'POST' && req.url === '/reset') {
     teams.clear();
+    persistTeams();
     return send(res, 200, '{"ok":true}');
   }
 
@@ -132,6 +176,8 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
+  // ─── 永続化された teams.json を読み込んで前回状態を復元 ───
+  const restored = loadPersistedTeams();
   // Print all LAN IPs so the instructor can tell teams what URL to use.
   const nets = os.networkInterfaces();
   const ips = [];
@@ -142,6 +188,9 @@ server.listen(PORT, '0.0.0.0', () => {
   }
   console.log('進捗トラッカー受信サーバー起動');
   console.log(`  PORT: ${PORT}`);
+  if (restored > 0) {
+    console.log(`  ✅ 前回の状態を復元しました: ${restored} チーム`);
+  }
   console.log('');
   console.log('  講師ダッシュボード（このPC上で開く）:');
   console.log(`    http://localhost:${PORT}/dashboard`);
