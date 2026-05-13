@@ -8,7 +8,6 @@ const QUESTIONS=[
   {cat:'リスト',diff:'easy',type:'choice',q:'このコードで nums の長さは？',code:'nums = [1, 2, 3]\nnums.append(4)\nnums.append(5)',choices:['3','4','5','6'],ans:2,expl:'3 + append×2 = 5'},
   {cat:'条件分岐',diff:'easy',type:'choice',q:'次のコードで出力されるのは？',code:'x = 7\nif x > 5:\n    print("大")\nelse:\n    print("小")',choices:['大','小','7','エラー'],ans:0,expl:'7 > 5 → "大"'},
   {cat:'Python基礎',diff:'easy',type:'fill',q:'リストの要素数を返す組み込み関数は？（関数名のみ）',code:'my_list = [1, 2, 3]\nprint(_____(my_list))  # 3',ans:'len',expl:'len() で長さを返す',hint:'l から始まる3文字'},
-  {cat:'ループ',diff:'easy',type:'fill',q:'1から10までの合計は？（数字のみ）',code:'total = sum(range(1, 11))\nprint(total)',ans:'55',expl:'1+2+…+10 = 55'},
   {cat:'内包表記',diff:'normal',type:'choice',q:'リスト内包表記の出力は？',code:'result = [x**2 for x in range(5) if x % 2 == 0]\nprint(result)',choices:['[0, 4, 16]','[0, 2, 4]','[1, 4, 9]','[0, 1, 4]'],ans:0,expl:'偶数(0,2,4)の2乗 → [0, 4, 16]'},
   {cat:'辞書',diff:'normal',type:'choice',q:'次のコードの出力は？',code:"d = {'a': 1, 'b': 2, 'c': 3}\nprint(sum(d.values()))",choices:['abc','3','6','Error'],ans:2,expl:'1+2+3 = 6'},
   {cat:'再帰',diff:'normal',type:'choice',q:'この関数の mystery(6) の戻り値は？',code:'def mystery(n):\n    if n <= 1: return n\n    return mystery(n-1) + mystery(n-2)',choices:['8','13','21','5'],ans:0,expl:'フィボナッチ。mystery(6)=8'},

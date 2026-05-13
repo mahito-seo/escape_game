@@ -40,10 +40,10 @@ const REPAIR_CHALLENGES=[
 '\n'+
 '修理するとMPバーが表示され、スキルが使えるようになる。',
    hint:'',
-   hintDetail:'int / / / * / mp / max_mp',
+   hintDetail:'mp / max_mp * 100',
    template:
 'def calc_mp_percent(mp, max_mp):\n'+
-'    # MPの割合(%)を整数で返せ\n'+
+'    # MPの割合(%)を返せ（整数でも小数でも OK）\n'+
 '    # mp: 現在MP, max_mp: 最大MP\n'+
 '    # 例: mp=30, max_mp=50 → 60\n'+
 '    # ===== この中を自由に書き換えよう！ =====\n'+
@@ -251,29 +251,37 @@ const REPAIR_CHALLENGES=[
    effectDesc:['','\uD83D\uDD25火炎(弱)','\uD83D\uDD25火炎(中)','\uD83D\uDD25火炎(強)！'],
    unlockMsg:'\uD83D\uDD25 火炎スキルが復活した！'},
 
-  {id:'skillHeal',name:'回復スキル設計',icon:'\uD83D\uDC8A',floor:1,
+  {id:'skillHeal',name:'回復スキル修理',icon:'\uD83D\uDC8A',floor:1,
    color:0x88ff88,emissive:0x44aa44,diff:'NORMAL',xp:80,
    mission:
-'【目的】回復量を実装！\n'+
+'【修理対象】💊 回復スキル（4キーで使う HP 回復魔法）\n'+
 '\n'+
-'calc_heal_skill(max_hp, level) を完成させよ。\n'+
+'戦闘中に MP を消費して HP を回復する魔法。\n'+
+'1 回で「どれだけ HP が戻るか」を計算する関数が壊れている。\n'+
+'修理すると 4キー で回復スキルが使えるようになる。\n'+
 '\n'+
-'■ ヒント\n'+
-'・max_hp の一定割合 + レベルボーナス\n'+
-'・整数で返す（int / // を使う）\n'+
-'・期待出力から各係数を逆算しよう\n'+
+'■ やること\n'+
+'calc_heal_skill(max_hp, level) を実装する：\n'+
+'・max_hp = プレイヤーの最大HP\n'+
+'・level  = プレイヤーのレベル\n'+
+'・戻り値 = 1回で回復するHP量（数値）\n'+
 '\n'+
-'■ 期待出力\n'+
-'・(100, 1) → 25\n'+
-'・(100, 5) → 45\n'+
-'・(500, 1) → 105\n'+
+'■ 設計のルール\n'+
+'・最大HPが大きいほど回復量も増える\n'+
+'・レベルが上がっても回復量が増える\n'+
+'・両方の引数を必ず使うこと\n'+
 '\n'+
-'※ 3 テスト全一致で ★★★（HP 40%回復！）',
+'■ 期待出力（この値になれば正解）\n'+
+'・(100, 1) → 25     ← Lv.1 / 最大HP 100\n'+
+'・(100, 5) → 45     ← Lv.5 / 最大HP 100\n'+
+'・(500, 1) → 105    ← Lv.1 / 最大HP 500\n'+
+'\n'+
+'※ 3 テスト全一致で ★★★（HP 40%回復）',
    hint:'',
-   hintDetail:'return max_hp // 5 + level * 5',
+   hintDetail:'答えを直接書かず、考え方だけ示す:\n・(100, 1) → 25 と (500, 1) → 105 を比べる\n  max_hp だけ 5倍になったら 結果も大きく変わる\n  → 「max_hp に比例する項」を割り出せる\n・(100, 1) → 25 と (100, 5) → 45 を比べる\n  level だけ 4 上がって +20\n  → 「level に比例する項」を割り出せる\n・2つの項を足し合わせれば答え',
    template:
 'def calc_heal_skill(max_hp, level):\n'+
-'    # 回復量（整数）を返す関数を完成させよ。\n'+
+'    # この関数が「回復スキル使用時の回復量」を決める。\n'+
 '    # 期待出力（下のテスト行）と一致するよう実装する。\n'+
 '    # ===== ここを書く =====\n'+
 '    \n'+
@@ -747,26 +755,34 @@ function spawnRepairTerminal(rm,challengeIdx){
     if(isWall(px,pz)||tooClose(px,pz))return; // skip this terminal if no safe spot
   }
   var tg=new THREE.Group();
-  var base=new THREE.Mesh(new THREE.CylinderGeometry(.45,.55,.15,6),
-    new THREE.MeshStandardMaterial({color:ch.color,emissive:ch.emissive,emissiveIntensity:.5,metalness:.4}));
-  base.position.y=.08;tg.add(base);
-  var screen=new THREE.Mesh(new THREE.BoxGeometry(.65,.95,.08),
-    new THREE.MeshStandardMaterial({color:0x1a1a1a,emissive:ch.color,emissiveIntensity:1.5,transparent:true,opacity:.85}));
-  screen.position.y=.65;tg.add(screen);
-  var indicator=new THREE.Mesh(new THREE.OctahedronGeometry(.12,0),
-    new THREE.MeshStandardMaterial({color:ch.color,emissive:ch.emissive,emissiveIntensity:3,transparent:true,opacity:.8}));
-  indicator.position.y=1.3;tg.add(indicator);
-  var ring=new THREE.Mesh(new THREE.TorusGeometry(.2,.04,4,8),
-    new THREE.MeshStandardMaterial({color:ch.color,emissive:ch.emissive,emissiveIntensity:2,transparent:true,opacity:.6}));
-  ring.position.y=1.0;ring.rotation.x=Math.PI/2;tg.add(ring);
-  var glow=new THREE.Mesh(new THREE.SphereGeometry(.5,8,8),
-    new THREE.MeshStandardMaterial({color:ch.color,emissive:ch.emissive,emissiveIntensity:2,transparent:true,opacity:.12}));
-  glow.position.y=.7;tg.add(glow);
-  var light=new THREE.PointLight(ch.color,2,8);
-  light.position.set(px,1.5,pz);scene.add(light);
+  // ── 約 1.7 倍に拡大して視認性アップ ──
+  var base=new THREE.Mesh(new THREE.CylinderGeometry(.75,.9,.25,8),
+    new THREE.MeshStandardMaterial({color:ch.color,emissive:ch.emissive,emissiveIntensity:.6,metalness:.4}));
+  base.position.y=.13;tg.add(base);
+  var screen=new THREE.Mesh(new THREE.BoxGeometry(1.1,1.6,.12),
+    new THREE.MeshStandardMaterial({color:0x1a1a1a,emissive:ch.color,emissiveIntensity:1.8,transparent:true,opacity:.9}));
+  screen.position.y=1.1;tg.add(screen);
+  var indicator=new THREE.Mesh(new THREE.OctahedronGeometry(.22,0),
+    new THREE.MeshStandardMaterial({color:ch.color,emissive:ch.emissive,emissiveIntensity:4,transparent:true,opacity:.9}));
+  indicator.position.y=2.2;tg.add(indicator);
+  var ring=new THREE.Mesh(new THREE.TorusGeometry(.38,.07,6,16),
+    new THREE.MeshStandardMaterial({color:ch.color,emissive:ch.emissive,emissiveIntensity:2.5,transparent:true,opacity:.7}));
+  ring.position.y=1.7;ring.rotation.x=Math.PI/2;tg.add(ring);
+  var ring2=new THREE.Mesh(new THREE.TorusGeometry(.55,.05,6,16),
+    new THREE.MeshStandardMaterial({color:ch.color,emissive:ch.emissive,emissiveIntensity:2,transparent:true,opacity:.5}));
+  ring2.position.y=.3;ring2.rotation.x=Math.PI/2;tg.add(ring2);
+  var glow=new THREE.Mesh(new THREE.SphereGeometry(.9,12,12),
+    new THREE.MeshStandardMaterial({color:ch.color,emissive:ch.emissive,emissiveIntensity:2.5,transparent:true,opacity:.15}));
+  glow.position.y=1.2;tg.add(glow);
+  // 遠くからも見える光の柱（透過シリンダー）
+  var beam=new THREE.Mesh(new THREE.CylinderGeometry(.15,.15,4.5,8),
+    new THREE.MeshStandardMaterial({color:ch.color,emissive:ch.emissive,emissiveIntensity:3,transparent:true,opacity:.35}));
+  beam.position.y=2.25;tg.add(beam);
+  var light=new THREE.PointLight(ch.color,4,15);
+  light.position.set(px,2.5,pz);scene.add(light);
   tg.position.set(px,0,pz);scene.add(tg);
   repairTerminals.push({mesh:tg,light:light,x:px,z:pz,challenge:ch,challengeIdx:challengeIdx,solved:false});
-  decoBlocks.push({x:px,z:pz,r:.5});
+  decoBlocks.push({x:px,z:pz,r:.9});
 }
 
 // ── Check proximity ──
@@ -1001,9 +1017,10 @@ function updateRepairTerminals(ts){
     if(rt.solved||!rt.mesh)continue;
     var dx=rt.x-player.x,dz=rt.z-player.z;
     if(dx*dx+dz*dz>400)continue;
-    if(rt.mesh.children[2])rt.mesh.children[2].position.y=1.3+Math.sin(ts/1000*2)*.15;
+    if(rt.mesh.children[2])rt.mesh.children[2].position.y=2.2+Math.sin(ts/1000*2)*.25;
     if(rt.mesh.children[2])rt.mesh.children[2].rotation.y+=.02;
     if(rt.mesh.children[3])rt.mesh.children[3].rotation.z+=.03;
+    if(rt.mesh.children[4])rt.mesh.children[4].rotation.z-=.02; // 下のリング逆回転
     if(rt.light)rt.light.intensity=2+Math.sin(ts/500)*.8;
   }
 }
