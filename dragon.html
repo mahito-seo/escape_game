@@ -58,10 +58,10 @@
   @keyframes msgFade { 0%{opacity:0;transform:translateY(10px) scale(.9)} 10%{opacity:1;transform:translateY(0) scale(1)} 75%{opacity:1} 100%{opacity:0;transform:translateY(-10px)} }
   #xp-bar-container { position:absolute; bottom:0; left:0; right:0; height:4px; background:rgba(0,0,0,.5); }
   #xp-fill { height:100%; background:linear-gradient(90deg,#00aa41,#44ff88); transition:width .5s; }
-  #controls-hint { position:absolute; bottom:90px; left:50%; transform:translateX(-50%); display:flex; gap:16px; opacity:.4; }
-  .ctrl { display:flex; flex-direction:column; align-items:center; gap:2px; }
-  .ctrl-key { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2); border-radius:3px; padding:2px 8px; font-size:11px; color:#aaa; }
-  .ctrl-desc { font-size:9px; color:#666; letter-spacing:1px; }
+  #controls-hint { position:absolute; bottom:90px; left:50%; transform:translateX(-50%); display:flex; gap:16px; opacity:.92; pointer-events:none; }
+  .ctrl { display:flex; flex-direction:column; align-items:center; gap:3px; background:rgba(0,0,0,.55); padding:6px 10px; border-radius:5px; box-shadow:0 2px 6px rgba(0,0,0,.5); }
+  .ctrl-key { background:rgba(40,40,40,.85); border:1px solid rgba(255,255,255,.5); border-radius:3px; padding:3px 10px; font-size:12px; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.8); font-weight:600; }
+  .ctrl-desc { font-size:10px; color:#ffe28a; letter-spacing:1.5px; text-shadow:0 1px 2px rgba(0,0,0,.9); font-weight:600; }
 
   /* ── Title ── */
   #title-screen { position:fixed; inset:0; background:radial-gradient(ellipse at center,#001a0a,#000 70%); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:100; transition:opacity 1s; }
