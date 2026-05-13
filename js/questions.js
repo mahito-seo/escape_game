@@ -10,7 +10,7 @@ const QUESTIONS=[
   {cat:'Python基礎',diff:'easy',type:'fill',q:'リストの要素数を返す組み込み関数は？（関数名のみ）',code:'my_list = [1, 2, 3]\nprint(_____(my_list))  # 3',ans:'len',expl:'len() で長さを返す',hint:'l から始まる3文字'},
   {cat:'内包表記',diff:'normal',type:'choice',q:'リスト内包表記の出力は？',code:'result = [x**2 for x in range(5) if x % 2 == 0]\nprint(result)',choices:['[0, 4, 16]','[0, 2, 4]','[1, 4, 9]','[0, 1, 4]'],ans:0,expl:'偶数(0,2,4)の2乗 → [0, 4, 16]'},
   {cat:'辞書',diff:'normal',type:'choice',q:'次のコードの出力は？',code:"d = {'a': 1, 'b': 2, 'c': 3}\nprint(sum(d.values()))",choices:['abc','3','6','Error'],ans:2,expl:'1+2+3 = 6'},
-  {cat:'再帰',diff:'normal',type:'choice',q:'この関数の mystery(6) の戻り値は？',code:'def mystery(n):\n    if n <= 1: return n\n    return mystery(n-1) + mystery(n-2)',choices:['8','13','21','5'],ans:0,expl:'フィボナッチ。mystery(6)=8'},
+  {cat:'再帰',diff:'normal',type:'choice',q:'この関数の mystery(4) の戻り値は？',code:'def mystery(n):\n    if n <= 1: return n\n    return mystery(n-1) + mystery(n-2)',choices:['3','2','5','4'],ans:0,expl:'フィボナッチ。0,1,1,2,3 → mystery(4)=3'},
   {cat:'スライス',diff:'normal',type:'choice',q:'以下のスライスの結果は？',code:'s = "Python"\nprint(s[1:4])',choices:['Pyt','yth','ytho','ython'],ans:1,expl:'s[1:4] → "yth"'},
   {cat:'例外処理',diff:'normal',type:'choice',q:'次のコードの出力は？',code:'try:\n    x = 10 / 0\nexcept ZeroDivisionError:\n    print("ゼロ除算")\nfinally:\n    print("終了")',choices:['ゼロ除算のみ','終了のみ','ゼロ除算\n終了','停止'],ans:2,expl:'except + finally'},
   {cat:'lambda',diff:'normal',type:'choice',q:'ラムダ式の実行結果は？',code:'f = lambda x, y: x * y + y\nprint(f(3, 4))',choices:['12','16','13','19'],ans:1,expl:'3*4+4=16'},
@@ -94,7 +94,7 @@ const QUESTIONS=[
   {cat:'any/all',diff:'hard',type:'choice',q:'次のコードの出力は？',code:'print(all([True, 1, "hello", [0]]))',choices:['True','False','Error','None'],ans:0,expl:'全て truthy → all() は True'},
   {cat:'collections',diff:'hard',type:'choice',q:'Counter の most_common(1) の結果は？',code:'from collections import Counter\nc = Counter("abracadabra")\nprint(c.most_common(1))',choices:["[('a', 5)]","[('b', 2)]","{'a': 5}","[5]"],ans:0,expl:'a が5回で最頻出'},
   {cat:'内包表記',diff:'hard',type:'fill',q:'このリスト内包表記の結果の長さは？（数字のみ）',code:'result = [i for i in range(100) if i % 3 == 0 and i % 5 == 0]\nprint(len(result))',ans:'7',expl:'FizzBuzz: 0,15,30,45,60,75,90 → 7個'},
-  {cat:'再帰',diff:'hard',type:'fill',q:'この関数の出力は？（数字のみ）',code:'def f(n):\n    if n == 0: return 1\n    return n * f(n-1)\nprint(f(5))',ans:'120',expl:'5! = 120（階乗）'},
+  {cat:'再帰',diff:'hard',type:'fill',q:'この関数の出力は？（数字のみ）',code:'def f(n):\n    if n == 0: return 1\n    return n * f(n-1)\nprint(f(4))',ans:'24',expl:'4! = 4*3*2*1 = 24（階乗）'},
   {cat:'ビット演算',diff:'hard',type:'fill',q:'次の式の結果は？（数字のみ）',code:'print(1 << 4)',ans:'16',expl:'1を左に4ビットシフト = 16'},
   {cat:'文字列',diff:'hard',type:'fill',q:'次のコードの出力は？（数字のみ）',code:'print(ord("A"))',ans:'65',expl:'ord("A") = 65（ASCII値）'},
 
