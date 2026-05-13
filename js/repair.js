@@ -40,7 +40,7 @@ const REPAIR_CHALLENGES=[
 '\n'+
 '修理するとMPバーが表示され、スキルが使えるようになる。',
    hint:'',
-   hintDetail:'mp / max_mp * 100',
+   hintDetail:'・割合とは「部分 ÷ 全体」のこと。例: 30 円のうち 50 円なら 30/50 = 0.6（60%）\n・パーセント表記にするには 100 を掛ける\n・(30, 50) → 60、(100, 100) → 100 になる式を考えよう',
    template:
 'def calc_mp_percent(mp, max_mp):\n'+
 '    # MPの割合(%)を返せ（整数でも小数でも OK）\n'+
@@ -84,7 +84,7 @@ const REPAIR_CHALLENGES=[
 '\n'+
 '修理すると敵の名前と HP 残量が見えるようになる。',
    hint:'',
-   hintDetail:'for / in / chr / += / result',
+   hintDetail:'・ASCII コードを 1 文字に変換する組み込み関数を 1 つ思い出す（コードを書く前に Python リファレンスで確認）\n・空文字列 "" から始めて、for ループで 1 文字ずつ後ろに追加していくパターン\n・例: [65, 66, 67] → "ABC" になる仕組み',
    template:
 'def decode_name(codes):\n'+
 '    # ASCIIコードのリストを文字列に変換して返せ\n'+
@@ -128,7 +128,7 @@ const REPAIR_CHALLENGES=[
 '\n'+
 '修理するとアイテムの回復量がアップする。',
    hint:'',
-   hintDetail:'min / + / hp / max_hp / amount',
+   hintDetail:'・もし hp + amount が max_hp 以下なら そのまま、超えていたら max_hp を返したい\n・「2 つの値の小さい方」を返す組み込み関数がある — それを使えば if 文不要で 1 行で書ける\n・例: (70, 100, 50) は 120 になるが、頭打ちで 100',
    template:
 'def calc_heal(hp, max_hp, amount):\n'+
 '    # 回復後のHPを返せ（max_hpを超えない！）\n'+
@@ -175,7 +175,7 @@ const REPAIR_CHALLENGES=[
 '※ 各係数は期待出力から逆算しよう。\n'+
 '※ 4 テスト全一致で ★★★（攻撃力 2.0倍）',
    hint:'',
-   hintDetail:'return max(attack - defense, 1) + streak * 4 + (level - 1) * 5',
+   hintDetail:'・基本ダメは attack − defense。ただし防御の方が高くても 1 にしたい\n  → 「2 つの値の大きい方」を返す関数で (attack-defense, 1) を比較\n・期待出力で逆算:\n  (30,10,5,1) → 40 と基本ダメ 20 の差 20 が streak=5 によるボーナス\n  (30,10,0,5) → 40 と基本ダメ 20 の差 20 が level=5 によるボーナス\n・level=1 のときボーナス 0 にしたい → (level - 1) を使う発想',
    template:
 'def calc_damage(attack, defense, streak, level):\n'+
 '    # ダメージを返す関数を完成させよ。\n'+
@@ -223,7 +223,7 @@ const REPAIR_CHALLENGES=[
 '\n'+
 '※ 4 テスト全一致で ★★★（火炎(強)！）',
    hint:'',
-   hintDetail:'return base_damage * level * floor_num',
+   hintDetail:'・(35, 1, 1) → 35 から: level=1, floor=1 のとき base_damage そのまま = 倍率 1\n・(35, 5, 1) → 175 から: level だけで 5 倍 になる\n・(35, 1, 5) → 175 から: floor だけで 5 倍 になる\n・(0, 5, 5) → 0 から: base_damage を必ず掛ける必要がある\n・3 引数を組み合わせて (1,1) で 1 倍 になる式を考える',
    template:
 'def calc_fire_damage(base_damage, level, floor_num):\n'+
 '    # 火炎ダメージを返す関数を完成させよ。\n'+
@@ -322,7 +322,7 @@ const REPAIR_CHALLENGES=[
 '・(0.0,  2.0, 40, 120) → 0\n'+
 '・(80.0, 2.0, 40, 120) → 120',
    hint:'',
-   hintDetail:'/ / * / pos / tile_size / cells / display',
+   hintDetail:'・ワールド全体の幅は何で決まる？ → tile_size × cells\n・pos がワールド全体の何割か = pos ÷ ワールド全幅\n・最後にその割合を表示サイズ display に掛ければピクセル位置\n・(24, 2, 40, 120) → 全幅 80、24/80 = 0.3、0.3 × 120 = 36',
    template:
 'def calc_map_pixel(pos, tile_size, cells, display):\n'+
 '    # 3D座標をマップのピクセル座標に変換して返せ\n'+
@@ -366,7 +366,7 @@ const REPAIR_CHALLENGES=[
 '\n'+
 '※ 3 テスト全一致で ★★★（雷撃(強)！）',
    hint:'',
-   hintDetail:'return max(damages) + level * 20',
+   hintDetail:'・リスト内の最大値を返す組み込み関数を使う\n・(...[80,...], 1) → 100 と (..., 5) → 180 を比べる\n  level が 1→5 (4 増) で結果が 100→180 (80 増) → level 1 あたりの寄与は？\n・max(リスト) + level × ◯ の形で ◯ を逆算',
    template:
 'def calc_lightning(damages, level):\n'+
 '    # 雷撃ダメージを返す関数を完成させよ。\n'+
@@ -424,7 +424,7 @@ const REPAIR_CHALLENGES=[
 '\n'+
 '修理すると Lv アップ時の HP/MP/攻撃力 上昇量がアップ。',
    hint:'',
-   hintDetail:'3つの _____ を埋める：\n・1つめ: threshold（消費した XP を引く）\n・2つめ: 1（レベルを 1 増やす）\n・3つめ: 1.5（次の閾値を 1.5 倍に）',
+   hintDetail:'・while ループの 3 行をそれぞれ考える:\n  - xp から「何」を引けば、消費した分が減るか\n  - level を「いくつ」増やしたいか（1 段階アップ）\n  - threshold を「何倍」にしたら次が厳しくなる仕様か\n・期待出力 (250, 100) → 3 のループを紙でトレースしてみると分かりやすい',
    template:
 'def calc_level(total_xp, base_threshold):\n'+
 '    # 初期化（変更不要）\n'+
@@ -478,7 +478,7 @@ const REPAIR_CHALLENGES=[
 '\n'+
 '修理するとドロップ率が 40% → 75% にアップ！',
    hint:'',
-   hintDetail:'if / elif / else / < / return / "hp" / "mp" / "xp"',
+   hintDetail:'・roll の値で 3 つに振り分ける条件分岐\n・境界値は問題文の仕様: 25 と 50\n・上から評価される if / elif / else を使うと、前段で弾けば次の条件は\n  小さい範囲をチェックするだけで書ける\n・else を最後に置けば「絶対に何か返す」が保証される',
    template:
 'def get_drop_item(roll):\n'+
 '    # roll(0-99) に応じてアイテム種類の文字列を返せ。\n'+
@@ -522,7 +522,7 @@ const REPAIR_CHALLENGES=[
 '\n'+
 '修理するとクリア画面に詳細スコア＋ランクが表示される。',
    hint:'',
-   hintDetail:'* / + / level / kills / streak',
+   hintDetail:'・3 つの引数それぞれに「重み」を掛けて足すだけ\n・(1, 0, 0) → 35 から: level 1 つあたりの重みは 35\n・残り 2 つの重みは、他のテストの式を立てて連立で逆算\n  例: (5, 12, 8) → 367 = 5×35 + 12×X + 8×Y、X と Y を求める',
    template:
 'def calc_score(level, kills, streak):\n'+
 '    # 3要素の重み付けスコアを返す。\n'+
@@ -567,7 +567,7 @@ const REPAIR_CHALLENGES=[
 '・enemies=[[0,0],[3,0],[10,0]], center=(0,0), r=5, base=100\n'+
 '　→ [100, 40, 0]',
    hint:'',
-   hintDetail:'(dx**2 + dy**2) ** 0.5  /  int(base_dmg * (1 - dist/radius))',
+   hintDetail:'・各敵について中心からの距離 dist を計算\n  → 三平方の定理: dx² + dy² の平方根（Python では ** 0.5）\n・dist が radius 以下のときだけダメージ、超えたら 0\n・中心ぴったりで base、端で 0 になるように線形減衰させたい\n  → (1 - dist/radius) を base に掛ける（中心: 1.0倍、半径端: 0倍）\n・結果は append で順に貯めて返す',
    template:
 'def calc_explosion(enemies, center_x, center_y, radius, base_dmg):\n'+
 '    results = []\n'+
@@ -625,7 +625,7 @@ const REPAIR_CHALLENGES=[
 '・(80, 4, 0.5)  → [80, 40, 20, 10]\n'+
 '・(50, 1, 0.7)  → [50]',
    hint:'',
-   hintDetail:'damages.append(int(current))  /  current *= decay',
+   hintDetail:'・current 変数を base_dmg からスタート\n・chain_count 回ループする\n・各ループの順序がポイント:\n  ① まず append で現在のダメージを記録\n  ② その後 current を decay 倍して次回に備える\n・順序を逆にすると最初の値が base_dmg にならない',
    template:
 'def calc_chain(base_dmg, chain_count, decay):\n'+
 '    damages = []\n'+
@@ -675,7 +675,7 @@ const REPAIR_CHALLENGES=[
 '・(95, 100, 10, 5)  → 5\n'+
 '・(50, 200, 20, 3)  → 60',
    hint:'',
-   hintDetail:'heal = min(heal_per_turn, max_hp - hp)  /  hp += heal  /  total_healed += heal',
+   hintDetail:'・各ターンの「実際に回復できる量」を考える\n  → 標準回復量 と 残り余裕(max_hp - hp) の小さい方\n  → 上限を超えないように 2 つの最小値を取る\n・回復したぶん hp も増やす（次ターンの余裕計算に必要）\n・total_healed に毎ターン足し込んで返す',
    template:
 'def calc_regen(hp, max_hp, heal_per_turn, turns):\n'+
 '    total_healed = 0\n'+
