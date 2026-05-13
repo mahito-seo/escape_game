@@ -877,11 +877,20 @@ function openRepairChallenge(rt){
         playSound('clear');spawnParticles(player.x,player.z,'#44ff88',30);
         showMessage(ch.unlockMsg+' '+starStr(level),'#44ff88');
         updateSkillsHUD();saveFeatures();saveProgress();
+        // \u30D2\u30F3\u30C8\u7B49\u3067\u4E0A\u304C\u9577\u304F\u306A\u3063\u3066\u308B\u3068\u89E3\u653E\u30E1\u30C3\u30BB\u30FC\u30B8\u304C\u753B\u9762\u304B\u3089\u5207\u308C\u3066\u898B\u3048\u306A\u3044\u306E\u3067\u3001
+        // \u5F37\u5236\u7684\u306B c-result \u307E\u3067\u30B9\u30AF\u30ED\u30FC\u30EB\u3055\u305B\u308B
+        setTimeout(function(){
+          try{r.scrollIntoView({behavior:'smooth',block:'end'});}catch(e){}
+        },50);
         setTimeout(function(){closeRepairModal();},3000);
       }else{
         document.getElementById('code-output').style.color='#ffaa88';
         document.getElementById('code-output').textContent=result+'\n\n\u274C \u30C6\u30B9\u30C8\u5931\u6557\u2026 \u30B3\u30FC\u30C9\u3092\u898B\u76F4\u3057\u3066\u518D\u5B9F\u884C\uFF01';
         showMessage('\u30C6\u30B9\u30C8\u5931\u6557\u2026 \u30B3\u30FC\u30C9\u3092\u4FEE\u6B63\u3057\u3066\u518D\u5B9F\u884C\uFF01','#ff8844');
+        // \u30C6\u30B9\u30C8\u5931\u6557\u6642\u3082\u5B9F\u884C\u7D50\u679C\u304C\u753B\u9762\u5916\u306B\u5207\u308C\u306A\u3044\u3088\u3046\u30B9\u30AF\u30ED\u30FC\u30EB
+        setTimeout(function(){
+          try{document.getElementById('code-output-wrap').scrollIntoView({behavior:'smooth',block:'end'});}catch(e){}
+        },50);
       }
     }catch(e){
       document.getElementById('code-output-wrap').classList.add('show');
