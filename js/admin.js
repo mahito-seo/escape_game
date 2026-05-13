@@ -69,6 +69,51 @@ setInterval(()=>appendSnapshot('interval'), 60000);
 // 起動時にも 1 回
 setTimeout(()=>appendSnapshot('boot'), 1000);
 
+// ─── 重要な節目で localStorage が消えても困らないよう、
+//     プレイヤーの PC に JSON ファイルを自動ダウンロードする ───
+const AUTO_DOWNLOAD_INTERVAL_MS = 10 * 60 * 1000; // 10 分
+let lastAutoDownloadAt = 0;
+
+function isMeaningfulProgress(){
+  // 始めたばかり / 何も解放されてない場合はダウンロードしない（無駄ファイル防止）
+  try{
+    if(typeof player==='undefined')return false;
+    if(player.level>1) return true;
+    if(player.kills>0) return true;
+    if(typeof currentCipherStage!=='undefined'&&currentCipherStage>0) return true;
+    if(typeof floor!=='undefined'&&floor>1) return true;
+    if(typeof features!=='undefined'){
+      for(const k in features) if(features[k]>0) return true;
+    }
+  }catch(e){}
+  return false;
+}
+
+function autoDownload(reason){
+  if(!isMeaningfulProgress()) return;
+  if(Date.now() - lastAutoDownloadAt < 30000) return; // 連投ガード（30秒以内は無視）
+  lastAutoDownloadAt = Date.now();
+  try{
+    appendSnapshot('auto-download:'+reason);
+    if(typeof window.admin === 'object' && typeof window.admin.exportLog === 'function'){
+      window.admin.exportLog();
+      if(typeof showMessage === 'function'){
+        showMessage('💾 進捗バックアップを自動ダウンロードしました ('+reason+')', '#88ccff');
+      }
+    }
+  }catch(e){
+    console.warn('auto-download failed:', e);
+  }
+}
+
+// 10 分ごとの定期バックアップ
+setInterval(()=>autoDownload('interval'), AUTO_DOWNLOAD_INTERVAL_MS);
+
+// 重要な節目: ステージクリア / ボス撃破 / ゲームクリア時
+// — saveProgress フックの中で reason を判定するのは難しいので、
+//   各イベント側で window.adminAutoBackup() を呼んでもらう
+window.adminAutoBackup = autoDownload;
+
 function _hud(){if(typeof updateHUD==='function')updateHUD();}
 function _skills(){if(typeof updateSkillsHUD==='function')updateSkillsHUD();}
 function _save(){if(typeof saveProgress==='function')saveProgress();}

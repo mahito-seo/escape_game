@@ -275,6 +275,8 @@ function agentComplete(){
   const b=document.createElement('div');b.className='stage-clear-banner';
   b.innerHTML=`<h2>\uD83D\uDD13 STAGE ${currentCipherStage+1} CLEAR!</h2><p>${CIPHER_STAGES[currentCipherStage].name} \u2014 \u5B8C\u5168\u89E3\u8AAD</p>`;
   document.body.appendChild(b);setTimeout(()=>b.remove(),3000);
+  // \u81EA\u52D5\u30D0\u30C3\u30AF\u30A2\u30C3\u30D7: \u30B9\u30C6\u30FC\u30B8\u30AF\u30EA\u30A2\u306F\u5FA9\u5143\u304C\u9AD8\u304F\u3064\u304F\u7BC0\u76EE\u306A\u306E\u3067\u5FC5\u305A\u4FDD\u5B58
+  if(typeof window.adminAutoBackup === 'function') window.adminAutoBackup('stage-clear');
   if(terminalMesh){scene.remove(terminalMesh);terminalMesh=null;}
   if(terminalLight){scene.remove(terminalLight);terminalLight=null;}
   if(terminalGlow){scene.remove(terminalGlow);terminalGlow=null;}

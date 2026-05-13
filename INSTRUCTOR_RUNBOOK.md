@@ -260,7 +260,12 @@ admin.skipFloor()                 // 強制的に次階層へ
 
 ### 状況 3: 完全に環境が死んだ
 
-直近の **📥** でダウンロードした `cipher-dungeon-all-teams-*.json` があれば全て復旧可能:
+各学生の PC にも**自動ダウンロードされた個別バックアップ**があるはず:
+- **ダウンロードフォルダ** を確認 → `cipher-dungeon-log-<チーム名>-<タイムスタンプ>.json` が並んでいる
+- 10 分ごと + ステージクリア / ゲームクリア時に自動ダウンロードされている
+- 最新のファイルを開いて `currentSave` / `currentFeatures` の文字列を取り出し、`admin.importSave({...})` で復元
+
+それでも何もなければ直近の講師側 **📥** でダウンロードした `cipher-dungeon-all-teams-*.json` で復旧:
 
 1. JSON をテキストエディタで開く
 2. `teams` 配列の中から復元したいチームの `snapshot` を見つける

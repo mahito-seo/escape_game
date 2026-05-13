@@ -18,6 +18,8 @@ function calcScore(forceS){
 
 function gameComplete(){
   gameState='complete';document.exitPointerLock();stopBGM();
+  // 自動バックアップ: ゲームクリアは最重要の節目
+  if(typeof window.adminAutoBackup === 'function') window.adminAutoBackup('game-complete');
   const isExtra=currentCipherStage>=6;
   const sc=calcScore(isExtra); // Extra clear = forced S rank
   const min=~~(sc.elapsed/60),sec=sc.elapsed%60;
