@@ -32,7 +32,11 @@ function uploadProgress(){
   let phase='exploring';
   if(typeof gameState!=='undefined'){
     if(gameState==='battle')phase='battle';
+    // 修理ターミナル中（gameState='cipher' でも repairActive が優先）
     else if(typeof repairActive!=='undefined'&&repairActive)phase='repair';
+    // 金色のコーディングチャレンジ（暗号でも修理でもない）
+    else if(typeof challengeActive!=='undefined'&&challengeActive)phase='challenge';
+    // 暗号ターミナル（緑）の Phase 1（コード入力）or Phase 2（Agent）
     else if(gameState==='cipher')phase=(typeof cipherPhase!=='undefined'&&cipherPhase===2)?'agent':'coding';
     else if(gameState==='complete')phase='complete';
     else if(gameState==='dead')phase='resting';

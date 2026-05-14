@@ -961,7 +961,8 @@ function showRepairHint(){
 // ── Close repair modal ──
 function closeRepairModal(){
   clearInterval(cipherTimerInt);repairActive=false;currentRepair=null;
-  if(typeof uploadProgress==='function')uploadProgress();
+  // 注: uploadProgress() の呼び出しは gameState='playing' を設定した後に
+  //     移動済み（最下部）。ここで呼ぶと「暗号コーディング中」と誤判定される。
   document.getElementById('cipher-modal').classList.remove('open');
   document.getElementById('code-editor-wrap').classList.remove('show');
   document.getElementById('code-output-wrap').classList.remove('show');
@@ -980,6 +981,9 @@ function closeRepairModal(){
   document.getElementById('c-submit').onclick=function(){submitCipherAnswer();};
   document.getElementById('c-input').onkeydown=function(e){if(e.key==='Enter')submitCipherAnswer();};
   gameState='playing';unmuteBGM();
+  // state を 'playing' に戻してから upload する（'cipher' のまま送ると
+  // ダッシュボードが「暗号コーディング中」と誤表示するため）
+  if(typeof uploadProgress==='function')uploadProgress();
   battleCooldown=3;challengeCooldownEnd=Date.now()+3000;
   setTimeout(function(){canvas.requestPointerLock();},350);
 }

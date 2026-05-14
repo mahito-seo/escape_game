@@ -86,9 +86,10 @@ function phaseLabel(t){
   if (t.gameComplete) return '🏆 ゲームクリア';
   if (t.bossActive) return '👹 ボス戦';
   if (t.cipherPhase === 'battle') return '⚔️ クイズバトル中';
-  if (t.cipherPhase === 'repair') return '🔧 修理ターミナル中';
+  if (t.cipherPhase === 'repair') return '🔧 修理コーディング中';
+  if (t.cipherPhase === 'challenge') return '⭐ チャレンジ端末中';
   if (t.cipherPhase === 'agent') return '🤖 Agent 推論中';
-  if (t.cipherPhase === 'coding') return '🐍 暗号コーディング中';
+  if (t.cipherPhase === 'coding') return '🔐 暗号コーディング中';
   if (t.cipherPhase === 'paused') return '⏸ ポーズ';
   if (t.cipherPhase === 'resting') return '☠ 強制休憩';
   if (t.cipherSolved) return '🚪 脱出口へ';
