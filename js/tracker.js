@@ -105,8 +105,11 @@ function openTrackerSettings(){
   }
 }
 
-// 30秒ごとに ping（プレイヤーが何もしていない間も「生きている」を伝える）
-setInterval(function(){if(typeof saveProgress==='function')uploadProgress();},30000);
+// 5秒ごとに ping（プレイヤーが何もしていない間も「生きている」を伝える）
+// — ダッシュボードの 2 秒ポーリングと合わせて、ほぼリアルタイム表示に。
+//   uploadProgress() 自体に 800ms の連投ガードがあるので、saveProgress() の
+//   イベント発火と被っても重複送信にはならない。
+setInterval(function(){if(typeof saveProgress==='function')uploadProgress();},5000);
 
 // タイトル画面のボタンに現在の状態を反映する
 function refreshTrackerBtn(){
