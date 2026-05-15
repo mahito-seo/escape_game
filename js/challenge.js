@@ -37,22 +37,25 @@ function miniPyEval(code){
     js=js
       .replace(/\bTrue\b/g,'true').replace(/\bFalse\b/g,'false').replace(/\bNone\b/g,'null').replace(/^\s*pass\s*$/gm,'')
       .replace(/\band\b/g,'&&').replace(/\bor\b/g,'||').replace(/\bnot\s+/g,'!')
-      .replace(/\blen\((.+?)\)/g,'($1).length')
-      .replace(/\bstr\((.+?)\)/g,'String($1)')
+      // Inner pattern allows one level of nested parens — needed for cases like
+      // sorted(d.keys()), len(s.split()), max(arr.values()). The plain (.+?)
+      // truncates at the first ')' and produces broken JS like sorted(d.keys(].sort(...).
+      .replace(/\blen\(((?:[^()]|\([^()]*\))+?)\)/g,'($1).length')
+      .replace(/\bstr\(((?:[^()]|\([^()]*\))+?)\)/g,'String($1)')
       // int() with optional base argument: int(x, 16) → parseInt(x, 16)
       .replace(/\bint\(([^,()]+(?:\([^)]*\))?[^,]*),\s*(\d+)\)/g,'parseInt($1, $2)')
-      .replace(/\bint\((.+?)\)/g,'parseInt($1)')
-      .replace(/\bfloat\((.+?)\)/g,'parseFloat($1)')
-      .replace(/\bchr\((.+?)\)/g,'String.fromCharCode($1)')
-      .replace(/\bord\((.+?)\)/g,'($1).charCodeAt(0)')
-      .replace(/\babs\((.+?)\)/g,'Math.abs($1)')
+      .replace(/\bint\(((?:[^()]|\([^()]*\))+?)\)/g,'parseInt($1)')
+      .replace(/\bfloat\(((?:[^()]|\([^()]*\))+?)\)/g,'parseFloat($1)')
+      .replace(/\bchr\(((?:[^()]|\([^()]*\))+?)\)/g,'String.fromCharCode($1)')
+      .replace(/\bord\(((?:[^()]|\([^()]*\))+?)\)/g,'($1).charCodeAt(0)')
+      .replace(/\babs\(((?:[^()]|\([^()]*\))+?)\)/g,'Math.abs($1)')
       // max/min: detect single-array form (Python: max([1,2,3])) vs varargs (max(a,b))
       // — Math.max([1,2,3]) returns NaN, so we wrap and spread when given a single array.
-      .replace(/\bmax\((.+?)\)/g,'((__a)=>__a.length===1&&Array.isArray(__a[0])?Math.max.apply(null,__a[0]):Math.max.apply(null,__a))([$1])')
-      .replace(/\bmin\((.+?)\)/g,'((__a)=>__a.length===1&&Array.isArray(__a[0])?Math.min.apply(null,__a[0]):Math.min.apply(null,__a))([$1])')
-      .replace(/\bsum\((.+?)\)/g,'($1).reduce((a,b)=>a+b,0)')
-      .replace(/\bsorted\((.+?),\s*reverse\s*=\s*true\)/gi,'[...$1].sort((a,b)=>b-a)')
-      .replace(/\bsorted\((.+?)\)/g,'[...$1].sort((a,b)=>a>b?1:a<b?-1:0)')
+      .replace(/\bmax\(((?:[^()]|\([^()]*\))+?)\)/g,'((__a)=>__a.length===1&&Array.isArray(__a[0])?Math.max.apply(null,__a[0]):Math.max.apply(null,__a))([$1])')
+      .replace(/\bmin\(((?:[^()]|\([^()]*\))+?)\)/g,'((__a)=>__a.length===1&&Array.isArray(__a[0])?Math.min.apply(null,__a[0]):Math.min.apply(null,__a))([$1])')
+      .replace(/\bsum\(((?:[^()]|\([^()]*\))+?)\)/g,'($1).reduce((a,b)=>a+b,0)')
+      .replace(/\bsorted\(((?:[^()]|\([^()]*\))+?),\s*reverse\s*=\s*true\)/gi,'[...$1].sort((a,b)=>b-a)')
+      .replace(/\bsorted\(((?:[^()]|\([^()]*\))+?)\)/g,'[...$1].sort((a,b)=>a>b?1:a<b?-1:0)')
       // String/list slicing s[a:b] → s.slice(a,b). Run BEFORE range/[::-1] handling.
       .replace(/(\w+)\[([^\[\]:]+):([^\[\]:]+)\]/g,'$1.slice($2,$3)')
       // enumerate(X) → Array.from(X.entries()) (no extra brackets so the list-comp regex doesn't get confused by the inner [])
@@ -73,10 +76,7 @@ function miniPyEval(code){
       .replace(/\.replace\((.+?),\s*(.+?)\)/g,'.split($1).join($2)')
       .replace(/\.split\((.+?)\)/g,'.split($1)')
       // .join() handled via _replaceJoin() below (paren-balanced)
-      .replace(/\.items\(\)/g,'.entries ? Object.entries($0_dict) : []') // partial
-      .replace(/\.values\(\)/g,'.values ? Object.values($0_dict) : []') // partial
-      .replace(/\.keys\(\)/g,'.keys ? Object.keys($0_dict) : []') // partial
-      // dict.values/keys/items
+      // dict.values/keys/items — preserve receiver
       .replace(/(\w+)\.values\(\)/g,'Object.values($1)')
       .replace(/(\w+)\.keys\(\)/g,'Object.keys($1)')
       .replace(/(\w+)\.items\(\)/g,'Object.entries($1)')

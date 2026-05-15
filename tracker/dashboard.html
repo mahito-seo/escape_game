@@ -12,11 +12,15 @@
   button:hover { background: #30363d; }
   button.danger { color: #ff7b72; border-color: #5a2828; }
   table { width: 100%; border-collapse: collapse; }
-  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #30363d; font-size: 13px; }
+  th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid #30363d; font-size: 13px; vertical-align: middle; }
   th { background: #161b22; color: #8b949e; font-weight: 600; letter-spacing: 1px; font-size: 11px; text-transform: uppercase; }
+  tr { transition: transform .35s ease, background .25s ease; }
   tr:hover td { background: #161b22; }
-  .team-name { font-weight: 600; color: #58a6ff; font-size: 14px; }
-  .stage-badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .rank { font-weight: 700; font-size: 18px; text-align: center; width: 60px; color: #6e7681; }
+  .team-name { font-weight: 700; color: #58a6ff; font-size: 20px; letter-spacing: 0.5px; }
+  .ip { font-size: 11px; color: #6e7681; margin-top: 2px; }
+  .score { font-weight: 700; font-size: 18px; color: #ffd955; text-align: center; }
+  .stage-badge { display: inline-block; padding: 3px 11px; border-radius: 10px; font-size: 12px; font-weight: 600; }
   .stage-1 { background: #1f3a1f; color: #7ee787; }
   .stage-2 { background: #1f2f3a; color: #79c0ff; }
   .stage-3 { background: #3a2a1f; color: #ffa657; }
@@ -24,13 +28,23 @@
   .stage-5 { background: #3a1f1f; color: #ffa198; }
   .stage-6 { background: #3a3a1f; color: #ffe58a; }
   .stage-clear { background: #1f3a3a; color: #56d4dd; }
-  .phase { font-size: 11px; color: #8b949e; }
+  .phase { font-size: 12px; color: #aab1bb; }
   .stale { opacity: 0.45; }
-  .progress-bar { background: #21262d; height: 8px; border-radius: 4px; overflow: hidden; min-width: 100px; }
+  .progress-bar { background: #21262d; height: 8px; border-radius: 4px; overflow: hidden; min-width: 110px; }
   .progress-fill { height: 100%; background: linear-gradient(90deg, #238636, #2ea043); transition: width .3s; }
   .empty { text-align: center; color: #6e7681; padding: 40px; font-size: 14px; }
   .updated { font-size: 11px; color: #6e7681; }
   .key { color: #ffa657; font-weight: 600; }
+  /* Top 3 強調 */
+  tr.rank-1 td { background: linear-gradient(90deg, rgba(255,200,0,.15), transparent 60%); border-left: 4px solid #ffcc00; }
+  tr.rank-2 td { background: linear-gradient(90deg, rgba(192,192,192,.13), transparent 60%); border-left: 4px solid #c0c0c0; }
+  tr.rank-3 td { background: linear-gradient(90deg, rgba(205,127,50,.13), transparent 60%); border-left: 4px solid #cd7f32; }
+  tr.rank-1 .rank { color: #ffcc00; font-size: 22px; }
+  tr.rank-2 .rank { color: #c0c0c0; font-size: 20px; }
+  tr.rank-3 .rank { color: #cd7f32; font-size: 20px; }
+  tr.rank-1 .team-name { color: #ffe680; text-shadow: 0 0 8px rgba(255,200,0,.4); }
+  tr.rank-2 .team-name { color: #e0e0e0; }
+  tr.rank-3 .team-name { color: #e6b88a; }
 </style>
 </head>
 <body>
@@ -42,12 +56,14 @@
   <button onclick="exportAll()" style="border-color:#2ea043;color:#7ee787;">📥 全チーム最新状態をダウンロード</button>
   <button class="danger" onclick="resetAll()">🗑️ 全データクリア</button>
 </div>
-<div class="sub" style="margin-top:-8px;">💡 緊急時用: 各行の「📋」でそのチームの復元コマンドをコピーできます</div>
+<div class="sub" style="margin-top:-8px;">💡 順位は <span class="key">Stage × 1000 + 修理 × 200 + Lv × 100 + 撃破 × 5</span> のスコアで決定。順位変動時のみ並び替えます。</div>
 
 <table>
   <thead>
   <tr>
+    <th style="width:60px;">順位</th>
     <th>チーム</th>
+    <th>スコア</th>
     <th>状況</th>
     <th>Stage</th>
     <th>Floor</th>
@@ -64,6 +80,18 @@
 <script>
 const STALE_MS = 60000; // 1分以上更新がないチームは薄く表示
 
+// ─── スコア計算 ───
+// 経過時間は不参加。Stage > 修理 > Level > 撃破 の重み付け。
+function calcScore(t){
+  let s = (t.stage || 1) * 1000;
+  s += (t.repairsSolved || 0) * 200;
+  s += (t.level || 1) * 100;
+  s += (t.kills || 0) * 5;
+  if (t.gameComplete) s += 10000;
+  if (t.bossActive) s += 1000;  // ボス戦中の小ボーナス
+  return s;
+}
+
 function fmtTime(sec){
   if (typeof sec !== 'number') return '—';
   const m = Math.floor(sec/60), s = sec%60;
@@ -78,8 +106,8 @@ function fmtAgo(ts){
   return `${Math.floor(ago/3600)}時間前`;
 }
 function stageLabel(t){
-  if (t.stage >= 6) return ['stage-6','EXTRA'];
   if (t.gameComplete) return ['stage-clear','CLEAR'];
+  if (t.stage >= 6) return ['stage-6','EXTRA'];
   return ['stage-'+(t.stage||1), 'STAGE '+(t.stage||1)];
 }
 function phaseLabel(t){
@@ -96,6 +124,55 @@ function phaseLabel(t){
   if ((t.repairsRemaining||0) > 0) return '🔧 修理中（探索）';
   return '🔍 探索中';
 }
+function rankMedal(idx){
+  if (idx === 0) return '🥇';
+  if (idx === 1) return '🥈';
+  if (idx === 2) return '🥉';
+  return String(idx + 1);
+}
+
+// ─── レンダリング ───
+// 各チームを <tr data-team="..."> として保持し、行 DOM を可能な限り再利用する。
+// 順位が変わった行だけ並び替える（行全体は再生成しない）→ ちらつき防止。
+let prevOrder = [];   // 前回の表示順（teamName[]）
+let rowsByName = {};  // teamName → <tr> 要素
+
+function buildOrUpdateRow(t, rankIdx){
+  const [cls, label] = stageLabel(t);
+  const stale = (Date.now() - (t.serverReceivedAt||0)) > STALE_MS;
+  const repairs = t.totalRepairs ? `${t.repairsSolved||0}/${t.totalRepairs}` : '—';
+  const repairPct = t.totalRepairs ? ((t.repairsSolved||0)/t.totalRepairs*100) : 0;
+  const recoverBtn = t.hasSnapshot
+    ? `<button onclick="copyRecover('${encodeURIComponent(t.teamName)}')" title="復元コマンドをコピー" style="padding:2px 8px;font-size:11px;">📋</button>`
+    : '<span style="color:#6e7681;font-size:11px;">—</span>';
+  const score = calcScore(t);
+
+  let tr = rowsByName[t.teamName];
+  if (!tr){
+    tr = document.createElement('tr');
+    tr.dataset.team = t.teamName;
+    rowsByName[t.teamName] = tr;
+  }
+  // 順位クラスを更新
+  tr.className = (stale?'stale ':'') + (rankIdx<3 ? 'rank-'+(rankIdx+1) : '');
+  tr.innerHTML = `
+    <td class="rank">${rankMedal(rankIdx)}</td>
+    <td>
+      <div class="team-name">${escapeHtml(t.teamName)}</div>
+      <div class="ip">${escapeHtml(t.clientIP||'')}</div>
+    </td>
+    <td class="score">${score.toLocaleString()}</td>
+    <td><span class="phase">${escapeHtml(phaseLabel(t))}</span></td>
+    <td><span class="stage-badge ${cls}">${label}</span></td>
+    <td>${t.floor||1}</td>
+    <td>${t.level||1}</td>
+    <td>${t.kills||0}</td>
+    <td>${repairs} <div class="progress-bar"><div class="progress-fill" style="width:${repairPct}%"></div></div></td>
+    <td>${fmtTime(t.elapsed)}</td>
+    <td class="updated">${fmtAgo(t.serverReceivedAt)} ${recoverBtn}</td>
+  `;
+  return tr;
+}
 
 async function refresh(){
   try {
@@ -105,29 +182,52 @@ async function refresh(){
     document.getElementById('last-fetch').textContent = new Date().toLocaleTimeString('ja-JP');
     const tbody = document.getElementById('tbody');
     if (!data.teams.length) {
-      tbody.innerHTML = '<tr><td class="empty" colspan="9">まだ接続しているチームがありません。<br>ゲームの設定でチーム名とアップロード URL を設定してもらってください。</td></tr>';
+      tbody.innerHTML = '<tr><td class="empty" colspan="11">まだ接続しているチームがありません。<br>ゲームの設定でチーム名とアップロード URL を設定してもらってください。</td></tr>';
+      prevOrder = [];
+      rowsByName = {};
       return;
     }
-    tbody.innerHTML = data.teams.map(t => {
-      const [cls, label] = stageLabel(t);
-      const stale = (Date.now() - (t.serverReceivedAt||0)) > STALE_MS;
-      const repairs = t.totalRepairs ? `${t.repairsSolved||0}/${t.totalRepairs}` : '—';
-      const repairPct = t.totalRepairs ? ((t.repairsSolved||0)/t.totalRepairs*100) : 0;
-      const recoverBtn = t.hasSnapshot
-        ? `<button onclick="copyRecover('${encodeURIComponent(t.teamName)}')" title="復元コマンドをコピー" style="padding:2px 8px;font-size:11px;">📋</button>`
-        : '<span style="color:#6e7681;font-size:11px;">—</span>';
-      return `<tr class="${stale?'stale':''}">
-        <td><div class="team-name">${escapeHtml(t.teamName)}</div><div class="phase">${escapeHtml(t.clientIP||'')}</div></td>
-        <td><span class="phase">${escapeHtml(phaseLabel(t))}</span></td>
-        <td><span class="stage-badge ${cls}">${label}</span></td>
-        <td>${t.floor||1}</td>
-        <td>${t.level||1}</td>
-        <td>${t.kills||0}</td>
-        <td>${repairs} <div class="progress-bar"><div class="progress-fill" style="width:${repairPct}%"></div></div></td>
-        <td>${fmtTime(t.elapsed)}</td>
-        <td class="updated">${fmtAgo(t.serverReceivedAt)} ${recoverBtn}</td>
-      </tr>`;
-    }).join('');
+
+    // ─── スコア順にソート（同点はチーム名昇順で安定化） ───
+    const sorted = data.teams
+      .map(t => ({...t, _score: calcScore(t)}))
+      .sort((a, b) => {
+        if (b._score !== a._score) return b._score - a._score;
+        return a.teamName.localeCompare(b.teamName);  // 同点は名前順で安定
+      });
+    const newOrder = sorted.map(t => t.teamName);
+
+    // ─── 行を構築/更新（DOM を再利用してちらつき防止） ───
+    sorted.forEach((t, idx) => buildOrUpdateRow(t, idx));
+
+    // ─── 順位が変わっていなければ並び替えない ───
+    const orderChanged = (
+      newOrder.length !== prevOrder.length ||
+      newOrder.some((n, i) => n !== prevOrder[i])
+    );
+
+    if (orderChanged) {
+      // 順位変更 → tbody を新しい順序で再構築
+      tbody.innerHTML = '';
+      sorted.forEach(t => tbody.appendChild(rowsByName[t.teamName]));
+      prevOrder = newOrder;
+    } else {
+      // 順位変更なし → 行 DOM は既に更新済み、並び替えだけスキップ
+      // ただし「初回追加」or「チーム消滅」のケースを拾うため、現在の tbody に
+      // 各行が含まれているか確認して足りないものを追加
+      sorted.forEach(t => {
+        if (!rowsByName[t.teamName].parentNode) tbody.appendChild(rowsByName[t.teamName]);
+      });
+    }
+
+    // ─── 古い行を掃除（チームが消えた場合） ───
+    Object.keys(rowsByName).forEach(name => {
+      if (!newOrder.includes(name)){
+        const r = rowsByName[name];
+        if (r.parentNode) r.parentNode.removeChild(r);
+        delete rowsByName[name];
+      }
+    });
   } catch (e) {
     document.getElementById('last-fetch').textContent = '取得エラー: '+e.message;
   }
@@ -140,7 +240,6 @@ async function resetAll(){
   refresh();
 }
 function exportAll(){
-  // ブラウザに直接ダウンロードさせる
   const a = document.createElement('a');
   a.href = '/export-all';
   a.download = '';
@@ -148,7 +247,6 @@ function exportAll(){
   setTimeout(()=>document.body.removeChild(a), 100);
 }
 async function copyRecover(teamNameEnc){
-  // 特定チームの snapshot を取得 → admin.importSave() に渡せるコマンドを生成 → クリップボードへ
   try{
     const res = await fetch('/export-team?name='+teamNameEnc);
     if (!res.ok) { alert('スナップショットが見つかりませんでした'); return; }
