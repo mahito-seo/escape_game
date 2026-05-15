@@ -264,6 +264,7 @@
   .pause-btn { font-family:'Cinzel',serif; font-size:14px; letter-spacing:3px; color:#000; background:linear-gradient(135deg,#88ffaa,#00aa41); border:none; padding:14px 48px; cursor:pointer; border-radius:4px; margin:6px; pointer-events:all; min-width:220px; text-align:center; }
   .pause-btn-save { background:linear-gradient(135deg,#4488ff,#0044aa); color:#fff; }
   .pause-btn-tutorial { background:linear-gradient(135deg,#ffcc44,#aa8800); color:#000; }
+  .pause-btn-reconnect { background:linear-gradient(135deg,#ff9933,#cc6611); color:#fff; }
 
   /* ── Tutorial Screen ── */
   #tutorial-screen { position:fixed; inset:0; background:rgba(0,0,0,.95); display:none; flex-direction:column; align-items:center; justify-content:center; z-index:110; padding:20px; }
@@ -675,8 +676,8 @@ function tutPage(dir){
   <p>ESCキーで再開</p>
   <button class="pause-btn" onclick="togglePause()">▶ 再開</button>
   <button class="pause-btn pause-btn-save" onclick="pauseSave()">💾 セーブ</button>
-  <button class="pause-btn pause-btn-reconnect" onclick="reconnectFromPause()" style="background:linear-gradient(135deg,#ff9933,#cc6611);color:#fff;">🔌 サーバー再接続</button>
   <button class="pause-btn pause-btn-tutorial" onclick="openTutorialFromPause()">📖 遊び方ガイド</button>
+  <button class="pause-btn pause-btn-reconnect" onclick="reconnectFromPause()">🔌 サーバー再接続</button>
   <div id="pause-reconnect-status" style="margin-top:10px;font-size:12px;color:#88cc88;min-height:18px;letter-spacing:1px;"></div>
 </div>
 
