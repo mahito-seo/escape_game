@@ -54,8 +54,10 @@ function miniPyEval(code){
       .replace(/\bmax\(((?:[^()]|\([^()]*\))+?)\)/g,'((__a)=>__a.length===1&&Array.isArray(__a[0])?Math.max.apply(null,__a[0]):Math.max.apply(null,__a))([$1])')
       .replace(/\bmin\(((?:[^()]|\([^()]*\))+?)\)/g,'((__a)=>__a.length===1&&Array.isArray(__a[0])?Math.min.apply(null,__a[0]):Math.min.apply(null,__a))([$1])')
       .replace(/\bsum\(((?:[^()]|\([^()]*\))+?)\)/g,'($1).reduce((a,b)=>a+b,0)')
-      .replace(/\bsorted\(((?:[^()]|\([^()]*\))+?),\s*reverse\s*=\s*true\)/gi,'[...$1].sort((a,b)=>b-a)')
-      .replace(/\bsorted\(((?:[^()]|\([^()]*\))+?)\)/g,'[...$1].sort((a,b)=>a>b?1:a<b?-1:0)')
+      // sorted() — runtime polyfill (see __sorted in prelude) handles lists, strings, and dicts.
+      // Inline regex-based [...x].sort(...) breaks on dicts (objects aren't iterable).
+      .replace(/\bsorted\(((?:[^()]|\([^()]*\))+?),\s*reverse\s*=\s*true\)/gi,'__sorted($1,true)')
+      .replace(/\bsorted\(((?:[^()]|\([^()]*\))+?)\)/g,'__sorted($1)')
       // String/list slicing s[a:b] → s.slice(a,b). Run BEFORE range/[::-1] handling.
       .replace(/(\w+)\[([^\[\]:]+):([^\[\]:]+)\]/g,'$1.slice($2,$3)')
       // enumerate(X) → Array.from(X.entries()) (no extra brackets so the list-comp regex doesn't get confused by the inner [])
@@ -118,6 +120,34 @@ function miniPyEval(code){
     }
     js=_replaceJoin(js,'"');
     js=_replaceJoin(js,"'");
+    // Handle `EXPR[::-1]` where EXPR ends with `)` or `]` (e.g. f(x)[::-1], "".join(a)[::-1])
+    // — the inline (\w+)[::-1] regex above only catches bare identifiers. Walk back paren-balanced.
+    js=(function _replaceSliceReverse(code){
+      var out='',i=0,MARK='[::-1]';
+      while(i<code.length){
+        var idx=code.indexOf(MARK,i);
+        if(idx<0){out+=code.substring(i);break;}
+        if(idx===0||!/[)\]]/.test(code[idx-1])){
+          // not a paren/bracket suffix — leave for the simple \w+ regex (already ran)
+          out+=code.substring(i,idx+MARK.length);i=idx+MARK.length;continue;
+        }
+        // Walk back paren-balanced + name chain to find expression start
+        var j=idx-1,depth=0;
+        while(j>=0){
+          var c=code[j];
+          if(c===')'||c===']'){depth++;j--;continue;}
+          if(c==='('||c==='['){if(depth===0)break;depth--;j--;continue;}
+          if(depth===0&&!/[\w.]/.test(c))break;
+          j--;
+        }
+        var exprStart=j+1;
+        var expr=code.substring(exprStart,idx);
+        out+=code.substring(i,exprStart);
+        out+='(typeof ('+expr+')==="string"?('+expr+').split("").reverse().join(""):Array.from('+expr+').reverse())';
+        i=idx+MARK.length;
+      }
+      return out;
+    })(js);
     // Convert print() — match balanced parens per line
     js=js.split('\n').map(function(ln){
       var m=ln.match(/^(\s*)print\((.+)\)\s*$/);
@@ -132,6 +162,9 @@ function miniPyEval(code){
       '$1for(let $2=$3;$2<$4;$2++){');
     js=js.replace(/^(\s*)for\s+(\w+)\s+in\s+range\((\d+)\)\s*:/gm,
       '$1for(let $2=0;$2<$3;$2++){');
+    // for a, b in iterable: → for(const [a, b] of ...)  (tuple unpacking)
+    // — Run BEFORE the single-var for-loop regex, otherwise `for a, b in x:` is munged.
+    js=js.replace(/^(\s*)for\s+(\w+)\s*,\s*(\w+)\s+in\s+(.+):\s*$/gm,'$1for(const [$2,$3] of $4){');
     // for x in variable: → for(const x of ...)
     // — match up to the LAST `:` on the line so we don't snag colons inside e.g. {length: ...}
     js=js.replace(/^(\s*)for\s+(\w+)\s+in\s+(\w+)\s*:\s*$/gm,'$1for(const $2 of (Array.isArray($3)||typeof $3==="string"?$3:Object.keys($3))){');
@@ -184,7 +217,15 @@ function miniPyEval(code){
       'if(c!==undefined){s=a;e=b;st=c;}else if(b!==undefined){s=a;e=b;}'+
       'var r=[],n=Math.max(0,Math.ceil((e-s)/st));'+
       'for(var __ri=0;__ri<n;__ri++)r.push(s+__ri*st);'+
-      'return r;}\n';
+      'return r;}\n'+
+      // sorted(): Python-like — accepts lists, strings, or dicts (sorts keys).
+      'function __sorted(x,reverse){var a;'+
+      'if(Array.isArray(x))a=x.slice();'+
+      'else if(typeof x==="string")a=x.split("");'+
+      'else if(x&&typeof x==="object")a=Object.keys(x);'+
+      'else a=Array.from(x);'+
+      'a.sort(reverse?function(p,q){return p<q?1:p>q?-1:0;}:function(p,q){return p<q?-1:p>q?1:0;});'+
+      'return a;}\n';
     js=__PRELUDE+js;
 
     const __out=[];
