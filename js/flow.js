@@ -122,6 +122,37 @@ function pauseSave(){
   setTimeout(function(){msg.remove();},2000);
 }
 
+// pause 画面の「🔌 サーバー再接続」ボタンから呼ぶ。
+// 接続が予期せず切れた場合のリカバリー用。
+function reconnectFromPause(){
+  var statusEl=document.getElementById('pause-reconnect-status');
+  if(statusEl)statusEl.textContent='🔄 再接続中...';
+  if(statusEl)statusEl.style.color='#ffcc88';
+  // tracker.js が無効なら何もしない
+  if(typeof window.reconnectTracker!=='function'){
+    if(statusEl){statusEl.textContent='⚠ 接続設定が未登録です（タイトル画面で 📡 進捗共有を設定）';statusEl.style.color='#ffaa44';}
+    return;
+  }
+  // 設定が空ならその旨を伝える
+  try{
+    var cfg=JSON.parse(localStorage.getItem('cipherDungeonTracker')||'{}');
+    if(!cfg.url||!cfg.teamName){
+      if(statusEl){statusEl.textContent='⚠ 設定が未登録です（タイトル画面で 📡 進捗共有を設定）';statusEl.style.color='#ffaa44';}
+      return;
+    }
+  }catch(e){}
+  window.reconnectTracker();
+  // 1.2秒後に成功/失敗を表示
+  setTimeout(function(){
+    var fail=(typeof lastUploadFail!=='undefined')?lastUploadFail:false;
+    if(statusEl){
+      if(fail){statusEl.textContent='❌ 再接続失敗（URL やネットワークを確認）';statusEl.style.color='#ff8844';}
+      else{statusEl.textContent='✅ 再接続成功（直近の状態をサーバーへ送信しました）';statusEl.style.color='#88ffaa';}
+    }
+    setTimeout(function(){if(statusEl)statusEl.textContent='';},4000);
+  },1200);
+}
+
 var tutFromPause=false;
 function openTutorialFromPause(){
   document.getElementById('pause-screen').classList.remove('show');

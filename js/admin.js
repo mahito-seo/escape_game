@@ -95,17 +95,24 @@ function autoDownload(reason){
   if(!isMeaningfulProgress()) return;
   if(Date.now() - lastAutoDownloadAt < 30000) return; // 連投ガード（30秒以内は無視）
   lastAutoDownloadAt = Date.now();
-  try{
-    appendSnapshot('auto-download:'+reason);
-    if(typeof window.admin === 'object' && typeof window.admin.exportLog === 'function'){
-      window.admin.exportLog();
-      if(typeof showMessage === 'function'){
-        showMessage('💾 進捗バックアップを自動ダウンロードしました ('+reason+')', '#88ccff');
-      }
-    }
-  }catch(e){
-    console.warn('auto-download failed:', e);
+  // Windows Chrome ではダウンロード処理が in-flight な fetch を中断する事象あり。
+  // 直前に上り送信を完了させてから少し待ってダウンロードする。
+  try{appendSnapshot('auto-download:'+reason);}catch(e){}
+  if(typeof uploadProgress==='function'){
+    try{uploadProgress(true);}catch(e){}
   }
+  setTimeout(function(){
+    try{
+      if(typeof window.admin === 'object' && typeof window.admin.exportLog === 'function'){
+        window.admin.exportLog();
+        if(typeof showMessage === 'function'){
+          showMessage('💾 進捗バックアップを自動ダウンロードしました ('+reason+')', '#88ccff');
+        }
+      }
+    }catch(e){
+      console.warn('auto-download failed:', e);
+    }
+  }, 1500);  // 1.5秒待ってからダウンロード（uploadProgress を確実に終わらせる）
 }
 
 // 定期バックアップ（無効化中、節目イベントだけが呼ぶ）

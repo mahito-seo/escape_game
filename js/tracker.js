@@ -14,10 +14,11 @@ function setTrackerConfig(cfg){
 
 let lastUploadAt=0;
 let lastUploadFail=false;
-function uploadProgress(){
+let consecutiveFails=0;
+function uploadProgress(force){
   const cfg=trackerConfig();
   if(!cfg.url||!cfg.teamName)return;            // 未設定なら何もしない
-  if(Date.now()-lastUploadAt<800)return;         // 連投防止
+  if(!force && Date.now()-lastUploadAt<800)return;  // 連投防止（force で回避可）
   lastUploadAt=Date.now();
 
   // 進捗オブジェクト構築
@@ -66,16 +67,43 @@ function uploadProgress(){
     clientTime:Date.now(),
     snapshot,
   };
-  try{
-    fetch(cfg.url,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(payload),
-      mode:'cors',
-      keepalive:true,
-    }).then(r=>{lastUploadFail=!r.ok;}).catch(()=>{lastUploadFail=true;});
-  }catch(e){lastUploadFail=true;}
+  // keepalive:true は Windows Chrome で auto-download と相性が悪く、
+  // 連続アップロードがブロックされることがある（64KB 制限 + page lifecycle）。
+  // 通常の fetch にすると安定する。
+  const bodyText = JSON.stringify(payload);
+  function send(attempt){
+    let timedOut=false;
+    const controller=(typeof AbortController!=='undefined')?new AbortController():null;
+    const timer=setTimeout(()=>{timedOut=true;if(controller)controller.abort();},8000);
+    try{
+      fetch(cfg.url,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:bodyText,
+        mode:'cors',
+        cache:'no-store',
+        signal:controller?controller.signal:undefined,
+      }).then(r=>{
+        clearTimeout(timer);
+        if(r.ok){lastUploadFail=false;consecutiveFails=0;}
+        else{lastUploadFail=true;consecutiveFails++;if(attempt<1)setTimeout(()=>send(attempt+1),700);}
+      }).catch(()=>{
+        clearTimeout(timer);
+        lastUploadFail=true;consecutiveFails++;
+        if(attempt<1)setTimeout(()=>send(attempt+1),700);  // 一度だけリトライ
+      });
+    }catch(e){clearTimeout(timer);lastUploadFail=true;consecutiveFails++;}
+  }
+  send(0);
 }
+
+// 手動で「今すぐ再接続」させるための公開関数。
+// pause 画面の「サーバー再接続」ボタンや admin.reconnect() から呼ぶ。
+window.reconnectTracker=function(){
+  consecutiveFails=0;
+  uploadProgress(true);  // force=true で 800ms ガードを無視
+  return '🔌 再接続を実行しました';
+};
 
 // 同一オリジン（tracker サーバー経由でロードされている場合）は URL 自動推定
 function defaultTrackerUrl(){
