@@ -261,7 +261,7 @@
   #pause-screen.show { display:flex; }
   #pause-screen h1 { font-family:'Cinzel Decorative',serif; font-size:48px; color:#88ffaa; text-shadow:0 0 30px rgba(0,255,65,.6); margin-bottom:16px; letter-spacing:6px; }
   #pause-screen p { font-size:16px; color:#66aa88; letter-spacing:3px; margin-bottom:32px; }
-  .pause-btn { font-family:'Cinzel',serif; font-size:14px; letter-spacing:3px; color:#000; background:linear-gradient(135deg,#88ffaa,#00aa41); border:none; padding:14px 48px; cursor:pointer; border-radius:4px; margin:6px; pointer-events:all; min-width:220px; text-align:center; }
+  .pause-btn { font-family:'Cinzel',serif; font-size:14px; letter-spacing:3px; color:#000; background:linear-gradient(135deg,#88ffaa,#00aa41); border:none; padding:14px 0; cursor:pointer; border-radius:4px; margin:6px; pointer-events:all; width:280px; box-sizing:border-box; text-align:center; }
   .pause-btn-save { background:linear-gradient(135deg,#4488ff,#0044aa); color:#fff; }
   .pause-btn-tutorial { background:linear-gradient(135deg,#ffcc44,#aa8800); color:#000; }
   .pause-btn-reconnect { background:linear-gradient(135deg,#ff9933,#cc6611); color:#fff; }
@@ -677,7 +677,7 @@ function tutPage(dir){
   <button class="pause-btn" onclick="togglePause()">▶ 再開</button>
   <button class="pause-btn pause-btn-save" onclick="pauseSave()">💾 セーブ</button>
   <button class="pause-btn pause-btn-tutorial" onclick="openTutorialFromPause()">📖 遊び方ガイド</button>
-  <button class="pause-btn pause-btn-reconnect" onclick="reconnectFromPause()">🔌 サーバー再接続</button>
+  <button class="pause-btn pause-btn-reconnect" onclick="reconnectFromPause()">🔌 再接続</button>
   <div id="pause-reconnect-status" style="margin-top:10px;font-size:12px;color:#88cc88;min-height:18px;letter-spacing:1px;"></div>
 </div>
 
