@@ -72,7 +72,7 @@ function playSound(name){
 const BGM_BASES=['audio/bgm1','audio/bgm2','audio/bgm3','audio/bgm4','audio/bgm5','audio/bgm6'];
 const BGM_VOL=0.15; // master BGM volume
 // Per-floor volume overrides (track-specific tweaks). bgm3 / bgm6 were reported too loud.
-const BGM_VOL_BY_FLOOR={3:0.07,6:0.045};
+const BGM_VOL_BY_FLOOR={3:0.035,6:0.022};
 function bgmVolFor(floorNum){return BGM_VOL_BY_FLOOR[floorNum]!==undefined?BGM_VOL_BY_FLOOR[floorNum]:BGM_VOL;}
 const BGM_VOL_MUTED=0.04; // during battle/cipher
 let bgmAudio=null;

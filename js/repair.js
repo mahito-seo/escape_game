@@ -511,7 +511,7 @@ const REPAIR_CHALLENGES=[
    effectDesc:['','','','ドロップ率 75%！'],
    unlockMsg:'\uD83D\uDC8E ドロップ率がブーストされた！'},
 
-  {id:'scoreCalc',name:'スコア計算を実装せよ',icon:'\uD83C\uDFC6',floor:4,
+  {id:'scoreCalc',name:'スコア計算を実装せよ',icon:'\uD83C\uDFC6',floor:5,
    color:0xffdd44,emissive:0xccaa00,diff:'HARD',xp:120,
    mission:
 '【目的】3 要素の重み付けスコア計算を実装！\n'+
@@ -590,7 +590,7 @@ const REPAIR_CHALLENGES=[
 '\n'+
 '        # ② 半径内ならダメージ計算、半径外なら 0\n'+
 '        if dist <= radius:\n'+
-'            damage = _____   # ← int(base_dmg * (1 - dist/radius))\n'+
+'            damage = _____   # ← base_dmg を「中心からの近さ」で割合化して int に\n'+
 '            results.append(damage)\n'+
 '        else:\n'+
 '            results.append(0)\n'+
@@ -616,7 +616,7 @@ const REPAIR_CHALLENGES=[
    effectDesc:['','','','\uD83C\uDF0B 爆裂火球！着弾時に範囲爆発！'],
    unlockMsg:'\uD83C\uDF0B 火球が「爆裂火球」に進化した！'},
 
-  {id:'lightningEvo',name:'雷撃 → 連鎖雷撃に進化',icon:'\u26A1\u26A1',floor:4,
+  {id:'lightningEvo',name:'雷撃 → 連鎖雷撃に進化',icon:'\u26A1\u26A1',floor:5,
    color:0x4444ff,emissive:0x2222cc,diff:'HARD',xp:120,
    mission:
 '【目的】連鎖ごとに減衰するダメージリストを作る！\n'+
@@ -689,13 +689,13 @@ const REPAIR_CHALLENGES=[
 '    total_healed = 0\n'+
 '    for i in range(turns):\n'+
 '        # ① 今ターンの回復量を計算（max_hp を超える分はカット）\n'+
-'        heal = _____   # ← min(heal_per_turn, max_hp - hp)\n'+
+'        heal = _____   # ← heal_per_turn と「最大HPまでの余裕」のどちらか小さい方\n'+
 '\n'+
 '        # ② 現在HPを増やす\n'+
-'        hp = _____     # ← hp + heal\n'+
+'        hp = _____     # ← 現在HP を heal ぶん増やす\n'+
 '\n'+
 '        # ③ 合計回復量に加算\n'+
-'        total_healed = _____  # ← total_healed + heal\n'+
+'        total_healed = _____  # ← 合計回復量に heal を足し込む\n'+
 '    return total_healed\n'+
 '\n'+
 '# ▼▼▼ テスト（変更禁止！）▼▼▼\n'+
@@ -814,10 +814,28 @@ function openRepairChallenge(rt){
   gameState='cipher';document.exitPointerLock();muteBGM();
   if(typeof uploadProgress==='function')uploadProgress();
   var ch=rt.challenge;
+  // フルスクリーン分割レイアウト + 厨二風アンバーテーマに切り替え
+  document.getElementById('cipher-modal').classList.add('repair-mode');
+  // Phase 2 から閉じた直後など、暗号モーダルが残した display:none を全部復元する。
+  //   これを忘れると修理を開いた時にミッション要件/ヒントが消えたままになる。
+  document.getElementById('cipher-modal').classList.remove('phase2');
+  document.getElementById('cipher-modal').classList.remove('cipher-fs');
+  document.getElementById('secret-reveal').classList.remove('show');
+  document.getElementById('agent-phase').classList.remove('show');
+  document.getElementById('agent-lockout').classList.remove('show');
+  var _phaseEl=document.getElementById('phase1-label');
+  if(_phaseEl){
+    _phaseEl.style.display='';
+    _phaseEl.textContent='⚙ REPAIR_PROTOCOL // 修理プロトコル起動 — '+(ch.diff||'').toUpperCase();
+    _phaseEl.style.color='#ffaa44';
+  }
   document.getElementById('cm-avatar').textContent=ch.icon;
   document.getElementById('cm-name').textContent='\uD83D\uDD27 修理ターミナル';
   document.getElementById('cm-stage-sub').textContent=ch.name+' \u2014 '+ch.diff;
-  document.getElementById('cm-mission').textContent=ch.mission;
+  // ミッション欄を確実に表示状態に戻してから文面を入れる
+  var _missionEl=document.getElementById('cm-mission');
+  _missionEl.style.display='';
+  _missionEl.textContent=ch.mission;
   document.getElementById('cm-data').style.display='none';
   // Hide hint area, show hint button instead
   var hintEl=document.getElementById('cm-hint');
@@ -854,8 +872,8 @@ function openRepairChallenge(rt){
   var closeBtn=document.getElementById('cipher-close-btn');
   closeBtn.style.display='inline-block';
   closeBtn.onclick=closeRepairModal;
-  // Run button
-  document.getElementById('code-run-btn').onclick=function(){
+  // Run button — async so we can await the Pyodide fallback when miniPyEval can't parse the code
+  document.getElementById('code-run-btn').onclick=async function(){
     // Clear stale state from any previous run before evaluating fresh code
     document.getElementById('code-output').textContent='';
     document.getElementById('code-output').style.color='';
@@ -863,7 +881,7 @@ function openRepairChallenge(rt){
     _cr.style.display='none';_cr.className='';
     try{
       var code=getEditorCode();
-      var result=miniPyEval(code);
+      var result=await miniPyEvalSafe(code);
       document.getElementById('code-output-wrap').classList.add('show');
       document.getElementById('code-output').textContent=result||'(\u51FA\u529B\u306A\u3057)';
       if(result.startsWith('Error')){
@@ -912,6 +930,8 @@ function openRepairChallenge(rt){
   el.classList.remove('danger');
   el.textContent='∞';
   document.getElementById('cipher-modal').classList.add('open');
+  // フルスクリーンレイアウト適用後に Ace のサイズを再計算 (display:none → grid 切替対策)
+  setTimeout(function(){ if(typeof aceEditor!=='undefined' && aceEditor && aceEditor.resize) aceEditor.resize(); }, 50);
   // Don't auto-focus editor — user clicks to start typing
 }
 
@@ -963,7 +983,12 @@ function closeRepairModal(){
   clearInterval(cipherTimerInt);repairActive=false;currentRepair=null;
   // 注: uploadProgress() の呼び出しは gameState='playing' を設定した後に
   //     移動済み（最下部）。ここで呼ぶと「暗号コーディング中」と誤判定される。
+  // 修理モーダルのフルスクリーン分割レイアウトを解除 (暗号モーダルでの再利用に備える)
+  document.getElementById('cipher-modal').classList.remove('repair-mode');
   document.getElementById('cipher-modal').classList.remove('open');
+  // Phase ラベルも暗号用に戻す
+  var _phaseEl=document.getElementById('phase1-label');
+  if(_phaseEl){ _phaseEl.textContent='Phase 1 : Python でパスフレーズを解読'; _phaseEl.style.color='#00ff41'; }
   document.getElementById('code-editor-wrap').classList.remove('show');
   document.getElementById('code-output-wrap').classList.remove('show');
   document.getElementById('cm-data').style.display='';
@@ -1076,6 +1101,34 @@ function repairPrereqMet(id){
   if(!req)return true;
   for(var i=0;i<req.length;i++)if((features[req[i]]||0)<=0)return false;
   return true;
+}
+
+// ── DEBUG: clear every repair terminal + the cipher terminal on the current floor ──
+// Returns { repair, repairTotal, cipher } so the caller can show a message.
+function debugClearCurrentFloor(){
+  var n=0, total=repairTerminals.length;
+  for(var i=0;i<repairTerminals.length;i++){
+    var rt=repairTerminals[i];
+    if(rt.solved) continue;
+    // Mark feature at ★★★ so subsequent floors don't re-spawn this challenge
+    if(rt.challenge && rt.challenge.id) features[rt.challenge.id]=3;
+    rt.solved=true;
+    if(rt.mesh) scene.remove(rt.mesh);
+    if(rt.light) scene.remove(rt.light);
+    n++;
+  }
+  saveFeatures();
+  if(typeof updateSkillsHUD==='function') updateSkillsHUD();
+  // Clear the cipher terminal too — unlocks the exit portal so player can walk out.
+  var cipherCleared=false;
+  if(!cipherSolved){
+    cipherSolved=true; cipherCleared=true;
+    if(terminalMesh){ scene.remove(terminalMesh); terminalMesh=null; }
+    if(terminalLight){ scene.remove(terminalLight); terminalLight=null; }
+    if(terminalGlow){  scene.remove(terminalGlow);  terminalGlow=null;  }
+    if(typeof unlockPortal==='function') unlockPortal();
+  }
+  return { repair:n, repairTotal:total, cipher:cipherCleared };
 }
 
 // ── Spawn repair terminals for current floor + carry-over from previous ──

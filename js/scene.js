@@ -104,6 +104,22 @@ function buildScene(){
     if(r.w>4&&r.h>4)placeTorch((r.x+r.w-1)*TILE-.5,(r.y+r.h-1)*TILE-.5);
     // Pillars in larger rooms
     if(r.w>=4&&r.h>=4)spawnRoomPillars(r,theme);
+    // Floor beacon: each room gets a uniquely-colored emissive ring at its center.
+    // Acts as a "landmark" so players can recognize already-visited rooms.
+    var cx=(r.x+r.w/2)*TILE, cz=(r.y+r.h/2)*TILE;
+    var hue=(i*0.137)%1; // golden-ratio hue rotation → maximally distinct
+    var ringColor=new THREE.Color().setHSL(hue,0.7,0.55);
+    var ring=new THREE.Mesh(
+      new THREE.TorusGeometry(0.9,0.08,6,20),
+      new THREE.MeshStandardMaterial({color:ringColor,emissive:ringColor,emissiveIntensity:1.6,transparent:true,opacity:.75})
+    );
+    ring.position.set(cx,0.03,cz); ring.rotation.x=-Math.PI/2; scene.add(ring);
+    // tiny glow pip in the centre
+    var pip=new THREE.Mesh(
+      new THREE.SphereGeometry(0.12,8,8),
+      new THREE.MeshStandardMaterial({color:ringColor,emissive:ringColor,emissiveIntensity:3,transparent:true,opacity:.7})
+    );
+    pip.position.set(cx,0.18,cz); scene.add(pip);
   });
 
   const r0=rooms[0];
@@ -238,13 +254,26 @@ function buildScene(){
   }
   // Pre-spawn repair terminals & decorations so mob spawn can avoid them.
   spawnFloorRepairTerminals(rooms);
+  // ─── アイテムターミナルは廃止 ───
+  // 代わりに「暗号ターミナルを解いた時にアイテムがドロップする」仕様に変更。
+  // 配列だけは念のため初期化（旧コードが参照しても落ちないように）
+  if(typeof itemTerminals!=='undefined') itemTerminals.length=0;
+  if(typeof updateInventoryHUD==='function') updateInventoryHUD();
   for(let i=1;i<rooms.length;i++)spawnDecorations(rooms[i]);
+  // Mob density multiplier — selected on the title screen (easy/normal/hard).
+  // Defaults to 1.0 when not set. EASY halves spawns, HARD ~doubles them.
+  const _mobMult = (typeof window!=='undefined' && typeof window.mobDensityMult==='number') ? window.mobDensityMult : 1.0;
   for(let i=1;i<rooms.length;i++){
     const rm=rooms[i];
     const nearKey=isNearKey(rm);
     // More enemies near terminal/exit
     const baseCnt=nearKey?2+~~(Math.random()*2):1+~~(Math.random()*(floor+1));
-    const cnt=Math.min(baseCnt,nearKey?5:3);
+    const rawCnt=Math.min(baseCnt,nearKey?5:3);
+    // Apply density multiplier. Keep at least 1 mob in key rooms on EASY so the
+    // floor isn't completely empty; non-key rooms can drop to 0.
+    let cnt=Math.round(rawCnt*_mobMult);
+    if(nearKey) cnt=Math.max(1, cnt);
+    else        cnt=Math.max(0, cnt);
     for(let j=0;j<cnt;j++){
       const ti=Math.min(~~(Math.random()*(1+floor*.8)),ETYPES.length-1);
       const t=ETYPES[ti];
@@ -269,6 +298,76 @@ function buildScene(){
       enemies.push({mesh:body,x:ex,z:ez,name:t.name,avatar:t.avatar,diff:t.diff||'easy',hp:~~(t.hp*sc),maxHp:~~(t.hp*sc),atk:~~(t.atk*(1+(floor-1)*.15)),speed:t.spd*spdSc,xp:~~(t.xp*(1+(floor-1)*.1)),xpBonus:t.xpBonus,size:t.sz,state:'idle',attackTimer:0,leg1,leg2,arm1,arm2,legPhase:0,alertTimer:0,inBattle:false,dying:false});
     }
     if(Math.random()<.4)spawnItemInRoom(rm);
+  }
+  // DEBUG MODE: reposition all terminals close to spawn (no-op if debug off)
+  if(typeof applyDebugLayout==='function') applyDebugLayout();
+}
+
+// ═══════════════════════════════════
+//  DEBUG: Move every interactive terminal close to the player spawn.
+//  Cipher terminal / exit / item terminal / repair terminals.
+//  Player spawn is the centre of room 0 (set in buildScene).
+// ═══════════════════════════════════
+function applyDebugLayout(){
+  if(!window.__debugMode) return;
+  var px=player.x, pz=player.z;
+  // Spiral search for open tiles around the player (skip the spawn tile itself)
+  var candidates=[];
+  for(var r=1; r<=8; r++){
+    for(var dx=-r; dx<=r; dx++){
+      for(var dz=-r; dz<=r; dz++){
+        if(Math.abs(dx)!==r && Math.abs(dz)!==r) continue; // ring only
+        var x=px+dx*TILE, z=pz+dz*TILE;
+        if(typeof isWall==='function' && !isWall(x,z)) candidates.push([x,z]);
+      }
+    }
+  }
+  var idx=0;
+  function nextPos(){ return idx<candidates.length ? candidates[idx++] : null; }
+
+  // 1) Cipher terminal
+  if(terminalMesh){
+    var p=nextPos();
+    if(p){
+      terminalX=p[0]; terminalZ=p[1];
+      terminalMesh.position.set(p[0],0,p[1]);
+      if(terminalLight) terminalLight.position.set(p[0],1.5,p[1]);
+      if(terminalGlow)  terminalGlow.position.set(p[0],1.6,p[1]);
+    }
+  }
+  // 2) Exit / stair — also update tile coords so checkStair() works
+  if(stairMesh){
+    var p2=nextPos();
+    if(p2){
+      stairMesh.position.set(p2[0],0,p2[1]);
+      if(stairLight) stairLight.position.set(p2[0],2.5,p2[1]);
+      dungeon.stairX = Math.round(p2[0]/TILE);
+      dungeon.stairY = Math.round(p2[1]/TILE);
+    }
+  }
+  // 3) Item terminal
+  if(typeof itemTerminals!=='undefined'){
+    for(var i=0;i<itemTerminals.length;i++){
+      var it=itemTerminals[i];
+      var p3=nextPos();
+      if(p3){
+        it.x=p3[0]; it.z=p3[1];
+        it.mesh.position.set(p3[0],0,p3[1]);
+        if(it.light) it.light.position.set(p3[0],2.5,p3[1]);
+      }
+    }
+  }
+  // 4) Repair terminals — there can be up to 14 on floor 4-5
+  if(typeof repairTerminals!=='undefined'){
+    for(var j=0;j<repairTerminals.length;j++){
+      var rt=repairTerminals[j];
+      var p4=nextPos();
+      if(p4){
+        rt.x=p4[0]; rt.z=p4[1];
+        rt.mesh.position.set(p4[0],0,p4[1]);
+        if(rt.light) rt.light.position.set(p4[0],1.5,p4[1]);
+      }
+    }
   }
 }
 

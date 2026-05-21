@@ -72,12 +72,27 @@ function startRegen(){
     if(regenTicks>=5){clearInterval(regenTimer);regenTimer=null;}
   },1000);
 }
+var __bossNoEffectMsgAt = 0;
 function updateProjectiles(){
   projectiles=projectiles.filter(p=>{
     p.mesh.position.x+=p.dir.x*p.speed;p.mesh.position.y+=p.dir.y*p.speed;p.mesh.position.z+=p.dir.z*p.speed;
     p.light.position.copy(p.mesh.position);p.traveled+=p.speed;p.mesh.rotation.x+=.1;p.mesh.rotation.y+=.1;
     var pColor=p.type.indexOf('fire')>=0?'#ff6600':'#8888ff';
     if(p.traveled>p.range||isWall(p.mesh.position.x,p.mesh.position.z)){scene.remove(p.mesh,p.light);spawnParticles(p.mesh.position.x,p.mesh.position.z,pColor,20);return false;}
+    // ── ボスに対しては魔法・遠距離攻撃は無効。当たったらメッセージを出して弾消滅 ──
+    if(typeof bossEntity!=='undefined' && bossEntity && !bossEntity.defeated){
+      var bdx=bossEntity.x-p.mesh.position.x, bdz=bossEntity.z-p.mesh.position.z;
+      if(bdx*bdx+bdz*bdz < 9){   // 半径 3 マスくらいで判定
+        spawnParticles(bossEntity.x,bossEntity.z,'#ffaa66',12);
+        // メッセージ連発を防ぐ (1.2 秒に 1 回まで)
+        if(Date.now()-__bossNoEffectMsgAt > 1200){
+          __bossNoEffectMsgAt = Date.now();
+          showMessage('💢 ボスに物理攻撃は効かないようだ…','#ffaa66');
+        }
+        scene.remove(p.mesh,p.light);
+        return false;
+      }
+    }
     for(const e of enemies){
       if(e.hp<=0||e.inBattle)continue;
       const dx=e.x-p.mesh.position.x,dz=e.z-p.mesh.position.z;
@@ -151,7 +166,8 @@ function updateEnemies(dt){
       const triggerDist=0.6+e.size;
       const approachDist=triggerDist+1.2;
       if(dist<approachDist&&!battleActive&&!cipherActive)approachTarget=e;
-      if(dist<triggerDist&&!battleActive&&!cipherActive&&battleCooldown<=0){battleCooldown=2.5;openBattle(e);return;}
+      var cineLock = (typeof cinematicActive!=='undefined'&&cinematicActive) || (typeof cinematicGraceUntil!=='undefined'&&Date.now()<cinematicGraceUntil);
+      if(dist<triggerDist&&!battleActive&&!cipherActive&&battleCooldown<=0&&!cineLock){battleCooldown=2.5;openBattle(e);return;}
     }
   }
 }

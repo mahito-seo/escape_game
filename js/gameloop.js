@@ -57,10 +57,15 @@ function loop(ts){
   camera.rotation.order='YXZ';camera.rotation.y=player.yaw;camera.rotation.x=player.pitch;camera.rotation.z=0;
 
   player.mp=Math.min(player.maxMp,player.mp+dt*1);
-  updateEnemies(dt);updateProjectiles();checkTerminal();checkRepairTerminals();checkBoss();updateBossProjectiles();checkItems();checkStair();updateCDs(dt);
+  updateEnemies(dt);updateProjectiles();checkTerminal();checkRepairTerminals();
+  if(typeof checkItemTerminals==='function')checkItemTerminals();
+  checkBoss();updateBossProjectiles();checkItems();checkStair();updateCDs(dt);
 
   // Animate torches every other frame
-  if(ts%2<1){updateTorches(ts/1000);updateRepairTerminals(ts);}
+  if(ts%2<1){
+    updateTorches(ts/1000);updateRepairTerminals(ts);
+    if(typeof updateItemTerminals==='function')updateItemTerminals(ts);
+  }
 
   // Animate terminal (only if nearby)
   if(terminalMesh&&!cipherSolved){
@@ -199,13 +204,31 @@ document.addEventListener('keydown',e=>{
         }
         return;
       }
-      // Stage 5 clear → normal ending
+      // First press: clear all repair + cipher terminals on the current floor.
+      // Player can then walk to the now-unlocked exit (or press again to skip floor).
+      var __cleared = (typeof debugClearCurrentFloor==='function') ? debugClearCurrentFloor() : null;
+      if(__cleared && (__cleared.repair>0 || __cleared.cipher)){
+        // 暗号もクリアした場合、Floor 1〜5 なら通常進行と同じくアイテム選択画面を出す
+        if(__cleared.cipher && floor>=1 && floor<=5 && !inventory[floor] && typeof openItemPicker==='function'){
+          setTimeout(function(){
+            if(typeof showMessage==='function') showMessage('✨ アイテムが落ちている…','#ffcc66');
+            openItemPicker(floor);
+          }, 600);
+        }
+        showMessage('\u23E9 DEBUG: \u4FEE\u7406 '+__cleared.repair+'/'+__cleared.repairTotal+
+                    ' + \u6697\u53F7 '+(__cleared.cipher?'OK':'\u2014')+' \u3092\u30AF\u30EA\u30A2','#ff00ff');
+        updateHUD();
+        if(typeof updateSkillsHUD==='function')updateSkillsHUD();
+        if(typeof saveProgress==='function')saveProgress();
+        return;
+      }
+      // Stage 5 already done \u2192 ending
       if(currentCipherStage>=4){
         currentCipherStage=5;gameComplete();
         showMessage('\u23E9 DEBUG: \u30AF\u30EA\u30A2','#ff00ff');
         return;
       }
-      // Normal: skip to next floor
+      // Everything cleared \u2192 skip floor
       currentCipherStage++;floor++;cipherSolved=false;escapeCount=0;
       dungeon=genDungeon();buildScene();
       player.hp=player.maxHp;player.mp=player.maxMp;

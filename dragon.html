@@ -65,20 +65,31 @@
 
   /* ── Title ── */
   #title-screen { position:fixed; inset:0; background:radial-gradient(ellipse at center,#001a0a,#000 70%); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:100; transition:opacity 1s; }
-  #title-screen h1 { font-family:'Cinzel Decorative',serif; font-size:clamp(32px,6vw,72px); color:#00ff41; text-shadow:0 0 30px rgba(0,255,65,.8),0 0 60px rgba(0,200,50,.4); letter-spacing:6px; animation:titlePulse 3s ease-in-out infinite; text-align:center; }
+  #title-screen h1 { font-family:'Cinzel Decorative',serif; font-size:clamp(46px,8vw,104px); color:#00ff41; text-shadow:0 0 30px rgba(0,255,65,.8),0 0 60px rgba(0,200,50,.4); letter-spacing:8px; animation:titlePulse 3s ease-in-out infinite; text-align:center; }
   @keyframes titlePulse { 0%,100%{text-shadow:0 0 30px rgba(0,255,65,.8),0 0 60px rgba(0,200,50,.4)} 50%{text-shadow:0 0 50px rgba(0,255,100,1),0 0 100px rgba(0,200,80,.6)} }
-  #title-screen h2 { font-size:clamp(14px,2vw,22px); color:#40a070; letter-spacing:8px; margin-top:8px; text-align:center; }
+  #title-screen h2 { font-size:clamp(20px,2.6vw,30px); color:#40a070; letter-spacing:10px; margin-top:12px; text-align:center; }
+  /* ── Mob density picker on title screen (small, lower position) ── */
+  #mob-density-picker { margin:24px 0 10px; display:flex; flex-direction:column; align-items:center; gap:10px; opacity:1; }
+  .mdp-label { font-family:'Cinzel',serif; font-size:15px; color:#88bbdd; letter-spacing:5px; }
+  .mdp-buttons { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
+  .mdp-btn { background:rgba(20,30,50,.7); border:1px solid #3a5878; border-radius:6px; padding:10px 28px; font-family:'Cinzel',serif; font-size:15px; letter-spacing:3px; color:#aaccee; cursor:pointer; pointer-events:all; transition:all .15s ease; }
+  .mdp-btn:hover { background:rgba(40,60,90,.8); border-color:#5a88bc; color:#bbddff; }
+  .mdp-btn.mdp-active { background:rgba(40,80,140,.85); border-color:#88ccff; color:#fff; box-shadow:0 0 8px rgba(120,180,255,.4); }
+  /* Hidden debug trigger — looks exactly like the rest of the title text */
+  #dbg-trig-n { color:inherit; font:inherit; letter-spacing:inherit; cursor:default; pointer-events:auto; }
+  #dbg-badge { position:fixed; bottom:14px; right:14px; font-family:monospace; font-size:10px; color:#ff44ff; letter-spacing:2px; opacity:.55; pointer-events:none; z-index:9999; text-shadow:0 0 6px rgba(255,80,255,.6); display:none; }
+  #dbg-badge.show { display:block; }
   .title-divider { width:300px; height:1px; background:linear-gradient(90deg,transparent,#00ff41,transparent); margin:30px 0; }
-  #start-btn { font-family:'Cinzel',serif; font-size:16px; letter-spacing:4px; color:#000; background:linear-gradient(135deg,#88ffaa,#00aa41,#88ffaa); border:none; padding:14px 48px; cursor:pointer; border-radius:3px; font-weight:600; box-shadow:0 0 30px rgba(0,200,65,.7); animation:btnGlow 2s ease-in-out infinite; transition:transform .1s; }
+  #start-btn { font-family:'Cinzel',serif; font-size:24px; letter-spacing:6px; color:#000; background:linear-gradient(135deg,#88ffaa,#00aa41,#88ffaa); border:none; padding:22px 72px; cursor:pointer; border-radius:5px; font-weight:600; box-shadow:0 0 30px rgba(0,200,65,.7); animation:btnGlow 2s ease-in-out infinite; transition:transform .1s; margin-top:8px; }
   #start-btn:hover { transform:scale(1.05); }
   @keyframes btnGlow { 0%,100%{box-shadow:0 0 20px rgba(0,200,65,.7)} 50%{box-shadow:0 0 40px rgba(0,255,100,1)} }
-  .title-desc { margin-top:20px; font-size:12px; color:#2a6a3a; letter-spacing:2px; text-align:center; line-height:1.8; }
+  .title-desc { margin-top:28px; font-size:15px; color:#3a8a4a; letter-spacing:3px; text-align:center; line-height:2.0; }
 
   /* ── Overlay ── */
   #overlay-screen { position:fixed; inset:0; background:rgba(0,0,0,0); display:none; flex-direction:column; align-items:center; z-index:50; overflow-y:auto; padding:30px 20px; }
   #overlay-screen.show { display:flex; background:rgba(0,0,0,.85); }
-  #overlay-title { font-family:'Cinzel Decorative',serif; font-size:56px; margin-bottom:16px; }
-  #overlay-sub { font-size:18px; color:#40a070; margin-bottom:32px; letter-spacing:3px; text-align:center; line-height:1.8; }
+  #overlay-title { font-family:'Cinzel Decorative',serif; font-size:72px; margin-bottom:20px; letter-spacing:4px; }
+  #overlay-sub { font-size:22px; color:#40a070; margin-bottom:32px; letter-spacing:3px; text-align:center; line-height:1.8; }
   .overlay-btn { font-family:'Cinzel',serif; font-size:14px; letter-spacing:3px; color:#000; background:linear-gradient(135deg,#88ffaa,#00aa41); border:none; padding:12px 36px; cursor:pointer; border-radius:3px; margin:6px; pointer-events:all; }
   #damage-flash { position:fixed; inset:0; background:rgba(200,0,0,0); pointer-events:none; z-index:20; transition:background .1s; }
   #damage-flash.flash { background:rgba(200,0,0,.3); }
@@ -163,6 +174,238 @@
   #cipher-modal.open { display:flex; animation:modalIn .35s ease; }
 
   .cipher-wrap { width:min(1180px,96vw); background:linear-gradient(160deg,#040a04,#0a120a 60%,#050a08); border:1px solid #00aa41; border-radius:8px; box-shadow:0 0 60px rgba(0,200,65,.35),inset 0 0 40px rgba(0,0,0,.6); overflow:hidden; display:flex; flex-direction:column; max-height:92vh; }
+
+  /* ════════════════════════════════════════════════════════════════
+     コーディングターミナル: フルスクリーン + 左右分割レイアウト
+     ・修理 (.repair-mode) はアンバー基調 / 暗号 (.cipher-fs) はグリーン基調
+     ・左サイド: ミッション要件・ヒント
+     ・右サイド: コードエディタ + 実行結果 + (暗号は入力欄/Phase2 など)
+     ════════════════════════════════════════════════════════════════ */
+  /* ─── 共通: フルスクリーンラップ + グリッドレイアウト ─── */
+  #cipher-modal.repair-mode, #cipher-modal.cipher-fs { background:rgba(0,0,0,.96); }
+  #cipher-modal.repair-mode .cipher-wrap,
+  #cipher-modal.cipher-fs .cipher-wrap {
+    width:99vw; height:98vh; max-width:none; max-height:none;
+    position:relative;
+  }
+  /* スキャンライン演出 (うっすら) */
+  #cipher-modal.repair-mode .cipher-wrap::before,
+  #cipher-modal.cipher-fs .cipher-wrap::before {
+    content:''; position:absolute; inset:0; pointer-events:none; z-index:1;
+    mix-blend-mode:overlay;
+  }
+  /* 本体: グリッドで 2 カラム
+     ・左カラム: phase / mission(伸縮) / hint(自動高さ)
+     ・右カラム: editor が phase+mission+hint の全高
+     ・最下部: output → 入力欄 → result → 機密解析 → Agent の順で全幅に積む */
+  #cipher-modal.repair-mode .cipher-body,
+  #cipher-modal.cipher-fs .cipher-body {
+    display:grid;
+    grid-template-columns:minmax(320px, 0.9fr) 1.4fr;
+    grid-template-rows:auto 1fr auto auto auto auto auto auto;
+    grid-template-areas:
+      "phase    editor"
+      "mission  editor"
+      "hint     editor"
+      "output   output"
+      "input    input"
+      "result   result"
+      "secret   secret"
+      "agent    agent";
+    gap:14px 18px;
+    padding:18px 22px;
+    overflow-y:auto;
+    position:relative; z-index:2;
+  }
+  /* グリッド領域の割当 (どちらのモードでも共通)
+     phase1-label は右の code-editor-header と高さを揃えるため box-sizing + 同等のパディング */
+  #cipher-modal.repair-mode #phase1-label,
+  #cipher-modal.cipher-fs #phase1-label {
+    grid-area:phase;
+    padding:8px 12px;
+    font-family:'Cinzel',serif; letter-spacing:3px;
+    box-sizing:border-box; display:flex; align-items:center;
+    min-height:38px;   /* editor header (padding 8px + 内容) と同じくらい */
+  }
+  #cipher-modal.repair-mode #cm-mission,
+  #cipher-modal.cipher-fs #cm-mission {
+    grid-area:mission; padding:18px 20px; margin:0;
+    font-size:15px; line-height:1.8;
+    overflow-y:auto; max-height:100%;
+    box-shadow:inset 0 0 30px rgba(0,0,0,.5);
+    border-radius:5px;
+  }
+  #cipher-modal.repair-mode #cm-mission::before,
+  #cipher-modal.cipher-fs #cm-mission::before {
+    content:'▣ MISSION_BRIEF'; display:block;
+    font-family:'Source Code Pro',monospace; font-size:10px; letter-spacing:3px;
+    margin-bottom:10px; padding-bottom:6px; border-bottom:1px dashed;
+  }
+  #cipher-modal.repair-mode #cm-hint,
+  #cipher-modal.cipher-fs #cm-hint {
+    grid-area:hint; padding:14px 16px; margin:0;
+    font-size:13px; line-height:1.7;
+    overflow-y:auto; border-radius:5px;
+  }
+  #cipher-modal.repair-mode #cm-hint:not(:empty)::before,
+  #cipher-modal.cipher-fs #cm-hint:not(:empty)::before {
+    content:'▣ HINT'; display:block;
+    font-family:'Source Code Pro',monospace; font-size:10px; letter-spacing:3px;
+    margin-bottom:6px;
+  }
+  /* エディタは .show が付いている時だけ display:flex で表示。
+     Phase2 移行時 (cipher) は .show が外れて元の display:none に戻る */
+  #cipher-modal.repair-mode #code-editor-wrap.show,
+  #cipher-modal.cipher-fs #code-editor-wrap.show {
+    grid-area:editor;
+    display:flex !important; flex-direction:column;
+    margin:0; border-radius:5px; min-height:0;
+  }
+  #cipher-modal.repair-mode .code-editor-header,
+  #cipher-modal.cipher-fs .code-editor-header {
+    padding:8px 14px; min-height:38px; box-sizing:border-box;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  #cipher-modal.repair-mode .code-editor-header span,
+  #cipher-modal.cipher-fs .code-editor-header span {
+    font-family:'Source Code Pro',monospace; font-size:12px; letter-spacing:3px;
+  }
+  #cipher-modal.repair-mode .code-editor-header span::before,
+  #cipher-modal.cipher-fs .code-editor-header span::before { content:'▣ '; }
+  #cipher-modal.repair-mode #code-editor,
+  #cipher-modal.cipher-fs #code-editor { flex:1; height:auto !important; min-height:0; font-size:15px; }
+  #cipher-modal.repair-mode #code-run-btn,
+  #cipher-modal.cipher-fs #code-run-btn {
+    padding:6px 18px; font-size:13px; letter-spacing:2px;
+  }
+  #cipher-modal.repair-mode #code-output-wrap,
+  #cipher-modal.cipher-fs #code-output-wrap {
+    grid-area:output; padding:12px 14px; margin:0;
+    overflow-y:auto; max-height:180px; border-radius:5px;
+  }
+  #cipher-modal.repair-mode .code-output-label::before,
+  #cipher-modal.cipher-fs .code-output-label::before { content:'▣ '; }
+  #cipher-modal.cipher-fs #cm-input-row { grid-area:input; margin:0; }
+  #cipher-modal.repair-mode #c-result,
+  #cipher-modal.cipher-fs #c-result { grid-area:result; margin:0; }
+  #cipher-modal.cipher-fs #secret-reveal { grid-area:secret; margin:0; }
+  #cipher-modal.cipher-fs #agent-phase { grid-area:agent; margin:0; }
+
+  /* Phase 2 (Agent) アクティブ時: エディタやミッション要件を消し、
+     秘密データと Agent ペインを中央に大きく見せる */
+  #cipher-modal.cipher-fs.phase2 .cipher-body {
+    grid-template-columns:minmax(380px, 1fr) minmax(380px, 1fr);
+    grid-template-rows:auto 1fr;
+    grid-template-areas:
+      "secret  agent"
+      "secret  agent";
+    align-items:start;
+    padding:24px 32px;
+  }
+  #cipher-modal.cipher-fs.phase2 #secret-reveal {
+    height:100%; max-height:none; margin:0;
+    overflow-y:auto;
+  }
+  #cipher-modal.cipher-fs.phase2 #agent-phase {
+    height:100%; max-height:none; margin:0; padding:18px 20px;
+    background:rgba(40,15,0,.4); border:1px solid #6a3a10; border-radius:6px;
+    overflow-y:auto;
+  }
+  /* Phase 2 のフォント増量 (フル画面の利点を活かして読みやすく) */
+  #cipher-modal.cipher-fs.phase2 .secret-reveal h4 { font-size:18px; letter-spacing:3px; margin-bottom:14px; }
+  #cipher-modal.cipher-fs.phase2 .secret-reveal-data {
+    font-size:15px; line-height:1.8; padding:16px 18px;
+    max-height:none;
+  }
+  #cipher-modal.cipher-fs.phase2 .encoding-hint-box {
+    font-size:15px; line-height:1.85; padding:16px 18px; margin-bottom:14px;
+  }
+  #cipher-modal.cipher-fs.phase2 .secret-instruction-box {
+    font-size:14px; line-height:1.75; margin-bottom:14px;
+  }
+  #cipher-modal.cipher-fs.phase2 .agent-phase-label {
+    font-size:18px; letter-spacing:3px; margin-bottom:14px;
+  }
+  #cipher-modal.cipher-fs.phase2 .agent-instruction {
+    font-size:16px; line-height:1.85; padding:18px 20px; margin-bottom:16px;
+  }
+  #cipher-modal.cipher-fs.phase2 #agent-input { font-size:17px; padding:14px 16px; }
+  #cipher-modal.cipher-fs.phase2 #agent-submit { font-size:16px; padding:14px 28px; letter-spacing:3px; }
+  #cipher-modal.cipher-fs.phase2 #agent-result { font-size:16px; padding:16px 20px; }
+  #cipher-modal.cipher-fs.phase2 .agent-lockout h4 { font-size:18px; }
+  #cipher-modal.cipher-fs.phase2 .agent-lockout p { font-size:15px; line-height:1.8; }
+  #cipher-modal.cipher-fs.phase2 .agent-lockout .lock-timer { font-size:42px; }
+  #cipher-modal.cipher-fs.phase2 #lockout-question-text { font-size:15px !important; line-height:1.8 !important; }
+  #cipher-modal.cipher-fs.phase2 #agent-continue-btn { font-size:16px !important; padding:12px 28px !important; letter-spacing:3px !important; }
+  /* フッター */
+  #cipher-modal.repair-mode .cipher-footer,
+  #cipher-modal.cipher-fs .cipher-footer { position:relative; z-index:2; }
+
+  /* ─── 修理モード (アンバー基調) ─── */
+  #cipher-modal.repair-mode .cipher-wrap {
+    background:linear-gradient(160deg,#06080c,#040608 60%,#08060a);
+    border:2px solid #ffaa44;
+    box-shadow:0 0 80px rgba(255,170,60,.35),inset 0 0 100px rgba(0,0,0,.85);
+  }
+  #cipher-modal.repair-mode .cipher-wrap::before {
+    background:repeating-linear-gradient(0deg, rgba(255,170,60,.04) 0px, rgba(255,170,60,.04) 1px, transparent 1px, transparent 3px);
+  }
+  #cipher-modal.repair-mode .cipher-header { background:linear-gradient(90deg,#1a0d04,#080404); border-bottom:1px solid #aa6622; }
+  #cipher-modal.repair-mode .cipher-name-big { color:#ffcc66; text-shadow:0 0 18px rgba(255,180,80,.6); letter-spacing:4px; }
+  #cipher-modal.repair-mode .cipher-stage-sub { color:#cc8844; letter-spacing:3px; }
+  #cipher-modal.repair-mode .cipher-avatar { filter:drop-shadow(0 0 14px rgba(255,180,80,.7)); }
+  #cipher-modal.repair-mode #cipher-timer { color:#ffcc66; text-shadow:0 0 18px rgba(255,180,80,.7); }
+  #cipher-modal.repair-mode #phase1-label { color:#ffaa66; border-left:3px solid #ffaa44; }
+  #cipher-modal.repair-mode #cm-mission { background:#0a0604; border:1px solid #6a4422; color:#ffdcb0; }
+  #cipher-modal.repair-mode #cm-mission::before { color:#aa7744; border-bottom-color:#6a4422; }
+  #cipher-modal.repair-mode #cm-hint { background:#0a0a04; border:1px solid #aa8822; color:#ffdd66; }
+  #cipher-modal.repair-mode #cm-hint:not(:empty)::before { color:#ccaa44; }
+  #cipher-modal.repair-mode #code-editor-wrap { border:1px solid #aa6622; background:#080604; }
+  #cipher-modal.repair-mode .code-editor-header { background:linear-gradient(90deg,#1a0d04,#0a0604); border-bottom:1px solid #6a4422; }
+  #cipher-modal.repair-mode .code-editor-header span { color:#ffaa44; }
+  #cipher-modal.repair-mode #code-run-btn { background:linear-gradient(135deg,#cc6600,#883300); border:1px solid #ffaa44; color:#ffd699; }
+  #cipher-modal.repair-mode #code-run-btn:hover { background:linear-gradient(135deg,#ee8822,#aa4400); box-shadow:0 0 12px rgba(255,170,60,.5); }
+  #cipher-modal.repair-mode #code-reset-btn { background:#2a1a0a; border-color:#6a4422; color:#ddbb88; }
+  #cipher-modal.repair-mode #code-output-wrap { background:#080404; border:1px solid #6a3322; }
+  #cipher-modal.repair-mode .code-output-label { color:#ffaa66; }
+  #cipher-modal.repair-mode .cipher-footer { background:#0a0604; border-top:1px solid #6a4422; }
+  #cipher-modal.repair-mode .cipher-footer-hint { color:#aa7744; letter-spacing:2px; }
+  #cipher-modal.repair-mode #cipher-close-btn { background:rgba(80,40,10,.6); border-color:#aa6622; color:#ffcc88; }
+  #cipher-modal.repair-mode #cipher-close-btn:hover { background:rgba(120,60,20,.8); color:#ffeebb; }
+  #cipher-modal.repair-mode #repair-hint-btn {
+    background:rgba(180,120,20,.5) !important; border-color:#cc8822 !important; color:#ffdd88 !important;
+    font-size:13px !important; padding:8px 22px !important;
+  }
+
+  /* ─── 暗号モード (グリーン基調) ─── */
+  #cipher-modal.cipher-fs .cipher-wrap {
+    background:linear-gradient(160deg,#040a06,#020806 60%,#040a04);
+    border:2px solid #00ff41;
+    box-shadow:0 0 80px rgba(0,200,65,.35),inset 0 0 100px rgba(0,0,0,.85);
+  }
+  #cipher-modal.cipher-fs .cipher-wrap::before {
+    background:repeating-linear-gradient(0deg, rgba(0,255,80,.04) 0px, rgba(0,255,80,.04) 1px, transparent 1px, transparent 3px);
+  }
+  #cipher-modal.cipher-fs #phase1-label { color:#88ffaa; border-left:3px solid #00ff41; }
+  #cipher-modal.cipher-fs #cm-mission { background:#040a04; border:1px solid #1a5a2a; color:#c8e8d0; }
+  #cipher-modal.cipher-fs #cm-mission::before { color:#44aa66; border-bottom-color:#1a5a2a; }
+  #cipher-modal.cipher-fs #cm-hint { background:#0a0a04; border:1px solid #aaaa00; color:#dddd44; }
+  #cipher-modal.cipher-fs #cm-hint:not(:empty)::before { color:#ccaa44; }
+  #cipher-modal.cipher-fs #code-editor-wrap { border:1px solid #2a5a2a; background:#020a04; }
+  #cipher-modal.cipher-fs .code-editor-header { background:#0a1a0a; border-bottom:1px solid #1a3a1a; }
+  #cipher-modal.cipher-fs .code-editor-header span { color:#44aa44; }
+  #cipher-modal.cipher-fs #code-output-wrap { background:#0a0505; border:1px solid #3a1a1a; }
+  #cipher-modal.cipher-fs .code-output-label { color:#aa6644; }
+  #cipher-modal.cipher-fs .cipher-footer { background:#040a04; border-top:1px solid #002a10; }
+
+  /* 狭い画面向けに 1 カラムへ */
+  @media (max-width: 900px) {
+    #cipher-modal.repair-mode .cipher-body,
+    #cipher-modal.cipher-fs .cipher-body {
+      grid-template-columns:1fr;
+      grid-template-areas:"phase" "mission" "hint" "editor" "output" "input" "result" "secret" "agent";
+    }
+  }
   .cipher-header { display:flex; align-items:center; justify-content:space-between; padding:14px 24px; background:linear-gradient(90deg,#001a08,#000d04); border-bottom:1px solid #004a20; }
   .cipher-header-info { display:flex; align-items:center; gap:14px; }
   .cipher-avatar { font-size:44px; filter:drop-shadow(0 0 12px rgba(0,255,65,.7)); animation:termFloat 2s ease-in-out infinite; }
@@ -256,6 +499,177 @@
   .mob-banner h2 { font-family:'Cinzel Decorative',serif; font-size:36px; color:#ffdd44; text-shadow:0 0 30px rgba(255,200,0,.8); margin-bottom:8px; }
   .mob-banner p { font-size:18px; color:#ffcc88; letter-spacing:3px; }
 
+  /* ── Inventory HUD (5 slots) ── */
+  #inventory-hud { position:fixed; bottom:88px; right:20px; z-index:10; display:flex; gap:6px; pointer-events:all; }
+  .inv-slot { width:44px; height:44px; background:rgba(20,10,30,.85); border:1px solid #6644aa; border-radius:5px; display:flex; flex-direction:column; align-items:center; justify-content:center; box-shadow:0 0 10px rgba(120,80,200,.3); }
+  .inv-slot.filled { border-color:#aa66ff; box-shadow:0 0 14px rgba(180,100,255,.5); background:rgba(40,20,60,.85); }
+  .inv-slot.robot { width:54px; height:54px; background:radial-gradient(circle, rgba(255,220,120,.35), rgba(60,40,10,.9)); border:2px solid #ffcc44; box-shadow:0 0 22px rgba(255,200,80,.7); animation:robotPulse 2.2s ease-in-out infinite; }
+  @keyframes robotPulse { 0%,100% { box-shadow:0 0 22px rgba(255,200,80,.7); } 50% { box-shadow:0 0 32px rgba(255,220,120,.95); } }
+  .inv-icon { font-size:22px; line-height:1; }
+  .inv-slot.robot .inv-icon { font-size:32px; }
+
+  /* ── Item Picker Modal ── */
+  #item-picker-modal { position:fixed; inset:0; z-index:200; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.92); }
+  #item-picker-modal.open { display:flex; animation:modalIn .35s ease; }
+  .ipm-wrap { width:min(1080px,96vw); max-height:92vh; overflow-y:auto; background:linear-gradient(160deg,#0a0420,#10082a 60%,#080418); border:1px solid #aa66ff; border-radius:8px; box-shadow:0 0 60px rgba(170,100,255,.4),inset 0 0 40px rgba(0,0,0,.6); }
+  .ipm-header { padding:18px 28px; background:linear-gradient(90deg,#1a082a,#080414); border-bottom:1px solid #6644aa; }
+  #ipm-title { font-family:'Cinzel Decorative',serif; font-size:22px; color:#dd99ff; text-shadow:0 0 12px rgba(180,100,255,.6); }
+  #ipm-subtitle { font-size:13px; color:#9988bb; margin-top:6px; letter-spacing:1px; }
+  .ipm-body { padding:20px 28px; }
+  #ipm-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px; }
+  .ipm-card { background:rgba(20,10,40,.7); border:1px solid #6644aa; border-radius:6px; padding:16px; display:flex; flex-direction:column; transition:all .2s ease; }
+  .ipm-card:hover { border-color:#bb88ff; box-shadow:0 0 16px rgba(180,100,255,.5); transform:translateY(-2px); }
+  .ipm-icon { font-size:48px; text-align:center; margin-bottom:8px; }
+  .ipm-name { font-family:'Cinzel',serif; font-size:18px; color:#ddaaff; text-align:center; margin-bottom:4px; letter-spacing:2px; }
+  .ipm-tag { font-size:11px; color:#9966cc; text-align:center; margin-bottom:10px; letter-spacing:1px; }
+  .ipm-desc { font-size:15px; color:#e6d4ff; line-height:1.7; margin-bottom:12px; min-height:56px; text-align:center; padding:6px 4px; }
+  .ipm-passive { font-size:12px; line-height:1.5; color:#ffd66a; background:rgba(60,40,10,.5); border:1px solid #aa8833; border-radius:5px; padding:8px 10px; margin-bottom:10px; letter-spacing:0; font-weight:600; }
+  .ipm-stats { font-size:11px; color:#aa88cc; margin-bottom:14px; }
+  .ipm-stat { display:flex; align-items:center; gap:8px; margin-bottom:3px; }
+  .ipm-stat-l { width:36px; color:#9988bb; }
+  .ipm-stat-v { width:38px; text-align:right; font-family:monospace; font-weight:bold; }
+  .ipm-stat-bar { flex:1; height:5px; background:rgba(40,20,60,.7); border-radius:3px; overflow:hidden; }
+  .ipm-stat-fill { height:100%; border-radius:3px; }
+  .ipm-pick { background:linear-gradient(135deg,#aa66ff,#7744cc); border:1px solid #cc88ff; border-radius:4px; padding:10px; font-family:'Cinzel',serif; font-size:13px; letter-spacing:2px; color:#fff; cursor:pointer; pointer-events:all; }
+  .ipm-pick:hover { background:linear-gradient(135deg,#cc88ff,#8855dd); box-shadow:0 0 12px rgba(200,120,255,.6); }
+  .ipm-footer { margin-top:14px; font-size:11px; color:#886699; text-align:center; letter-spacing:2px; }
+
+  /* ── Big boss-victory banner (full-screen, auto-fades) ── */
+  #boss-victory-banner { position:fixed; inset:0; z-index:300; display:none; align-items:center; justify-content:center; background:radial-gradient(ellipse at center,rgba(255,220,80,.18),rgba(0,0,0,.92) 70%); pointer-events:none; }
+  #boss-victory-banner.show { display:flex; animation:bvbFade 4s ease forwards; }
+  .bvb-inner { text-align:center; }
+  .bvb-emoji { font-size:clamp(80px,12vw,160px); filter:drop-shadow(0 0 40px rgba(255,200,80,.8)); animation:bvbPulse 1.2s ease-in-out infinite; }
+  .bvb-line1 { font-family:'Cinzel Decorative',serif; font-size:clamp(48px,8vw,120px); color:#ffdd44; text-shadow:0 0 30px rgba(255,200,0,.9),0 0 60px rgba(255,150,0,.6); letter-spacing:8px; margin-top:12px; animation:bvbSlideIn .8s cubic-bezier(.2,1.4,.4,1); }
+  .bvb-line2 { font-family:'Cinzel',serif; font-size:clamp(16px,2vw,24px); color:#ffeebb; letter-spacing:4px; margin-top:16px; animation:bvbSlideIn 1.2s cubic-bezier(.2,1.4,.4,1); }
+  @keyframes bvbFade { 0%{opacity:0;} 8%{opacity:1;} 85%{opacity:1;} 100%{opacity:0;} }
+  @keyframes bvbPulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.08);} }
+  @keyframes bvbSlideIn { from{opacity:0;transform:translateY(20px);} to{opacity:1;transform:translateY(0);} }
+
+  /* ── Pre-battle briefing modal ── */
+  #prebattle-modal { position:fixed; inset:0; z-index:210; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.92); }
+  #prebattle-modal.open { display:flex; animation:modalIn .3s ease; }
+  .prb-wrap { width:min(820px,96vw); max-height:92vh; overflow-y:auto; background:linear-gradient(160deg,#1a0a0a,#0a0404 60%); border:2px solid #ff6633; border-radius:8px; box-shadow:0 0 60px rgba(255,100,0,.5); padding:24px 30px; }
+  .prb-title { font-family:'Cinzel Decorative',serif; font-size:22px; color:#ff8844; text-shadow:0 0 18px rgba(255,80,0,.7); letter-spacing:3px; text-align:center; margin-bottom:16px; }
+  .prb-body { font-size:13px; color:#eecc99; line-height:1.7; }
+  .prb-section { margin-bottom:14px; }
+  .prb-h { font-family:'Cinzel',serif; font-size:14px; color:#ffaa55; letter-spacing:2px; margin-bottom:6px; border-bottom:1px solid #6a3a1a; padding-bottom:3px; }
+  .prb-section ul { margin:6px 0 0 20px; }
+  .prb-section li { margin-bottom:3px; }
+  .prb-table { width:100%; border-collapse:collapse; margin-top:4px; font-size:12px; }
+  .prb-table th, .prb-table td { padding:4px 8px; border-bottom:1px solid #4a2a1a; text-align:left; }
+  .prb-table th { color:#ffaa55; }
+  .prb-table code { background:rgba(60,30,10,.6); padding:1px 6px; border-radius:3px; color:#ffcc88; }
+  .prb-body code { background:rgba(60,30,10,.6); padding:1px 5px; border-radius:3px; color:#ffcc88; font-size:11px; }
+  .prb-footer { display:flex; gap:10px; justify-content:flex-end; margin-top:16px; }
+  .prb-btn { padding:10px 22px; font-family:'Cinzel',serif; font-size:13px; letter-spacing:2px; border-radius:5px; cursor:pointer; pointer-events:all; }
+  .prb-btn-cancel { background:rgba(50,30,30,.7); border:1px solid #885544; color:#cc9988; }
+  .prb-btn-go { background:linear-gradient(135deg,#cc4422,#882211); border:1px solid #ff6633; color:#fff; }
+  .prb-btn-go:hover { background:linear-gradient(135deg,#ee5533,#aa3322); box-shadow:0 0 16px rgba(255,80,0,.5); }
+
+  /* ── Robot Arena Modal — turn-by-turn ── */
+  #robot-arena-modal { position:fixed; inset:0; z-index:200; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.95); }
+  #robot-arena-modal.open { display:flex; animation:modalIn .35s ease; }
+  /* ── ターン開始バナー (中央に「Nターン目」がドンと出る) ── */
+  #ram-turn-banner { position:absolute; inset:0; display:none; align-items:center; justify-content:center; pointer-events:none; z-index:10; }
+  #ram-turn-banner.show { display:flex; animation:rtbPop 1.5s ease forwards; }
+  #ram-turn-banner .rtb-inner { text-align:center; transform:scale(.6); }
+  #ram-turn-banner.show .rtb-inner { animation:rtbInner 1.5s ease forwards; }
+  #ram-turn-banner .rtb-num { font-family:'Cinzel Decorative',serif; font-size:clamp(96px,14vw,180px); color:#ffcc44; text-shadow:0 0 28px rgba(255,160,40,.95),0 0 60px rgba(255,100,20,.6); letter-spacing:6px; line-height:1; }
+  #ram-turn-banner .rtb-label { font-family:'Cinzel',serif; font-size:clamp(20px,2vw,32px); color:#ffaa66; letter-spacing:14px; margin-top:8px; text-shadow:0 0 14px rgba(255,140,40,.7); }
+  #ram-turn-banner .rtb-vs { margin-top:22px; display:flex; align-items:center; justify-content:center; gap:18px; font-family:'Cinzel',serif; font-size:clamp(16px,1.6vw,22px); letter-spacing:2px; text-shadow:0 0 10px rgba(0,0,0,.8); }
+  #ram-turn-banner .rtb-you { color:#88ddff; }
+  #ram-turn-banner .rtb-boss { color:#ff9966; }
+  #ram-turn-banner .rtb-vs-sep { color:#cc8866; font-size:clamp(20px,2vw,26px); letter-spacing:0; }
+  #ram-turn-banner .rtb-prefix { font-size:11px; letter-spacing:3px; opacity:.8; display:block; margin-bottom:2px; }
+  @keyframes rtbPop { 0% { background:rgba(0,0,0,0);} 15%{background:rgba(0,0,0,.4);} 80%{background:rgba(0,0,0,.4);} 100%{background:rgba(0,0,0,0);} }
+  @keyframes rtbInner { 0%{transform:scale(.4); opacity:0;} 12%{transform:scale(1.15); opacity:1;} 22%{transform:scale(1);opacity:1;} 78%{transform:scale(1);opacity:1;} 100%{transform:scale(1.05);opacity:0;} }
+  .ram-wrap { width:99vw; height:98vh; max-width:none; max-height:none; background:linear-gradient(160deg,#1a0808,#0a0404 60%,#100404); border:2px solid #ff4422; border-radius:8px; box-shadow:0 0 80px rgba(255,80,0,.4),inset 0 0 60px rgba(0,0,0,.7); display:flex; flex-direction:column; }
+  .ram-header { padding:12px 24px; background:linear-gradient(90deg,#2a0808,#1a0404); border-bottom:1px solid #aa4422; display:flex; align-items:center; justify-content:space-between; }
+  .ram-title { font-family:'Cinzel Decorative',serif; font-size:20px; color:#ff8844; text-shadow:0 0 18px rgba(255,80,0,.7); letter-spacing:3px; }
+  #ram-help-btn { background:rgba(60,30,30,.7); border:1px solid #aa6644; border-radius:4px; padding:5px 12px; font-size:11px; color:#ffcc88; cursor:pointer; pointer-events:all; letter-spacing:1px; }
+  #ram-help-btn:hover { background:rgba(90,40,40,.85); }
+
+  /* HP / Intent area */
+  .ram-hp-area { display:grid; grid-template-columns:1fr 160px 1fr; gap:14px; padding:14px 24px; background:linear-gradient(180deg,rgba(40,15,5,.6),rgba(20,5,0,.6)); border-bottom:1px solid #aa4422; align-items:center; }
+  .ram-side { display:flex; flex-direction:column; gap:4px; }
+  .ram-side-name { font-family:'Cinzel',serif; font-size:14px; letter-spacing:2px; }
+  .ram-side-you .ram-side-name { color:#88ccff; }
+  .ram-side-boss .ram-side-name { color:#ff8888; text-align:right; }
+  .ram-stat-mini { font-size:10px; color:#cce0ff; opacity:.7; letter-spacing:0; }
+  .ram-hpbar { height:14px; background:rgba(20,10,10,.85); border:1px solid #553333; border-radius:7px; overflow:hidden; position:relative; }
+  .ram-hpbar-fill { height:100%; transition:width .45s cubic-bezier(.32,1.4,.46,1); }
+  .ram-hpbar-fill-you { background:linear-gradient(90deg,#44ff88,#22cc66); box-shadow:0 0 8px rgba(80,255,140,.4) inset; }
+  .ram-hpbar-fill-boss { background:linear-gradient(90deg,#ff4444,#aa2222); box-shadow:0 0 8px rgba(255,80,80,.4) inset; float:right; }
+  .ram-side-boss .ram-hpbar { direction:rtl; }
+  .ram-side-boss .ram-hpbar-fill { direction:ltr; float:right; }
+  .ram-hp-num { font-family:'Source Code Pro',monospace; font-size:13px; color:#ffd; letter-spacing:1px; }
+  .ram-side-boss .ram-hp-num { text-align:right; }
+  .ram-enbar { height:7px; background:rgba(20,10,10,.85); border:1px solid #444466; border-radius:4px; overflow:hidden; margin-top:2px; }
+  .ram-enbar-fill { height:100%; background:linear-gradient(90deg,#88aaff,#5577cc); transition:width .3s ease; }
+  .ram-en-num { font-size:11px; color:#aacceeaa; letter-spacing:1px; }
+  .ram-vs { display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .ram-turn { font-family:'Cinzel Decorative',serif; font-size:18px; color:#ffaa44; text-shadow:0 0 10px rgba(255,150,0,.6); letter-spacing:3px; }
+  .ram-intent { color:#ff8866; text-align:center; min-height:36px; background:rgba(60,20,10,.5); border:1px solid #aa4422; border-radius:5px; padding:6px 10px; min-width:160px; line-height:1.3; }
+  .rai-pfx { font-size:11px; color:#cc8866; letter-spacing:1px; margin-bottom:2px; }
+  .rai-act { font-size:15px; color:#ffaa66; font-weight:600; white-space:nowrap; }
+
+  /* Detail stats strip below HP bars */
+  .ram-stat-strip { display:flex; gap:14px; padding:7px 24px; background:rgba(20,8,4,.6); border-bottom:1px solid #6a3a1a; font-size:12px; color:#cca088; flex-wrap:wrap; align-items:center; }
+  .rss-item { display:inline-flex; gap:5px; align-items:baseline; }
+  .rss-key { color:#aa8866; letter-spacing:1px; }
+  .rss-val { color:#ffdd99; font-family:'Source Code Pro',monospace; font-weight:bold; min-width:34px; }
+  .rss-sep { color:#553322; font-size:14px; }
+
+  /* Body / editor / log */
+  .ram-body { display:flex; gap:14px; padding:14px; flex:1; overflow:hidden; position:relative; }
+  .ram-actions { width:210px; flex:none; display:flex; flex-direction:column; gap:7px; overflow-y:auto; padding-right:4px; }
+  .ram-actions-label { font-family:'Cinzel',serif; font-size:11px; color:#cc8866; letter-spacing:2px; padding-bottom:4px; border-bottom:1px solid #6a3a1a; }
+  .ram-action-item { background:rgba(40,15,5,.7); border:1px solid #6a3a1a; border-radius:5px; padding:9px 12px; cursor:pointer; transition:all .15s ease; pointer-events:all; }
+  .ram-action-item:hover { background:rgba(70,30,10,.9); border-color:#aa6644; transform:translateY(-1px); }
+  .ram-action-item:active { transform:translateY(0); }
+  .ram-action-item code { display:block; color:#ffd699; font-family:'Source Code Pro',monospace; font-size:15px; font-weight:bold; letter-spacing:1px; }
+  .ram-action-desc { font-size:12px; color:#ddbb99; line-height:1.45; margin-top:3px; }
+  .ram-action-item.copied { border-color:#88ff88; background:rgba(20,60,20,.7); }
+  .ram-boss-label { color:#ff7766 !important; border-bottom-color:#883322 !important; margin-top:10px; }
+  .ram-action-item.ram-boss-item { background:rgba(40,5,5,.55); border-color:#883322; cursor:default; opacity:.92; }
+  .ram-action-item.ram-boss-item:hover { background:rgba(40,5,5,.55); border-color:#883322; transform:none; }
+  .ram-action-item.ram-boss-item code { color:#ffaa88; }
+  .ram-action-item.ram-boss-item .ram-action-desc { color:#e0a89c; }
+  .ram-actions-hint { font-size:10px; color:#886655; letter-spacing:1px; padding:4px; line-height:1.4; text-align:center; margin-top:auto; }
+  .ram-left { flex:1.1; display:flex; flex-direction:column; gap:10px; min-width:0; }
+  .ram-right { flex:1; display:flex; flex-direction:column; min-width:0; }
+  .ram-confirm-toggle { font-size:11px; color:#cc9977; letter-spacing:1px; display:flex; align-items:center; gap:4px; pointer-events:all; cursor:pointer; user-select:none; }
+  .ram-confirm-toggle input { cursor:pointer; }
+
+  /* ── Action confirmation dialog (inside arena modal) ── */
+  #ram-action-confirm { position:absolute; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.65); z-index:5; }
+  #ram-action-confirm.show { display:flex; animation:racFade .15s ease; }
+  @keyframes racFade { from{opacity:0;} to{opacity:1;} }
+  .rac-card { background:linear-gradient(160deg,#1a0808,#100404 60%); border:2px solid #ff6633; border-radius:10px; padding:24px 32px; min-width:380px; max-width:560px; text-align:center; box-shadow:0 0 40px rgba(255,80,0,.5); }
+  .rac-title { font-family:'Cinzel',serif; font-size:14px; color:#ffaa66; letter-spacing:2px; margin-bottom:12px; }
+  .rac-action-name { font-family:'Source Code Pro',monospace; font-size:32px; color:#ffdd88; font-weight:bold; margin-bottom:6px; text-shadow:0 0 12px rgba(255,200,80,.5); }
+  .rac-action-jp { font-size:14px; color:#eecc99; margin-bottom:14px; letter-spacing:1px; }
+  .rac-warn { font-size:13px; color:#ff8866; margin-bottom:14px; min-height:0; line-height:1.6; }
+  .rac-warn.show { padding:10px; background:rgba(80,30,10,.6); border:1px solid #aa4422; border-radius:5px; min-height:auto; }
+  .rac-buttons { display:flex; gap:10px; justify-content:center; }
+  .ram-editor-wrap { background:rgba(10,5,5,.7); border:1px solid #aa4422; border-radius:5px; padding:10px; display:flex; flex-direction:column; flex:1; min-height:0; }
+  .ram-editor-label { font-size:11px; color:#cc8866; letter-spacing:1px; margin-bottom:6px; }
+  .ram-control-row { display:flex; gap:8px; align-items:center; }
+  .ram-btn { background:linear-gradient(135deg,#cc4422,#882211); border:1px solid #ff6633; border-radius:5px; padding:12px 22px; font-family:'Cinzel',serif; font-size:14px; letter-spacing:2px; color:#fff; cursor:pointer; pointer-events:all; flex:1; }
+  .ram-btn:hover { background:linear-gradient(135deg,#ee5533,#aa3322); box-shadow:0 0 18px rgba(255,80,0,.6); }
+  .ram-btn:disabled { opacity:.6; cursor:wait; }
+  .ram-btn-sub { background:rgba(50,30,20,.7); border:1px solid #885544; border-radius:4px; padding:8px 14px; font-size:12px; color:#cc9977; cursor:pointer; pointer-events:all; letter-spacing:1px; }
+  .ram-btn-sub:hover { background:rgba(70,40,30,.85); color:#ffcc99; }
+  .ram-log-label { font-size:11px; color:#cc8866; letter-spacing:1px; margin-bottom:6px; }
+  #ram-log { flex:1; background:#050202; border:1px solid #aa4422; border-radius:5px; padding:14px 18px; font-family:'Source Code Pro',monospace; font-size:13px; color:#ddcc99; line-height:1.75; overflow-y:auto; white-space:pre-wrap; min-height:0; }
+  .ram-footer { padding:10px 24px; border-top:1px solid #6a2a1a; display:flex; gap:12px; align-items:center; justify-content:space-between; }
+  #ram-result-msg { font-family:'Cinzel',serif; font-size:14px; letter-spacing:2px; color:#ffcc88; }
+
+  /* ── Cinematic Dim Overlay (ロボット組み立て演出) ── */
+  #cinematic-overlay { position:fixed; inset:0; background:radial-gradient(ellipse at center,rgba(40,30,10,.55),rgba(0,0,0,.78) 70%); display:none; z-index:55; pointer-events:all; cursor:default; }
+  #cinematic-overlay.show { display:block; animation:cineFade .6s ease; }
+  @keyframes cineFade { from{opacity:0;} to{opacity:1;} }
+
   /* ── Pause Screen ── */
   #pause-screen { position:fixed; inset:0; background:rgba(0,0,0,.8); display:none; flex-direction:column; align-items:center; justify-content:center; z-index:60; }
   #pause-screen.show { display:flex; }
@@ -292,10 +706,15 @@
     padding:6px 14px; background:#333; color:#ff4444;
     border:1px solid #ff4444; border-radius:4px;
     font-family:'Courier New',monospace; font-size:11px;
-    cursor:pointer; opacity:.5; transition:opacity .2s;
+    cursor:pointer; opacity:.7; transition:opacity .2s;
     z-index:9999; pointer-events:all;
+    display:none;   /* 通常時は表示しない (ポーズ中とオールクリア時のみ) */
   }
   .dev-reset:hover { opacity:1; }
+  /* ポーズ画面表示中は右下に出す */
+  #pause-screen.show ~ .dev-reset { display:block; }
+  /* 全クリ表示中は body にクラスを付けて表示する (JS で制御) */
+  body.all-cleared .dev-reset { display:block; }
 </style>
 </head>
 <body>
@@ -364,15 +783,74 @@
 
 <!-- Title -->
 <div id="title-screen">
-  <h1>CIPHER DUNGEON</h1>
+  <h1>CIPHER DUNGEO<span id="dbg-trig-n">N</span></h1>
   <h2>暗号の迷宮 〜 脱出せよ 〜</h2>
   <div class="title-divider"></div>
   <button id="start-btn" onclick="startGame()">🔓 ENTER THE DUNGEON 🔓</button>
   <p class="title-desc">拠点が攻撃された。全データが暗号ロックされた。<br>地下施設を突破し、5つの暗号を解読して脱出せよ。</p>
-  <button id="tracker-btn" onclick="openTrackerSettings()" style="margin-top:18px;background:rgba(0,40,80,.6);border:1px solid #2868a8;color:#88ccff;padding:8px 22px;font-family:'Cinzel',serif;font-size:12px;letter-spacing:3px;cursor:pointer;border-radius:4px;pointer-events:all;">📡 進捗共有を設定</button>
-  <button id="restore-btn" onclick="document.getElementById('restore-file-input').click()" style="margin-top:10px;background:rgba(80,40,0,.6);border:1px solid #a86828;color:#ffcc88;padding:8px 22px;font-family:'Cinzel',serif;font-size:12px;letter-spacing:3px;cursor:pointer;border-radius:4px;pointer-events:all;">💾 セーブを復元</button>
+  <!-- ── Mob density selector — affects only enemy spawn count, not problem difficulty ── -->
+  <div id="mob-density-picker">
+    <div class="mdp-label">⚔ 敵の出現量</div>
+    <div class="mdp-buttons">
+      <button class="mdp-btn" data-density="easy">🟢 EASY</button>
+      <button class="mdp-btn mdp-active" data-density="normal">🟡 NORMAL</button>
+      <button class="mdp-btn" data-density="hard">🔴 HARD</button>
+    </div>
+  </div>
+  <button id="tracker-btn" onclick="openTrackerSettings()" style="margin-top:24px;background:rgba(0,40,80,.6);border:1px solid #2868a8;color:#88ccff;padding:14px 36px;font-family:'Cinzel',serif;font-size:16px;letter-spacing:4px;cursor:pointer;border-radius:5px;pointer-events:all;">📡 進捗共有を設定</button>
+  <button id="restore-btn" onclick="document.getElementById('restore-file-input').click()" style="margin-top:14px;background:rgba(80,40,0,.6);border:1px solid #a86828;color:#ffcc88;padding:14px 36px;font-family:'Cinzel',serif;font-size:16px;letter-spacing:4px;cursor:pointer;border-radius:5px;pointer-events:all;">💾 セーブを復元</button>
   <input id="restore-file-input" type="file" accept=".json,application/json" style="display:none" onchange="restoreFromFile(event)">
 </div>
+<div id="dbg-badge">🐛 DEBUG MODE</div>
+<script>
+// ── Hidden debug trigger: click the last "N" of CIPHER DUNGEON 5 times within 2s ──
+(function(){
+  var clicks=0,last=0;
+  function init(){
+    var n=document.getElementById('dbg-trig-n');
+    if(!n) return;
+    n.addEventListener('click', function(e){
+      e.stopPropagation();
+      var now=Date.now();
+      if(now-last>2000) clicks=0;
+      clicks++; last=now;
+      if(clicks>=5){
+        clicks=0;
+        window.__debugMode = !window.__debugMode;
+        var b=document.getElementById('dbg-badge');
+        if(b) b.classList.toggle('show', !!window.__debugMode);
+      }
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+
+// ── Mob density picker: easy / normal / hard ──
+// Affects only the *number* of enemies spawned per room (multiplier in scene.js).
+// Quiz/repair/cipher difficulty itself is unchanged.
+(function(){
+  var MULT = { easy:0.5, normal:1.0, hard:1.75 };
+  function apply(d){
+    if(!(d in MULT)) d='normal';
+    window.mobDensity = d;
+    window.mobDensityMult = MULT[d];
+    try{ localStorage.setItem('mobDensity', d); }catch(e){}
+    var btns=document.querySelectorAll('#mob-density-picker .mdp-btn');
+    btns.forEach(function(b){ b.classList.toggle('mdp-active', b.getAttribute('data-density')===d); });
+  }
+  function init(){
+    var saved='normal';
+    try{ saved=localStorage.getItem('mobDensity')||'normal'; }catch(e){}
+    apply(saved);
+    document.querySelectorAll('#mob-density-picker .mdp-btn').forEach(function(b){
+      b.addEventListener('click', function(){ apply(b.getAttribute('data-density')); });
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+</script>
 
 <!-- Tutorial (paged) -->
 <div id="tutorial-screen">
@@ -421,7 +899,9 @@
         <h3>🎮 操作方法</h3>
         <p><span class="key">W</span> 前進　<span class="key">S</span> 後退　<span class="key">A</span> 右移動　<span class="key">D</span> 左移動<br>
         <span class="key">マウス</span> 視点移動　<span class="key">←→</span> 左右を見る　<span class="key">↑↓</span> 上下を見る<br>
-        <span class="key">R</span> 視点リセット　<span class="key">ESC</span> ポーズ</p>
+        <span class="key">R</span> 視点リセット　<span class="key">ESC</span> ポーズ／再開<br>
+        <span style="color:#88ffaa;font-size:12px;">💡 <b>ESC</b> を押すといつでもポーズできます。<br>
+        ポーズ画面の「📖 遊び方ガイドを読む」でこの説明書をいつでも見直せます。</span></p>
       </div>
       <div class="tutorial-section">
         <h3>⚡ スキル <span style="color:#ff4444;font-size:12px;">※最初は使用不可！修理が必要</span></h3>
@@ -480,9 +960,9 @@
       <div class="tutorial-section">
         <h3>🏆 スコア（RANK S〜E）</h3>
         <p>クリア時にスコアとランクが表示される。<br><br>
-        ・タイムスコア（30分以内で満点）<br>
-        ・戦闘XPスコア（レベル×35 + 撃破数×8）<br>
-        ・連続正解ボーナス<br><br>
+        ・タイムスコア（<b>120分以内で満点 400pts</b>、150分まで 300、180分まで 200、240分まで 200→50、それ以降 50）<br>
+        ・戦闘XPスコア（レベル×35 + 撃破数×8、<b>上限なし</b>）<br>
+        ・連続正解ボーナス（連続正解×12、上限 250）<br><br>
         <span style="color:#888;">S(750+) / A(600+) / B(450+) / C(300+) / D(150+) / E</span></p>
       </div>
     </div>
@@ -670,14 +1150,21 @@ function tutPage(dir){
   </div>
 </div>
 
+<!-- Cinematic Dim Overlay (ロボット組み立て演出) -->
+<div id="cinematic-overlay"></div>
+
 <!-- Pause Screen -->
 <div id="pause-screen">
   <h1>⏸ PAUSE</h1>
-  <p>ESCキーで再開</p>
+  <p>ESC キーでいつでもポーズ／再開できます</p>
   <button class="pause-btn" onclick="togglePause()">▶ 再開</button>
   <button class="pause-btn pause-btn-save" onclick="pauseSave()">💾 セーブ</button>
-  <button class="pause-btn pause-btn-tutorial" onclick="openTutorialFromPause()">📖 遊び方ガイド</button>
+  <button class="pause-btn pause-btn-tutorial" onclick="openTutorialFromPause()">📖 遊び方ガイドを読む</button>
   <button class="pause-btn pause-btn-reconnect" onclick="reconnectFromPause()">🔌 再接続</button>
+  <div style="margin-top:14px;font-size:11px;color:#88aa88;letter-spacing:1.5px;line-height:1.7;text-align:center;max-width:520px;">
+    💡 操作: <b>WASD</b> 移動 / <b>マウス</b>視点 / <b>2-5</b> スキル<br>
+    📖 「遊び方ガイド」は最初のチュートリアルと同じ内容を再表示できます
+  </div>
   <div id="pause-reconnect-status" style="margin-top:10px;font-size:12px;color:#88cc88;min-height:18px;letter-spacing:1px;"></div>
 </div>
 
@@ -687,6 +1174,234 @@ function tutPage(dir){
   <div class="mob-driver" id="mob-driver">Player 1</div>
   <div class="mob-countdown" id="mob-countdown">5:00</div>
   <div class="mob-next" id="mob-next">次: Player 2</div>
+</div>
+
+<!-- Inventory HUD (5 slots, fills up as items are collected) -->
+<div id="inventory-hud" title="Floor 1〜5 で集めたアイテム"></div>
+
+<!-- Item Picker Modal -->
+<div id="item-picker-modal">
+  <div class="ipm-wrap">
+    <div class="ipm-header">
+      <div class="ipm-title-row">
+        <div id="ipm-title">アイテムを選ぼう</div>
+        <div id="ipm-subtitle">説明文</div>
+      </div>
+    </div>
+    <div class="ipm-body">
+      <div id="ipm-grid"></div>
+      <div class="ipm-footer">📦 1 度選ぶと取り消せません！</div>
+    </div>
+  </div>
+</div>
+
+<!-- Robot Arena Modal (Extra Stage boss battle) -->
+<!-- ── Big victory banner (auto-closes the arena) ── -->
+<div id="boss-victory-banner">
+  <div class="bvb-inner">
+    <div class="bvb-emoji">🏆</div>
+    <div class="bvb-line1">ボス撃破！</div>
+    <div class="bvb-line2">フェニックスガーディアン を倒した！</div>
+  </div>
+</div>
+
+<!-- ── Pre-battle briefing modal ── -->
+<div id="prebattle-modal">
+  <div class="prb-wrap">
+    <div class="prb-title" id="prb-title-text">⚔ バトル説明</div>
+    <div class="prb-body">
+      <div class="prb-section">
+        <div class="prb-h">🎯 ゴール</div>
+        <div>あなたが Floor 1〜5 で集めた 5 つのパーツで組み上げたロボットに <b>Python でターンごとの行動を指示</b>し、ボスを撃破せよ。</div>
+      </div>
+      <div class="prb-section">
+        <div class="prb-h">⚙ ルール</div>
+        <ul>
+          <li><b>ターン制</b>: 自分のロボット → ボス の順で 1 ターンずつ行動</li>
+          <li>ボスの行動はランダム（attack / heavy / charge / heal / shield）。<b>バッチ 1 ターン目</b>だけ画面上部に予告が出る。<b>2-3 ターン目はランダム</b>なので、それも踏まえた対策をコードに入れておこう。コードからは <code>state["boss_action"]</code> でそのターンの行動を読める</li>
+          <li>「▶ 実行」を 1 回押すと <b>3 ターン分</b> まとめて進行する。エディタの <code>robot_action(state)</code> はターンごとに呼ばれる</li>
+          <li>ターン間でコードを書き換えてもよい（リアクティブな戦略 OK）</li>
+        </ul>
+      </div>
+      <div class="prb-section">
+        <div class="prb-h">🤖 ロボットの選べる行動</div>
+        <table class="prb-table">
+          <tr><th>行動</th><th>効果</th><th>エネルギー</th></tr>
+          <tr><td><code>"attack"</code></td><td>通常攻撃。<b>エネルギー消費なし</b>で毎ターン打てる安定型。ダメージは中くらい（ボスの防御で減らされる）</td><td>0</td></tr>
+          <tr><td><code>"ranged"</code></td><td>遠距離射撃。<b>攻撃の +50% くらい</b>の高ダメージだがエネルギーを消費。「ライフル」装備ならコスト大幅減</td><td>10</td></tr>
+          <tr><td><code>"defend"</code></td><td>防御態勢（被ダメ大幅減）</td><td>0</td></tr>
+          <tr><td><code>"dodge"</code></td><td>回避（速度依存で成功）</td><td>0</td></tr>
+          <tr><td><code>"special"</code></td><td>必殺技（<b>3 ターンのクールタイム</b>・装備で効果変化）</td><td>20</td></tr>
+          <tr><td><code>"charge"</code></td><td>エネルギー回復・攻撃なし</td><td>—</td></tr>
+        </table>
+        <div style="margin-top:6px;color:#88ccff;">💡 <code>attack</code> はノーコストで継続火力、<code>ranged</code> はエネルギーを払って一発で大きく削る — 局面で使い分けよう。<br>
+        💡 必殺技は強力だが <b>3 ターンのクールタイム</b>。連発不可。<br>
+        💡 必殺ばかり狙うとボスが <b>shield / charge</b> を多用してくる（適応 AI）。</div>
+      </div>
+      <div class="prb-section">
+        <div class="prb-h">⭐ 装備の特殊効果で戦闘が変わる</div>
+        <div>5 つの装備それぞれに <b>戦闘中ずっと効く特殊効果</b>（重装フレームなら全被ダメ -3、高速ホイールならチャージ時のエネルギー回復が増えるなど）が付いている。アイテム選択時に表示される ⭐ 行がそれ。組み合わせで戦い方が大きく変わるので、装備に合わせて戦法を考えよう。</div>
+      </div>
+      <div class="prb-section">
+        <div class="prb-h">👹 ボスの行動</div>
+        <table class="prb-table">
+          <tr><th>boss_action</th><th>挙動</th></tr>
+          <tr><td><code>"attack"</code></td><td>通常攻撃</td></tr>
+          <tr><td><code>"heavy"</code></td><td>大攻撃（ダメージ大）</td></tr>
+          <tr><td><code>"charge"</code></td><td>力を溜める（次ターンに heavy が来やすい）</td></tr>
+          <tr><td><code>"heal"</code></td><td>自己回復</td></tr>
+          <tr><td><code>"shield"</code></td><td>防御（こちらの攻撃が半減）</td></tr>
+        </table>
+        <div style="margin-top:6px;color:#88aacc;">💡 ヒント: ボスが <code>charge</code> したら次は <code>heavy</code> が来やすい → <code>defend</code> や <code>dodge</code> が安全。</div>
+      </div>
+    </div>
+    <div class="prb-footer">
+      <button id="prb-cancel" class="prb-btn prb-btn-cancel">後で（離れる）</button>
+      <button id="prb-start" class="prb-btn prb-btn-go">🤖 戦闘を始める →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Main robot arena: turn-by-turn battle ── -->
+<div id="robot-arena-modal">
+  <div class="ram-wrap">
+    <!-- ターン開始バナー (1 ターン進む直前に「Nターン目」+ 両者の行動を中央にドンと出す) -->
+    <div id="ram-turn-banner"><div class="rtb-inner">
+      <div class="rtb-num" id="rtb-num">1</div>
+      <div class="rtb-label">ターン目</div>
+      <div class="rtb-vs">
+        <div class="rtb-you"><span class="rtb-prefix">🤖 ロボット</span><span id="rtb-you-act">—</span></div>
+        <span class="rtb-vs-sep">VS</span>
+        <div class="rtb-boss"><span class="rtb-prefix">👹 ボス</span><span id="rtb-boss-act">—</span></div>
+      </div>
+    </div></div>
+    <div class="ram-header">
+      <div class="ram-title">🤖 ROBOT ARENA — フェニックスガーディアン</div>
+      <button id="ram-help-btn" title="ルールを再表示">❓ ルールを見る</button>
+    </div>
+    <!-- HP bars and intent indicator (Pokemon-style) -->
+    <div class="ram-hp-area">
+      <div class="ram-side ram-side-you">
+        <div class="ram-side-name" id="ram-you-name">🤖 ロボット <span class="ram-stat-mini" id="ram-stat-mini"></span></div>
+        <div class="ram-hpbar"><div class="ram-hpbar-fill ram-hpbar-fill-you" id="ram-you-hp-fill"></div></div>
+        <div class="ram-hp-num"><span id="ram-you-hp">0</span> / <span id="ram-you-maxhp">0</span></div>
+        <div class="ram-enbar"><div class="ram-enbar-fill" id="ram-you-en-fill"></div></div>
+        <div class="ram-en-num">⚡ エネルギー <span id="ram-you-en">0</span>/<span id="ram-you-maxen">0</span></div>
+      </div>
+      <div class="ram-vs">
+        <div class="ram-turn" id="ram-turn">TURN 0</div>
+        <div class="ram-intent" id="ram-intent">👹 ?</div>
+      </div>
+      <div class="ram-side ram-side-boss">
+        <div class="ram-side-name">👹 フェニックスガーディアン</div>
+        <div class="ram-hpbar"><div class="ram-hpbar-fill ram-hpbar-fill-boss" id="ram-boss-hp-fill"></div></div>
+        <div class="ram-hp-num"><span id="ram-boss-hp">0</span> / <span id="ram-boss-maxhp">0</span></div>
+      </div>
+    </div>
+
+    <!-- ── 詳細ステータス (回避率・クリティカル率・必殺のクールタイム など) ── -->
+    <div class="ram-stat-strip" id="ram-stat-strip">
+      <span class="rss-item"><span class="rss-key">⚔ 攻撃力</span><span class="rss-val" id="rss-atk">--</span></span>
+      <span class="rss-item"><span class="rss-key">🛡 防御力</span><span class="rss-val" id="rss-def">--</span></span>
+      <span class="rss-item"><span class="rss-key">⚡ 速さ</span><span class="rss-val" id="rss-spd">--</span></span>
+      <span class="rss-sep">|</span>
+      <span class="rss-item"><span class="rss-key">💨 回避率</span><span class="rss-val" id="rss-dodge">--</span></span>
+      <span class="rss-item" id="rss-crit-wrap"><span class="rss-key">✨ クリティカル率</span><span class="rss-val" id="rss-crit">--</span></span>
+      <span class="rss-item" id="rss-dr-wrap"><span class="rss-key">🛡 被ダメージ軽減</span><span class="rss-val" id="rss-dr">--</span></span>
+      <span class="rss-sep">|</span>
+      <span class="rss-item"><span class="rss-key">💥 必殺のクールタイム</span><span class="rss-val" id="rss-cd">--</span></span>
+      <span class="rss-item" id="rss-burn-wrap"><span class="rss-key">🔥 ボス燃焼</span><span class="rss-val" id="rss-burn">--</span></span>
+    </div>
+    <!-- Body: editor + log -->
+    <div class="ram-body">
+      <!-- ── ロボット行動 (クリックでクリップボード) ＋ ボス行動の参照表 ── -->
+      <div class="ram-actions">
+        <div class="ram-actions-label">🤖 ロボットの行動</div>
+        <div class="ram-action-item" data-action="attack">
+          <code>"attack"</code>
+          <div class="ram-action-desc">通常攻撃<br>コストなし<br>中ダメージ</div>
+        </div>
+        <div class="ram-action-item" data-action="ranged">
+          <code>"ranged"</code>
+          <div class="ram-action-desc">遠距離射撃<br>エネルギー -10<br>大ダメージ</div>
+        </div>
+        <div class="ram-action-item" data-action="defend">
+          <code>"defend"</code>
+          <div class="ram-action-desc">防御態勢<br>被ダメ大幅減</div>
+        </div>
+        <div class="ram-action-item" data-action="dodge">
+          <code>"dodge"</code>
+          <div class="ram-action-desc">回避<br>速さ依存で成功</div>
+        </div>
+        <div class="ram-action-item" data-action="special">
+          <code>"special"</code>
+          <div class="ram-action-desc">必殺技<br>エネルギー -20<br>クールタイム 3 ターン</div>
+        </div>
+        <div class="ram-action-item" data-action="charge">
+          <code>"charge"</code>
+          <div class="ram-action-desc">エネルギー回復<br>攻撃なし</div>
+        </div>
+        <div class="ram-actions-hint">💡 クリックで<br>クリップボードへ</div>
+
+        <!-- ── ボスの行動リファレンス（表示専用）── -->
+        <div class="ram-actions-label ram-boss-label">👹 ボスの行動</div>
+        <div class="ram-action-item ram-boss-item">
+          <code>"attack"</code>
+          <div class="ram-action-desc">通常攻撃</div>
+        </div>
+        <div class="ram-action-item ram-boss-item">
+          <code>"heavy"</code>
+          <div class="ram-action-desc">大攻撃<br>ダメージ大</div>
+        </div>
+        <div class="ram-action-item ram-boss-item">
+          <code>"charge"</code>
+          <div class="ram-action-desc">力を溜める<br>次は大攻撃が<br>来やすい</div>
+        </div>
+        <div class="ram-action-item ram-boss-item">
+          <code>"heal"</code>
+          <div class="ram-action-desc">自己回復<br>体力が戻る</div>
+        </div>
+        <div class="ram-action-item ram-boss-item">
+          <code>"shield"</code>
+          <div class="ram-action-desc">シールド展開<br>こちらの攻撃<br>半減</div>
+        </div>
+      </div>
+      <div class="ram-left">
+        <div class="ram-editor-wrap">
+          <div class="ram-editor-label">📝 <code>robot_action(state)</code> ターンごとに書き換えてOK</div>
+          <div id="robot-code-editor" style="flex:1;min-height:380px;"></div>
+        </div>
+        <div class="ram-control-row">
+          <button id="ram-reset-code" class="ram-btn-sub">↺ 初期コード</button>
+          <label class="ram-confirm-toggle"><input type="checkbox" id="ram-skip-confirm"> 確認をスキップ</label>
+          <button id="ram-step" class="ram-btn">▶ 実行（1 ターン進む）</button>
+        </div>
+      </div>
+      <div class="ram-right">
+        <div class="ram-log-label">📜 戦闘ログ</div>
+        <div id="ram-log"></div>
+      </div>
+    </div>
+
+    <!-- ── アクション確認ダイアログ ── -->
+    <div id="ram-action-confirm">
+      <div class="rac-card">
+        <div class="rac-title">🤖 ロボットの次の行動</div>
+        <div class="rac-action-name" id="rac-action-name">"???"</div>
+        <div class="rac-action-jp"   id="rac-action-jp">説明</div>
+        <div class="rac-warn"        id="rac-warn"></div>
+        <div class="rac-buttons">
+          <button id="rac-cancel" class="ram-btn-sub">✏ コードを直す</button>
+          <button id="rac-go"     class="ram-btn">▶ そのまま実行</button>
+        </div>
+      </div>
+    </div>
+    <div class="ram-footer">
+      <span id="ram-result-msg"></span>
+      <button id="ram-close" class="ram-btn-sub" style="display:none;">閉じる</button>
+      <button id="ram-restart" class="ram-btn-sub" style="display:none;">▶ もう一度</button>
+    </div>
+  </div>
 </div>
 
 <button class="dev-reset" onclick="resetToTitle()">🏠 RESET</button>
@@ -699,6 +1414,8 @@ function tutPage(dir){
 <script src="js/stages.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/repair.js"></script>
+<script src="js/items.js"></script>
+<script src="js/itemTerminal.js"></script>
 <script src="js/themes.js"></script>
 <script src="js/dungeon.js"></script>
 <script src="js/scene.js"></script>
@@ -708,6 +1425,7 @@ function tutPage(dir){
 <script src="js/battle.js"></script>
 <script src="js/cipher.js"></script>
 <script src="js/boss.js"></script>
+<script src="js/robotBattle.js"></script>
 <script src="js/score.js"></script>
 <script src="js/death.js"></script>
 <script src="js/sound.js"></script>
@@ -717,6 +1435,42 @@ function tutPage(dir){
 <script src="js/admin.js"></script>
 
 <!-- IGNORE BELOW: preserved inline for reference -->
+<script>
+// ── Pyodide lazy-loader ──
+// miniPyEval (regex-based) で扱えない構文（f-string / try-except / 想定外の慣用句など）
+// が来たときの保険として、ブラウザ上で動く実 CPython (Pyodide) を遅延ロードする。
+// 初回ロードは 5〜30 秒（10MB）。一度ロードすればブラウザがキャッシュする。
+window._pyodideLoadPromise = null;
+window.loadPyodideLazy = function(){
+  if(window._pyodideLoadPromise) return window._pyodideLoadPromise;
+  window._pyodideLoadPromise = (async function(){
+    var ind = document.createElement('div');
+    ind.id = '_pyodide-loading';
+    ind.style.cssText = 'position:fixed;top:14px;right:14px;background:rgba(0,0,0,.88);color:#88ffaa;padding:10px 16px;border:1px solid #00aa41;border-radius:6px;font:13px monospace;z-index:9999;letter-spacing:1px;max-width:380px;box-shadow:0 0 16px rgba(0,255,65,.3);';
+    ind.textContent = '🐍 Python ランタイム読込中… 初回のみ 10〜30 秒';
+    document.body.appendChild(ind);
+    try{
+      await new Promise(function(resolve, reject){
+        var s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js';
+        s.onload = resolve; s.onerror = reject;
+        document.head.appendChild(s);
+      });
+      var py = await loadPyodide({indexURL:'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/'});
+      window.pyodideRuntime = py;
+      ind.textContent = '✅ Python ランタイム準備完了';
+      setTimeout(function(){ if(ind.parentNode) ind.remove(); }, 2000);
+      return py;
+    }catch(e){
+      ind.textContent = '⚠ Python ランタイム読込失敗（ネットワーク確認）';
+      ind.style.color = '#ff8888'; ind.style.borderColor = '#aa4444';
+      setTimeout(function(){ if(ind.parentNode) ind.remove(); }, 6000);
+      throw e;
+    }
+  })();
+  return window._pyodideLoadPromise;
+};
+</script>
 <script>var _INLINE_DISABLED=true;</script>
 <script type="text/disabled">
 // === util.js ===
@@ -987,7 +1741,7 @@ const camera=new THREE.PerspectiveCamera(75,W/H,.1,100);
 const TILE=4,MAP_W=28,MAP_H=28;
 let gameState='title';
 let player=mkPlayer();
-function mkPlayer(){return{x:0,z:0,yaw:0,pitch:0,hp:200,maxHp:200,mp:100,maxMp:100,level:6,xp:0,xpNext:760,kills:0,attackPower:62,defense:15,speed:.035,skills:[{name:'火球',cd:0,maxCd:3,cost:15},{name:'雷撃',cd:0,maxCd:5,cost:25},{name:'回復',cd:0,maxCd:8,cost:20}]};} // DEBUG: Lv6 start (TODO: revert to Lv1)
+function mkPlayer(){return{x:0,z:0,yaw:0,pitch:0,hp:200,maxHp:200,mp:100,maxMp:100,level:6,xp:0,xpNext:760,kills:0,attackPower:62,defense:15,speed:.035,skills:[{name:'火球',cd:0,maxCd:5,cost:24},{name:'雷撃',cd:0,maxCd:8,cost:40},{name:'回復',cd:0,maxCd:10,cost:26}]};} // DEBUG: Lv6 start (TODO: revert to Lv1)
 
 let keys={},mouse={dx:0,dy:0},pointerLocked=false;
 let floor=1,dungeon=null;
@@ -3123,9 +3877,10 @@ function gameComplete(){
       `SHADOW NETWORKの全データを奪還し、<br>`+
       `攻撃者の痕跡を突き止めた。<br><br>`+
       `<span style="color:#ff8800;">君は真のエージェントだ。</span></span>`;
-    document.getElementById('overlay-btn').textContent='もう一度挑戦する';
-    document.getElementById('overlay-btn').style.display='inline-block';
-    document.getElementById('overlay-btn').onclick=restartGame;
+    // エクストラ全クリア時は再チャレンジ動線を切る (押すとスコア消えるため)。
+    // 代わりに右下の小さな RESET だけ出して、明示操作のときだけタイトルへ戻れるようにする。
+    document.getElementById('overlay-btn').style.display='none';
+    document.body.classList.add('all-cleared');
   }else{
     // NORMAL ENDING
     playSound('fanfare');

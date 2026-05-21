@@ -10,6 +10,8 @@
 
 > **スキル威力**: 攻撃力・火炎・雷撃・回復は ★数 が威力倍率に直接効く（[0, 1×, 1.5×, 2×]）。他の機能はバイナリ（出るか出ないか）。
 
+> **UI**: 修理ターミナルは **フル画面 + 左右分割レイアウト**（アンバー基調のハッカー風）。左に要件 + ヒント、右にエディタ + 実行結果。エディタは要件と高さが揃って下まで伸びる。
+
 ---
 
 ## 出現条件（Gating）
@@ -228,7 +230,7 @@ def calc_level(total_xp, base_threshold):
 
 ---
 
-## FLOOR 4 — メタ機能・進化
+## FLOOR 4 — メタ機能・進化（前半）
 
 ### 10. 💎 itemDrop（get_drop_item）— HARD / XP 100
 
@@ -253,7 +255,11 @@ def get_drop_item(roll):
 
 ---
 
-### 11. 🏆 scoreCalc（calc_score）— HARD / XP 120
+## FLOOR 5 — メタ機能・進化（後半）
+
+> Floor 5 はラスボス前のさびしいエリアにならないよう、`scoreCalc` と `lightningEvo` をここに配置している（前提条件 `skillLightning` は Floor 3 で取得が必要）。
+
+### 11. 🏆 scoreCalc（calc_score）— HARD / XP 120 — **Floor 5**
 
 | | |
 |---|---|
@@ -302,7 +308,7 @@ def calc_explosion(enemies, center_x, center_y, radius, base_dmg):
 
 ---
 
-### 13. ⚡⚡ lightningEvo（calc_chain）— HARD / XP 120
+### 13. ⚡⚡ lightningEvo（calc_chain）— HARD / XP 120 — **Floor 5**
 
 | | |
 |---|---|
@@ -367,12 +373,12 @@ def calc_regen(hp, max_hp, heal_per_turn, turns):
 | 8 | skillLightning | calc_lightning | **3** | HARD | `max(リスト)` + bonus |
 | 9 | levelUp | calc_level | **3** | HARD | `while` + 1.5倍 |
 | 10 | itemDrop | get_drop_item | **4** | HARD | `if/elif/else` |
-| 11 | scoreCalc | calc_score | **4** | HARD | 重み付き和 |
+| 11 | scoreCalc | calc_score | **5** | HARD | 重み付き和 |
 | 12 | fireEvo | calc_explosion | **4** | HARD | 距離公式 + 範囲 |
-| 13 | lightningEvo | calc_chain | **4** | HARD | 等比減衰 |
+| 13 | lightningEvo | calc_chain | **5** | HARD | 等比減衰 |
 | 14 | healEvo | calc_regen | **4** | HARD | `min` + 累積 |
 
-> 配置: Floor 1=3 / Floor 2=3 / Floor 3=3 / Floor 4=5。Floor 4 は進化系 3 つを含むので少し多め。
+> 配置: Floor 1=3 / Floor 2=3 / Floor 3=3 / Floor 4=3 / Floor 5=2。Floor 5 をラスボス前の最終調整エリアにするため `scoreCalc` と `lightningEvo` をここに移動。
 
 ---
 

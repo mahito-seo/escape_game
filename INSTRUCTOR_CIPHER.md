@@ -96,8 +96,8 @@ ID:A006 NAME:WOLF    STATUS:ACTIVE  SECTOR:S12
 table = {6: "R", 4: "H", 2: "I", 1: "C", 5: "E", 3: "P"}
 
 result = ""
-for n in range(_____, _____):       # ← 開始番号と終了番号
-    result += table[_____]          # ← 辞書を何で引く？
+for n in range(_____, _____):       # ← 開始番号と終了番号を入れる
+    result += _____                 # ← table から n 番目の値を取り出す
 print(result)
 ```
 
@@ -105,7 +105,7 @@ print(result)
 |---|---|
 | 1つめ | `1` |
 | 2つめ | `7`（range は終了値を含まないので +1） |
-| 3つめ | `n` |
+| 3つめ | `table[n]`（dict をキーで引く構文を丸ごと書かせる） |
 | 出力（パスフレーズ） | **`CIPHER`** |
 
 > 検算: table[1]=C, [2]=I, [3]=P, [4]=H, [5]=E, [6]=R → CIPHER
@@ -142,27 +142,40 @@ RjEyOlNIWEhCWE46U0VCRkc6TlBHVklS
 
 ## Stage 3 — 溶岩の回廊：優先度マップ ★★★☆☆
 
-### Phase 1: Python コーディング（辞書 + sorted + keys）
+### Phase 1: Python コーディング（sorted + .items() + リスト内包 + `"".join`）
 
 **テンプレート（3 つの空欄を埋める）**
 ```python
-# 文字→番号 の辞書。番号の小さい順に文字を並べると DELTA になる
+# 番号→文字 の辞書。番号の小さい順に文字を並べると DELTA になる
 table = {3: "L", 5: "A", 1: "D", 4: "T", 2: "E"}
 
-result = _____                        # ← 空文字列で初期化
-for k in sorted(table._____()):       # ← 辞書のキー一覧を取るメソッド
-    result += table[_____]            # ← ループ変数で値を取り出す
+# 1) 辞書を「(キー, 値) のペアのリスト」に変換し、昇順ソート
+pairs = sorted(table._____())              # ← 辞書を「ペアのリスト」に変換するメソッド
+
+# 2) 各ペアから「値（=文字）」を取り出してリスト化（リスト内包表記）
+chars = [pair[_____] for pair in pairs]    # ← (キー, 値) のうち「値」のインデックス
+
+# 3) chars リストを 1 つの文字列に連結（区切り文字なし）
+result = _____.join(chars)                 # ← 連結の区切り（空白なし）
+
 print(result)
 ```
 
 | 空欄 | 答え |
 |---|---|
-| 1つめ | `""` |
-| 2つめ | `keys` |
-| 3つめ | `k` |
+| 1つめ | `items` |
+| 2つめ | `1` |
+| 3つめ | `""` |
 | 出力（パスフレーズ） | **`DELTA`** |
 
-> 検算: sorted(keys) = [1,2,3,4,5] → D, E, L, T, A → DELTA
+> 検算: sorted(items) = [(1,"D"),(2,"E"),(3,"L"),(4,"T"),(5,"A")] → 各 pair[1] = "D","E","L","T","A" → `"".join(...)` → DELTA
+>
+> **設計変更メモ**: Stage 1・2 で既出だった `result += ...` / `table[ループ変数]` を一切使わず、
+> **タプルインデックス `pair[1]`**・**リスト内包**・**`"".join(list)`** という新しい慣用句を導入。
+> ヒントには **使わない候補（ダミー）** を混ぜて、順番で機械的に埋められないようにしています。
+
+**別解も通る**: 旧来の `for k in sorted(table.keys()): result += table[k]` でも DELTA。
+miniPyEval はリスト内包・タプルインデックス・`"".join(...)`・`.items()` をすべてサポート済み。
 
 ### Phase 2: Agent 機密情報C
 
@@ -253,27 +266,47 @@ P1-2:ALPHA-7
 
 ### Phase 1: Python コーディング
 
-**テンプレート（3 つの空欄）**
+**テンプレート（6 つの空欄、シフト＋剰余暗号）**
 ```python
-# data の各値を A 起点のアルファベットに変換して、最後に逆順にする
-# 0 → A, 6 → G, 4 → E, 12 → M, 14 → O   (n + 65 が ASCII コード)
-data = [0, 6, 4, 12, 14]
+# シフト + 剰余の合成暗号を解読せよ
+# 暗号化: orig_idx + key → encrypted （位置ごとに違う鍵）
+# 復号:   (enc - key) % 26 → orig_idx → alphabet[orig_idx]
+encrypted = [17, 19, 5, 15, 5]
+keys      = [3, 7, 1, 9, 5]
+alphabet  = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-result = ""
-for n in data:
-    result = result + _____(n _____ 65)   # ← 関数名 / 算術演算子
-
-result = result[_____]   # ← 逆順スライス
+result = _____                                  # ← 1) 空文字列で初期化
+for i, enc in _____(encrypted):                 # ← 2) (index, 値) を同時に列挙する組み込み関数
+    k = keys[_____]                             # ← 3) どの位置の鍵を取り出す？
+    orig = (enc _____ k) _____ 26               # ← 4) シフトを戻す演算子 / 5) アルファベット長で剰余
+    result _____ alphabet[orig]                 # ← 6) result に文字を追加する複合代入
 print(result)
 ```
 
 | 空欄 | 答え |
 |---|---|
-| 1つめ | `chr` |
-| 2つめ | `+` |
-| 3つめ | `::-1` |
-| 中間結果 | `"AGEMO"` |
+| 1つめ | `""` |
+| 2つめ | `enumerate` |
+| 3つめ | `i` |
+| 4つめ | `-` |
+| 5つめ | `%` |
+| 6つめ | `+=` |
+
+**各位置の復号トレース**
+| i | enc | key | `(enc - key) % 26` | alphabet[idx] |
+|---|---|---|---|---|
+| 0 | 17 | 3 | 14 | `O` |
+| 1 | 19 | 7 | 12 | `M` |
+| 2 | 5 | 1 | 4 | `E` |
+| 3 | 15 | 9 | 6 | `G` |
+| 4 | 5 | 5 | 0 | `A` |
+
 | 出力（パスフレーズ） | **`OMEGA`** |
+|---|---|
+
+> **設計意図**: Stage 1〜2・EXTRA で繰り返し出てきた `chr()` 縛りから離れ、`enumerate` + タプルアンパック + 剰余演算子 (`%`) + 複合代入 (`+=`) の組合せに変更。Pythonic な慣用句と暗号学の基礎概念（modular shift）を同時に確認できます。
+>
+> **別解も通る**: `for i in range(len(encrypted))` / `for e, k in zip(encrypted, keys)` / `"".join([alphabet[(e-k)%26] for e,k in zip(encrypted,keys)])` などのバリエーションも全部正解として通します（miniPyEval は `enumerate`/`zip`/`range`/リスト内包をすべてサポート済み）。
 
 ### Phase 2: Agent 機密情報E
 

@@ -9,6 +9,8 @@ const MAX_AGENT_WRONG=3, LOCKOUT_SEC=300;
 function openCipherModal(){
   if(cipherActive||cipherSolved||battleActive)return;
   cipherActive=true;gameState='cipher';document.exitPointerLock();cipherPhase=1;muteBGM();
+  // フルスクリーン分割レイアウト + グリーン基調テーマに切り替え
+  document.getElementById('cipher-modal').classList.add('cipher-fs');
   const s=CIPHER_STAGES[currentCipherStage];
   document.getElementById('cm-avatar').textContent=s.avatar;
   document.getElementById('cm-name').textContent='暗号ターミナル';
@@ -29,7 +31,7 @@ function openCipherModal(){
     document.getElementById('code-output-wrap').classList.remove('show');
     document.getElementById('code-run-btn').onclick=async()=>{
       try{
-        const result=miniPyEval(getEditorCode());
+        const result=await miniPyEvalSafe(getEditorCode());
         document.getElementById('code-output-wrap').classList.add('show');
         document.getElementById('code-output').textContent=result||'(出力なし)';
         if(result.startsWith('Error')){
@@ -72,6 +74,8 @@ function openCipherModal(){
   document.getElementById('agent-lockout').classList.remove('show');
   cipherWrongCount=0;
   document.getElementById('cipher-modal').classList.add('open');
+  // フルスクリーンレイアウト適用後に Ace のサイズを再計算
+  setTimeout(function(){ if(typeof aceEditor!=='undefined' && aceEditor && aceEditor.resize) aceEditor.resize(); }, 50);
   startCipherTimer();
   // Phase1 を一度通過していれば、コーディングをスキップして Agent から再開
   if(cipherPhase1Solved){
@@ -93,6 +97,8 @@ function enterAgentPhase(s){
   document.getElementById('c-result').style.display='none';
   document.getElementById('c-input').disabled=true;
   document.getElementById('c-submit').disabled=true;
+  // フルスクリーンレイアウトを Phase 2 用 (secret + agent の 2 カラム) に切替
+  document.getElementById('cipher-modal').classList.add('phase2');
   // Show secret + agent phase
   document.getElementById('secret-title').textContent=s.secretTitle;
   document.getElementById('encoding-hint').textContent=s.encodingHint||'';
@@ -287,6 +293,16 @@ function agentComplete(){
   // Normal stages: open portal
   unlockPortal();playSound('clear');
   showMessage('\u8131\u51FA\u53E3\u304C\u958B\u653E\u3055\u308C\u305F\uFF01\u5149\u306E\u67F1\u3078\u5411\u304B\u3048\uFF01','#44ffaa');
+  // \u2500\u2500 Floor 1\u301C5 \u306E\u30AF\u30EA\u30A2\u5831\u916C\u3068\u3057\u3066\u3001\u672A\u53D6\u5F97\u306A\u3089 1 \u3064\u30A2\u30A4\u30C6\u30E0\u3092\u9078\u3070\u305B\u308B \u2500\u2500
+  if(floor>=1 && floor<=5 && !inventory[floor] && typeof openItemPicker==='function'){
+    // \u30B9\u30C6\u30FC\u30B8\u30AF\u30EA\u30A2\u30D0\u30CA\u30FC\u304C\u6D88\u3048\u308B\u9803\u306B\u51FA\u3059\uFF08\u6F14\u51FA\u306E\u91CD\u8907\u3092\u907F\u3051\u308B\uFF09
+    setTimeout(function(){
+      if(typeof showMessage==='function'){
+        showMessage('\u2728 \u30A2\u30A4\u30C6\u30E0\u304C\u843D\u3061\u3066\u3044\u308B\u2026','#ffcc66');
+      }
+      openItemPicker(floor);
+    }, 1600);
+  }
 }
 
 function cipherTimeOut(){
@@ -368,6 +384,8 @@ function closeCipherModal(){
   // after the puzzle was already solved, triggering a spurious 休憩 overlay.
   stopCipherTimer();
   cipherActive=false;cipherPhase=1;
+  document.getElementById('cipher-modal').classList.remove('cipher-fs');
+  document.getElementById('cipher-modal').classList.remove('phase2');
   document.getElementById('cipher-modal').classList.remove('open');
   document.getElementById('code-editor-wrap').classList.remove('show');
   document.getElementById('code-output-wrap').classList.remove('show');

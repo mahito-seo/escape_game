@@ -6,6 +6,7 @@ function saveProgress(){
   const data={floor,currentCipherStage,cipherSolved,player:{level:player.level,xp:player.xp,xpNext:player.xpNext,hp:player.hp,maxHp:player.maxHp,mp:player.mp,maxMp:player.maxMp,kills:player.kills,attackPower:player.attackPower,defense:player.defense},totalStreak,startTime};
   localStorage.setItem('cipherDungeonSave',JSON.stringify(data));
   saveFeatures();
+  if(typeof saveInventory==='function')saveInventory();
   // ピギーバック: 進捗トラッカーが設定されていればアップロード（失敗しても無視）
   if(typeof uploadProgress==='function')uploadProgress();
 }
@@ -24,8 +25,13 @@ function loadProgress(){
       player.attackPower=d.player.attackPower||22;player.defense=d.player.defense||5;
     }
     loadFeatures();
+    if(typeof loadInventory==='function')loadInventory();
+    if(typeof updateInventoryHUD==='function')updateInventoryHUD();
     return true;
   }catch(e){return false;}
 }
-function clearSave(){localStorage.removeItem('cipherDungeonSave');clearFeatures();}
+function clearSave(){
+  localStorage.removeItem('cipherDungeonSave');clearFeatures();
+  if(typeof clearInventory==='function')clearInventory();
+}
 

@@ -64,6 +64,12 @@
   .stage-5 { background: #3a1f1f; color: #ffa198; }
   .stage-6 { background: #3a3a1f; color: #ffe58a; }
   .stage-clear { background: #1f3a3a; color: #56d4dd; }
+  /* Mode badges (mob density picked on title screen) */
+  .mode-badge { display:inline-block; padding:3px 9px; border-radius:10px; font-size:11px; font-weight:700; letter-spacing:1px; margin-right:4px; }
+  .mode-easy   { background:#1a3a1a; color:#7ee787; border:1px solid #44aa44; }
+  .mode-normal { background:#3a3a1a; color:#ffd66a; border:1px solid #aaaa44; }
+  .mode-hard   { background:#3a1a1a; color:#ff8888; border:1px solid #aa4444; }
+  .mode-debug  { background:#2a1a3a; color:#dd99ff; border:1px solid #8844aa; }
   .phase { font-size: 14px; color: #c9d1d9; }
   .num { font-size: 20px; font-weight: 700; text-align: center; color: #e6edf3; }
   .stale { opacity: 0.45; }
@@ -98,6 +104,7 @@
   <tr>
     <th style="width:60px;">順位</th>
     <th>チーム</th>
+    <th>モード</th>
     <th>スコア</th>
     <th>状況</th>
     <th>Stage</th>
@@ -168,6 +175,20 @@ function rankBadge(idx){
   return `<span class="rank-num">${n}</span>`;
 }
 
+function modeBadge(t){
+  // タイトル画面で選んだ敵の出現量モード + デバッグモード
+  const d = (t.mobDensity || 'normal').toLowerCase();
+  const map = {
+    easy:   {label:'🟢 EASY',   cls:'mode-easy'},
+    normal: {label:'🟡 NORMAL', cls:'mode-normal'},
+    hard:   {label:'🔴 HARD',   cls:'mode-hard'},
+  };
+  const m = map[d] || map.normal;
+  let badge = `<span class="mode-badge ${m.cls}">${m.label}</span>`;
+  if (t.debugMode) badge += ` <span class="mode-badge mode-debug" title="デバッグモード（隠しコマンドで起動）">🐛 DEBUG</span>`;
+  return badge;
+}
+
 // ─── レンダリング ───
 // 各チームを <tr data-team="..."> として保持し、行 DOM を可能な限り再利用する。
 // 順位が変わった行だけ並び替える（行全体は再生成しない）→ ちらつき防止。
@@ -198,6 +219,7 @@ function buildOrUpdateRow(t, rankIdx){
       <div class="team-name">${escapeHtml(t.teamName)}</div>
       <div class="ip">${escapeHtml(t.clientIP||'')}</div>
     </td>
+    <td>${modeBadge(t)}</td>
     <td class="score">${score.toLocaleString()}</td>
     <td><span class="phase">${escapeHtml(phaseLabel(t))}</span></td>
     <td><span class="stage-badge ${cls}">${label}</span></td>

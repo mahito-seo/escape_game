@@ -29,10 +29,40 @@ function miniPyEval(code){
     // Strip Python module imports (base64 etc — we provide JS shims below).
     js=js.replace(/^\s*import\s+\w+(\s+as\s+\w+)?\s*$/gm,'');
     js=js.replace(/^\s*from\s+\S+\s+import\s+.+$/gm,'');
+    // f-strings: f"hello {name}" → `hello ${name}` (JS template literal).
+    // Single-line, no nested braces / format specifiers (rare in beginner code).
+    js=js.replace(/\bf"([^"\n]*)"/g, function(_, c){return '`'+c.replace(/\{([^}]*)\}/g, '${$1}')+'`';});
+    js=js.replace(/\bf'([^'\n]*)'/g, function(_, c){return '`'+c.replace(/\{([^}]*)\}/g, '${$1}')+'`';});
+    // Tuple unpacking on a single line: `a, b = X, Y` or `a, b = some_call()`.
+    // Use `var` so destructuring doesn't fail in strict-ish contexts on undeclared names.
+    js=js.replace(/^(\s*)(\w+)\s*,\s*(\w+)\s*=\s*(.+)$/gm, function(_, indent, a, b, rhs){
+      var depth=0, hasTopComma=false;
+      for(var i=0;i<rhs.length;i++){
+        var c=rhs[i];
+        if(c==='('||c==='['||c==='{')depth++;
+        else if(c===')'||c===']'||c==='}')depth--;
+        else if(c===','&&depth===0){hasTopComma=true;break;}
+      }
+      return hasTopComma
+        ? indent+'var ['+a+','+b+'] = ['+rhs+']'
+        : indent+'var ['+a+','+b+'] = '+rhs;
+    });
+    // Conditional expression: `X if COND else Y` → `(COND ? X : Y)`
+    // Handles three common contexts:
+    //   1. var assignment:    `x = a if cond else b`
+    //   2. return statement:  `return a if cond else b`
+    //   3. compound assign:   `x += a if cond else b`
+    js=js.replace(/^(\s*\w+(?:\[[^\]]*\])?\s*[+\-*/%]?=\s*)([^\n]+?)\s+if\s+([^\n]+?)\s+else\s+([^\n]+?)\s*$/gm,
+      '$1($3 ? $2 : $4)');
+    js=js.replace(/^(\s*return\s+)([^\n]+?)\s+if\s+([^\n]+?)\s+else\s+([^\n]+?)\s*$/gm,
+      '$1($3 ? $2 : $4)');
     // base64 module shims using atob/btoa
     js=js.replace(/base64\.b64decode\(([^)]+)\)\.decode\([^)]*\)/g,'atob($1)');
     js=js.replace(/base64\.b64decode\(([^)]+)\)/g,'atob($1)');
     js=js.replace(/base64\.b64encode\(([^)]+)\)\.decode\([^)]*\)/g,'btoa($1)');
+    // json module shims using JSON.parse / JSON.stringify
+    js=js.replace(/\bjson\.loads\(((?:[^()]|\([^()]*\))+?)\)/g,'JSON.parse($1)');
+    js=js.replace(/\bjson\.dumps\(((?:[^()]|\([^()]*\))+?)\)/g,'JSON.stringify($1)');
     // Convert common Python to JS
     js=js
       .replace(/\bTrue\b/g,'true').replace(/\bFalse\b/g,'false').replace(/\bNone\b/g,'null').replace(/^\s*pass\s*$/gm,'')
@@ -58,8 +88,10 @@ function miniPyEval(code){
       // Inline regex-based [...x].sort(...) breaks on dicts (objects aren't iterable).
       .replace(/\bsorted\(((?:[^()]|\([^()]*\))+?),\s*reverse\s*=\s*true\)/gi,'__sorted($1,true)')
       .replace(/\bsorted\(((?:[^()]|\([^()]*\))+?)\)/g,'__sorted($1)')
-      // String/list slicing s[a:b] → s.slice(a,b). Run BEFORE range/[::-1] handling.
-      .replace(/(\w+)\[([^\[\]:]+):([^\[\]:]+)\]/g,'$1.slice($2,$3)')
+      // String/list slicing — full and one-sided forms, run BEFORE range/[::-1] handling.
+      .replace(/(\w+)\[([^\[\]:]+):([^\[\]:]+)\]/g,'$1.slice($2,$3)')          // s[a:b]
+      .replace(/(\w+)\[([^\[\]:]+):\]/g,'$1.slice($2)')                         // s[a:]
+      .replace(/(\w+)\[:([^\[\]:]+)\]/g,'$1.slice(0,$2)')                       // s[:b]
       // enumerate(X) → Array.from(X.entries()) (no extra brackets so the list-comp regex doesn't get confused by the inner [])
       .replace(/\benumerate\(([^)]+)\)/g,'Array.from(($1).entries())')
       // range() — constrained to a single line and no nested parens, otherwise it gobbles
@@ -73,6 +105,11 @@ function miniPyEval(code){
       .replace(/\.append\(/g,'.push(')
       .replace(/\.upper\(\)/g,'.toUpperCase()')
       .replace(/\.lower\(\)/g,'.toLowerCase()')
+      .replace(/\.strip\(\)/g,'.trim()')
+      .replace(/\.lstrip\(\)/g,'.trimStart()')
+      .replace(/\.rstrip\(\)/g,'.trimEnd()')
+      .replace(/\.startswith\(/g,'.startsWith(')
+      .replace(/\.endswith\(/g,'.endsWith(')
       .replace(/\.count\((.+?)\)/g,'.split($1).length-1')
       .replace(/\.sort\(\)/g,'.sort((a,b)=>a>b?1:a<b?-1:0)')
       .replace(/\.replace\((.+?),\s*(.+?)\)/g,'.split($1).join($2)')
@@ -148,12 +185,26 @@ function miniPyEval(code){
       }
       return out;
     })(js);
-    // Convert print() — match balanced parens per line
+    // Convert print() — match balanced parens per line. Handles both single-arg and multi-arg
+    // forms (`print(a, b, c)` joins args with a space, like Python's default sep).
     js=js.split('\n').map(function(ln){
       var m=ln.match(/^(\s*)print\((.+)\)\s*$/);
       if(m){
         var indent=m[1],arg=m[2];
-        return indent+'__out.push((function(v){return Array.isArray(v)?JSON.stringify(v).replace(/,/g,", "):typeof v==="number"&&v!==~~v?String(v):String(v);})('+arg+'))';
+        var fmt='(function(v){return Array.isArray(v)?JSON.stringify(v).replace(/,/g,", "):typeof v==="number"&&v!==~~v?String(v):String(v);})';
+        // Detect top-level commas — those denote multi-arg print
+        var depth=0, hasTopComma=false;
+        for(var i=0;i<arg.length;i++){
+          var c=arg[i];
+          if(c==='('||c==='['||c==='{')depth++;
+          else if(c===')'||c===']'||c==='}')depth--;
+          else if(c===','&&depth===0){hasTopComma=true;break;}
+        }
+        if(hasTopComma){
+          // print(a, b, c) → push args joined by ' '
+          return indent+'__out.push(['+arg+'].map('+fmt+').join(" "))';
+        }
+        return indent+'__out.push('+fmt+'('+arg+'))';
       }
       return ln;
     }).join('\n');
@@ -225,7 +276,10 @@ function miniPyEval(code){
       'else if(x&&typeof x==="object")a=Object.keys(x);'+
       'else a=Array.from(x);'+
       'a.sort(reverse?function(p,q){return p<q?1:p>q?-1:0;}:function(p,q){return p<q?-1:p>q?1:0;});'+
-      'return a;}\n';
+      'return a;}\n'+
+      // zip(): truncates to shortest like Python.
+      'function zip(){var a=arguments,n=a.length===0?0:Math.min.apply(null,Array.prototype.map.call(a,function(x){return x.length;}));'+
+      'var r=[];for(var __zi=0;__zi<n;__zi++){var t=[];for(var __zj=0;__zj<a.length;__zj++)t.push(a[__zj][__zi]);r.push(t);}return r;}\n';
     js=__PRELUDE+js;
 
     const __out=[];
@@ -250,6 +304,51 @@ function miniPyEval(code){
     output=['Error: '+e.message];
   }
   return output.join('\n');
+}
+
+// ═══════════════════════════════════
+//  miniPyEvalSafe — fast regex path → real Python (Pyodide) fallback
+//  miniPyEval が "Error: ..." を返したとき自動的に本物の CPython で再評価する。
+//  学生が想定外の構文 (f-string / try-except / while-else / async など) を書いても、
+//  Python として正しいコードは必ず動くことを保証する。
+// ═══════════════════════════════════
+async function miniPyEvalSafe(code){
+  // Fast path: regex-based mini interpreter
+  let result;
+  try{
+    result=miniPyEval(code);
+  }catch(e){
+    result='Error: '+(e&&e.message||String(e));
+  }
+  // Success → return immediately. Pyodide is only used as a fallback.
+  if(!result.startsWith('Error'))return result;
+  // Slow path: real CPython via Pyodide (lazy-loaded from CDN)
+  if(typeof loadPyodideLazy!=='function')return result;
+  let py;
+  try{
+    py=await loadPyodideLazy();
+  }catch(e){
+    // Pyodide couldn't be loaded (offline?). Surface the original miniPyEval error.
+    return result+'\n(注: 想定外の構文を実 Python ランタイムに送ろうとしましたがネットワーク未接続のため失敗）';
+  }
+  // Capture stdout from real Python
+  let captured='';
+  try{
+    py.setStdout({batched:function(s){captured+=s+'\n';}});
+    py.setStderr({batched:function(s){captured+=s+'\n';}});
+  }catch(e){/* older Pyodide may not expose setStdout; fall through to sys redirect below */}
+  try{
+    await py.runPythonAsync(code);
+    return captured.replace(/\n+$/,'');
+  }catch(e){
+    // Pyodide raised — return the captured stdout (if any) + the error message,
+    // similar to how miniPyEval surfaces errors. This is a real Python error, not ours.
+    let msg=(e&&e.message||String(e));
+    // Trim multi-line Python traceback to the most actionable line
+    let pyLines=msg.split('\n').map(function(l){return l.trim();}).filter(Boolean);
+    let lastErr=pyLines[pyLines.length-1]||'Python error';
+    return (captured?captured.replace(/\n+$/,'')+'\n':'')+'Error: '+lastErr;
+  }
 }
 
 // ═══════════════════════════════════
@@ -388,10 +487,10 @@ function openCodingChallenge(ct){
   document.getElementById('cipher-close-btn').style.display='inline-block';
 
   // Run button: execute + auto-check answer
-  document.getElementById('code-run-btn').onclick=()=>{
+  document.getElementById('code-run-btn').onclick=async()=>{
     try{
       const code=getEditorCode();
-      const result=miniPyEval(code);
+      const result=await miniPyEvalSafe(code);
       document.getElementById('code-output-wrap').classList.add('show');
       document.getElementById('code-output').textContent=result||'(出力なし)';
       // Auto-check: if output matches answer → success!

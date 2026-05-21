@@ -13,25 +13,29 @@
 
 ## ゲーム概要
 
-**Python の文法学習 × Copilot Agent への推論プロンプト設計** をテーマにした脱出ゲーム。学生は 5 階層 (+ EXTRA) のダンジョンを進みながら以下をこなします:
+**Python の文法学習 × Copilot Agent への推論プロンプト設計 × AI 対戦の自前実装** をテーマにした脱出ゲーム。学生は 5 階層 (+ EXTRA) のダンジョンを進みながら以下をこなします:
 
-1. **修理ターミナル（黄色端末）** — Python の穴埋め問題でゲーム機能（攻撃力・スキル・マップ等）を解放
-2. **暗号ターミナル（緑端末）** — Phase 1 で Python パスフレーズ計算 → Phase 2 で Copilot Agent に機密データを渡して推論させ最終答えを入力
-3. **モブバトル** — 通路の敵に接触すると Python クイズが開始
-4. **ボス戦（EXTRA のみ）** — 3 問のコーディング問題でラスボスを倒す
+1. **修理ターミナル（黄色端末・フル画面）** — Python の穴埋め問題でゲーム機能（攻撃力・スキル・マップ等）を解放
+2. **暗号ターミナル（緑端末・フル画面）** — Phase 1 で Python パスフレーズ計算 → Phase 2 で Copilot Agent に機密データを渡して推論させ最終答えを入力
+3. **アイテムピックアップ** — 各フロアの暗号 Phase 2 をクリアすると **🤖 ロボットの組み立て部品** が落ちる（ボディ / 武器 / サブ武器 / 移動 / コア）。各装備に特殊効果あり
+4. **モブバトル** — 通路の敵に接触すると Python クイズが開始（タイトルで密度 Easy/Normal/Hard 選択可）
+5. **ボス戦 ROBOT ARENA（EXTRA のみ）** — 集めた装備で組み上げたロボットを `robot_action(state)` の **Python AI コード** で制御してターン制バトル
 
 ---
 
 ## 階層構成
 
 ```
-Floor 1 (古代遺跡)    : Stage 1 暗号 / 基本修理 (mpBar/enemyName/itemEffect/skillHeal)
-Floor 2 (氷の洞窟)    : Stage 2 暗号 / 戦闘修理 (skillFire)
-Floor 3 (溶岩の回廊)  : Stage 3 暗号 / 戦闘核 (attack/minimap/skillLightning/levelUp)
-Floor 4 (闇の森)      : Stage 4 暗号 / メタ・進化系 (itemDrop/scoreCalc/各evo)
-Floor 5 (深淵の神殿)  : Stage 5 暗号（最終ステージ）
-Floor 6 (不死鳥の炉)  : EXTRA 暗号 + ボス戦 PHOENIX GUARDIAN
+Floor 1 (古代遺跡)    : Stage 1 暗号 / 修理 (mpBar/enemyName/skillHeal) / アイテム ボディフレーム
+Floor 2 (氷の洞窟)    : Stage 2 暗号 / 修理 (itemEffect/attack/skillFire) / アイテム メイン武器
+Floor 3 (溶岩の回廊)  : Stage 3 暗号 / 修理 (minimap/skillLightning/levelUp) / アイテム サブ武器
+Floor 4 (闇の森)      : Stage 4 暗号 / 修理 (itemDrop/fireEvo/healEvo) / アイテム 移動装置
+Floor 5 (深淵の神殿)  : Stage 5 暗号 / 修理 (scoreCalc/lightningEvo) / アイテム パワーコア
+                       ↑ 5 アイテム揃うと組み立て演出 + 右上 HUD が 🤖 一個に
+Floor 6 (不死鳥の炉)  : EXTRA 暗号 → ROBOT ARENA ボス戦
 ```
+
+> **デバッグモード**: タイトル画面の "CIPHER DUNGEON" の最後の "N" を 5 回クリックすると有効化。Lv.6 開始 + 修理ターミナルが入口近くにまとまる。授業中は使わない
 
 ---
 
@@ -67,7 +71,9 @@ Floor 6 (不死鳥の炉)  : EXTRA 暗号 + ボス戦 PHOENIX GUARDIAN
 | 「Stage 5 と EXTRA が混同」 | Stage 5 は「**最大**優先度」、EXTRA は「**最小**優先度」。逆 |
 | 「修理で ★★★ が取れない」 | 期待出力と一致しているかテスト出力を確認。部分点でも機能は解放される |
 | 「`Unexpected identifier` / `Unexpected token` エラー」 | `miniPyEval` は Python のサブセットなので、タプルアンパック・f-string などは未対応。1 行 1 文に書き直す |
-| 「ボスの火球が痛い」 | 壁・柱を盾にしながら近づく。被弾 40〜64 ダメージなので HP 管理重要 |
+| 「ROBOT ARENA で `boss == "heavy"` なのに dodge しない」 | バッチ 2-3 ターン目は予告なし（ランダム）。1 ターン目のみ予告が出る仕様 |
+| 「ボスを火球・雷撃で削ろうとする」 | 「ボスに物理攻撃は効かないようだ…」と出る。コードで倒すしかない |
+| 「アイテムが取れない」 | 暗号ターミナル Phase 2 までクリアしないと落ちない（Phase 1 だけでは出ない） |
 
 ---
 
@@ -78,7 +84,20 @@ Floor 6 (不死鳥の炉)  : EXTRA 暗号 + ボス戦 PHOENIX GUARDIAN
 | 暗号ターミナル | `450 + ステージ番号 × 90` 秒（Stage 1: 9分、Stage 5: 15分） |
 | 修理ターミナル | **なし**（じっくり考えてOK） |
 | コーディングチャレンジ（金色端末） | 7.5 分 |
-| ボス戦 | 15 分 |
+| ROBOT ARENA ボス戦 | **時間制限なし**（コードを書き換えながら試行錯誤できる） |
+
+---
+
+## スコア計算
+
+| 部門 | 計算式 | 上限 |
+|---|---|---|
+| ⏱ タイム | 120 分以内 400 / 150 分 300 / 180 分 200 / 240 分 50 / それ以降 50 | 400 pts |
+| ⚔ 戦闘 XP | `(Lv-1) × 35 + 撃破数 × 8` | **上限なし** (HARD モード救済) |
+| 🔥 連続正解 | `連続正解 × 12` | 250 pts |
+
+**ランク境界**: S(750+) / A(600+) / B(450+) / C(300+) / D(150+) / E
+EXTRA ボス撃破は **強制 RANK S (1000 pts 固定)**。エクストラクリア後は再チャレンジボタンなし（スコア保持のため）。
 
 ---
 

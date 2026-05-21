@@ -85,6 +85,35 @@ function resetEditorToTemplate(){
   if(typeof showMessage==='function')showMessage('↺ 初期状態に戻しました','#bbaadd',1500);
 }
 
+// ── 独立した Ace エディタ: ロボバトル用 (#robot-code-editor) ──
+// 暗号モーダルと同じ #code-editor を共有すると ID 重複で片方が壊れるため別インスタンス。
+var robotAceEditor=null;
+function initRobotEditor(){
+  if(robotAceEditor)return;
+  if(typeof ace==='undefined')return;
+  var el=document.getElementById('robot-code-editor');
+  if(!el)return;
+  robotAceEditor=ace.edit('robot-code-editor');
+  robotAceEditor.setTheme('ace/theme/monokai');
+  robotAceEditor.session.setMode('ace/mode/python');
+  robotAceEditor.setOptions({fontSize:'13px',showPrintMargin:false,useSoftTabs:true,tabSize:4,wrap:true,highlightActiveLine:true,showGutter:true});
+  robotAceEditor.setReadOnly(false);
+}
+function getRobotCode(){
+  if(robotAceEditor)return robotAceEditor.getValue();
+  var el=document.getElementById('robot-code-editor');
+  return el?(el.value||el.textContent||''):'';
+}
+function setRobotCode(code){
+  if(robotAceEditor){
+    robotAceEditor.setValue(code,-1);robotAceEditor.clearSelection();
+    setTimeout(function(){try{robotAceEditor.resize(true);}catch(e){}},0);
+    return;
+  }
+  var el=document.getElementById('robot-code-editor');
+  if(el){if(el.value!==undefined)el.value=code;else el.textContent=code;}
+}
+
 // SHA-256 (with fallback for environments without crypto.subtle)
 async function sha256(t){
   try{

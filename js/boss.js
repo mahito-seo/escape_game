@@ -1,5 +1,5 @@
 // ═══════════════════════════════════
-//  BOSS SYSTEM — PHOENIX GUARDIAN
+//  BOSS SYSTEM — フェニックスガーディアン
 // ═══════════════════════════════════
 var bossEntity=null;
 var bossQIdx=0;
@@ -66,7 +66,7 @@ function spawnBoss(){
   bossEntity={mesh:bg,x:sx,z:sz,hp:3,maxHp:3,defeated:false,aura:aura,aura2:aura2,
     arm1:arm1,arm2:arm2,head:head,fp1:fp1,fp2:fp2,l1:l1,l2:l2,phase:0};
   bossQIdx=0;
-  showMessage('\uD83D\uDD25 \u30DC\u30B9\u300CPHOENIX GUARDIAN\u300D\u304C\u51FA\u73FE\u3057\u305F\uFF01','#ff2200');
+  showMessage('\uD83D\uDD25 \u30DC\u30B9\u300C\u30D5\u30A7\u30CB\u30C3\u30AF\u30B9\u30AC\u30FC\u30C7\u30A3\u30A2\u30F3\u300D\u304C\u51FA\u73FE\u3057\u305F\uFF01','#ff2200');
   showMessage('\u8FD1\u3065\u3044\u3066\u30B3\u30FC\u30C7\u30A3\u30F3\u30B0\u30D0\u30C8\u30EB\u3067\u5012\u305B\uFF01','#ff8844');
 }
 
@@ -137,6 +137,12 @@ function updateBossProjectiles(){
 
 function openBossBattle(){
   if(gameState!=='playing'||!bossEntity)return;
+  // EXTRA stage の新仕様: ロボ vs ボスの自動戦闘モーダルを開く（旧コーディング問題は無効化）
+  if(typeof openRobotArena==='function'){
+    openRobotArena();
+    return;
+  }
+  // フォールバック（万一 robotBattle.js が読み込まれていない場合）
   gameState='cipher';document.exitPointerLock();
   startBossBGM();
   document.getElementById('cipher-modal').classList.add('open');
@@ -149,7 +155,7 @@ function loadBossQuestion(){
   var ch=BOSS_CHALLENGES[bossQIdx];
   if(!ch||!bossEntity)return;
   document.getElementById('cm-avatar').textContent='\uD83D\uDC79';
-  document.getElementById('cm-name').textContent='PHOENIX GUARDIAN';
+  document.getElementById('cm-name').textContent='フェニックスガーディアン';
   document.getElementById('cm-stage-sub').textContent='\u30DC\u30B9\u30D0\u30C8\u30EB '+(bossQIdx+1)+'/'+BOSS_CHALLENGES.length+' \u2014 \u8981\u4EF6\u3092\u6E80\u305F\u3059\u95A2\u6570\u3092\u66F8\u3051';
   document.getElementById('cm-mission').textContent=ch.q;
   document.getElementById('cm-mission').style.display='';
@@ -167,10 +173,10 @@ function loadBossQuestion(){
   document.getElementById('secret-reveal').classList.remove('show');
   document.getElementById('agent-phase').classList.remove('show');
   document.getElementById('cipher-close-btn').style.display='none';
-  document.getElementById('code-run-btn').onclick=function(){
+  document.getElementById('code-run-btn').onclick=async function(){
     try{
       var code=getEditorCode();
-      var result=miniPyEval(code);
+      var result=await miniPyEvalSafe(code);
       document.getElementById('code-output-wrap').classList.add('show');
       document.getElementById('code-output').textContent=result||'(\u51FA\u529B\u306A\u3057)';
       if(result.trim()===ch.answer){
@@ -186,7 +192,7 @@ function loadBossQuestion(){
           bossProjectiles=[];
           playSound('clear');
           setTimeout(function(){closeBossModal();unlockPortal();
-            showMessage('\uD83D\uDD25 PHOENIX GUARDIAN \u3092\u64C3\u7834\uFF01','#ff8800');
+            showMessage('\uD83D\uDD25 フェニックスガーディアン \u3092\u64C3\u7834\uFF01','#ff8800');
             showMessage('\u8131\u51FA\u53E3\u304C\u51FA\u73FE\u3057\u305F\uFF01','#44ffaa');},2500);
         }else{
           document.getElementById('cr-msg').innerHTML='<strong>\u30C0\u30E1\u30FC\u30B8\uFF01 \u30DC\u30B9 HP: '+bossEntity.hp+'/'+bossEntity.maxHp+'</strong><br>\u6B21\u306E\u554F\u984C\u3078\u2026';

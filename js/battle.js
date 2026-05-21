@@ -3,12 +3,18 @@ let battleActive=false, battleEnemy=null, battleQList=[], battleQIdx=0;
 let battleTimer=45, battleTimerInt=null, totalStreak=0, roundCorrect=0;
 const BATTLE_QCOUNT=3, BATTLE_TIME=45;
 // Per-difficulty time. Code questions get a +30s padding since they require reading code.
-const BATTLE_TIME_BY_DIFF={easy:45,normal:90,hard:150};
+// easy is generous so beginners can look things up / ask the room.
+const BATTLE_TIME_BY_DIFF={easy:75,normal:120,hard:180};
 
 function pickQuestions(fl,enemyDiff){
   // Match questions to enemy difficulty
   let diff=enemyDiff||'easy';
   let pool=QUESTIONS.filter(q=>q.diff===diff);
+  // Mix in dynamic / parameterized questions so values aren't always identical.
+  // Roughly half of each battle ends up being a fresh dynamic question for easy/normal.
+  if(typeof expandDynamicQuestions==='function'){
+    pool=[...pool,...expandDynamicQuestions(diff,Math.max(8,Math.floor(pool.length/2)))];
+  }
   // Mix in code-input questions for normal+ enemies on floor 3+
   if(fl>=3&&diff!=='easy'&&typeof CODE_BATTLE_QS!=='undefined'){
     pool=[...pool,...CODE_BATTLE_QS.filter(q=>q.diff===diff)];

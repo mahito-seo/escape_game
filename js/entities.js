@@ -79,8 +79,9 @@ function updateHUD(){
     // Stage 2: cipher
     missions.push('\uD83D\uDD13 \u6697\u53F7\u30BF\u30FC\u30DF\u30CA\u30EB\u3067\u6697\u53F7\u3092\u89E3\u8AAD\u305B\u3088');
   }else{
-    // Stage 3: exit / boss
-    missions.push('\u2728 \u8131\u51FA\u53E3\uFF08\u7DD1\u306E\u67F1\uFF09\u3078\u5411\u304B\u3048\uFF01');
+    // Stage 3: exit / boss - EXTRA stage is gold, others green
+    var __portalLabel = (currentCipherStage>=5) ? '\u9EC4\u91D1\u306E\u67F1' : '\u7DD1\u306E\u67F1';
+    missions.push('\u2728 \u8131\u51FA\u53E3\uFF08'+__portalLabel+'\uFF09\u3078\u5411\u304B\u3048\uFF01');
   }
   if(typeof bossEntity!=='undefined'&&bossEntity&&!bossEntity.defeated)missions.push('\uD83D\uDC79 \u30DC\u30B9\u3092\u5012\u305B\uFF01');
   var title=currentCipherStage>=CIPHER_STAGES.length?'ALL CLEAR':'FLOOR '+floor+' \u30DF\u30C3\u30B7\u30E7\u30F3';

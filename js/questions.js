@@ -7,7 +7,7 @@ const QUESTIONS=[
   {cat:'Python基礎',diff:'easy',type:'choice',q:'Pythonでコメントを書く正しい記号は？',choices:['//','#','/*','--'],ans:1,expl:'# がコメント'},
   {cat:'リスト',diff:'easy',type:'choice',q:'このコードで nums の長さは？',code:'nums = [1, 2, 3]\nnums.append(4)\nnums.append(5)',choices:['3','4','5','6'],ans:2,expl:'3 + append×2 = 5'},
   {cat:'条件分岐',diff:'easy',type:'choice',q:'次のコードで出力されるのは？',code:'x = 7\nif x > 5:\n    print("大")\nelse:\n    print("小")',choices:['大','小','7','エラー'],ans:0,expl:'7 > 5 → "大"'},
-  {cat:'Python基礎',diff:'easy',type:'fill',q:'リストの要素数を返す組み込み関数は？（関数名のみ）',code:'my_list = [1, 2, 3]\nprint(_____(my_list))  # 3',ans:'len',expl:'len() で長さを返す',hint:'l から始まる3文字'},
+  {cat:'Python基礎',diff:'easy',type:'fill',q:'リストの要素数を返す組み込み関数は？（関数名のみ）',code:'my_list = [1, 2, 3]\nprint(_____(my_list))  # 3',ans:'len',expl:'len() で長さを返す',hint:'「長さ length」を意味する短い英単語'},
   {cat:'内包表記',diff:'normal',type:'choice',q:'リスト内包表記の出力は？',code:'result = [x**2 for x in range(5) if x % 2 == 0]\nprint(result)',choices:['[0, 4, 16]','[0, 2, 4]','[1, 4, 9]','[0, 1, 4]'],ans:0,expl:'偶数(0,2,4)の2乗 → [0, 4, 16]'},
   {cat:'辞書',diff:'normal',type:'choice',q:'次のコードの出力は？',code:"d = {'a': 1, 'b': 2, 'c': 3}\nprint(sum(d.values()))",choices:['abc','3','6','Error'],ans:2,expl:'1+2+3 = 6'},
   {cat:'再帰',diff:'normal',type:'choice',q:'この関数の mystery(4) の戻り値は？',code:'def mystery(n):\n    if n <= 1: return n\n    return mystery(n-1) + mystery(n-2)',choices:['3','2','5','4'],ans:0,expl:'フィボナッチ。0,1,1,2,3 → mystery(4)=3'},
@@ -15,15 +15,15 @@ const QUESTIONS=[
   {cat:'例外処理',diff:'normal',type:'choice',q:'次のコードの出力は？',code:'try:\n    x = 10 / 0\nexcept ZeroDivisionError:\n    print("ゼロ除算")\nfinally:\n    print("終了")',choices:['ゼロ除算のみ','終了のみ','ゼロ除算\n終了','停止'],ans:2,expl:'except + finally'},
   {cat:'lambda',diff:'normal',type:'choice',q:'ラムダ式の実行結果は？',code:'f = lambda x, y: x * y + y\nprint(f(3, 4))',choices:['12','16','13','19'],ans:1,expl:'3*4+4=16'},
   {cat:'文字列操作',diff:'normal',type:'choice',q:'以下のコードの出力は？',code:'words = ["apple","banana","cherry"]\nprint(", ".join(sorted(words, key=len)))',choices:['apple, banana, cherry','apple, cherry, banana','cherry, banana, apple','banana, apple, cherry'],ans:1,expl:'長さソート'},
-  {cat:'文字列',diff:'normal',type:'fill',q:'文字列を大文字に変換するメソッドは？（メソッド名のみ）',code:'s = "hello"\nprint(s.___())  # HELLO',ans:'upper',expl:'.upper()で大文字に',hint:'"大文字"を意味する英単語'},
-  {cat:'辞書',diff:'normal',type:'fill',q:'KeyError を避けてデフォルト値を返すメソッドは？',code:"d = {'x': 10}\nval = d.___('y', 0)  # → 0",ans:'get',expl:'.get(key, default)',hint:'3文字の英単語'},
+  {cat:'文字列',diff:'normal',type:'fill',q:'文字列を大文字に変換するメソッドは？（メソッド名のみ）',code:'s = "hello"\nprint(s.___())  # HELLO',ans:'upper',expl:'.upper()で大文字に',hint:'大文字を表す英単語。lower の対義語'},
+  {cat:'辞書',diff:'normal',type:'fill',q:'KeyError を避けてデフォルト値を返すメソッドは？',code:"d = {'x': 10}\nval = d.___('y', 0)  # → 0",ans:'get',expl:'.get(key, default)',hint:'「取得する」を意味する基本動詞'},
   {cat:'デコレータ',diff:'hard',type:'choice',q:'デコレータの出力は？',code:'def double(func):\n    def wrapper(x):\n        return func(x) * 2\n    return wrapper\n\n@double\ndef add_one(x):\n    return x + 1\n\nprint(add_one(5))',choices:['6','11','12','10'],ans:2,expl:'add_one(5)=6 → ×2=12'},
   {cat:'ジェネレータ',diff:'hard',type:'choice',q:'フィボナッチの最初の5要素は？',code:'def fib():\n    a, b = 0, 1\n    while True:\n        yield a\n        a, b = b, a + b',choices:['[1,1,2,3,5]','[0,1,1,2,3]','[0,1,2,3,5]','[1,2,3,5,8]'],ans:1,expl:'0,1,1,2,3'},
   {cat:'クロージャ',diff:'hard',type:'choice',q:'クロージャの出力は？',code:'def make_counter():\n    count = 0\n    def inc():\n        nonlocal count\n        count += 1\n        return count\n    return inc\n\nc = make_counter()\nprint(c(), c(), c())',choices:['0 1 2','1 1 1','1 2 3','0 0 0'],ans:2,expl:'nonlocal → 1,2,3'},
   {cat:'クラス継承',diff:'hard',type:'choice',q:'このコードの出力は？',code:'class Animal:\n    sound = "..."\n    def speak(self):\n        return f"I say {self.sound}"\n\nclass Dog(Animal):\n    sound = "Woof"\n\nprint(Dog().speak())',choices:['I say ...','I say Woof','Woof','Error'],ans:1,expl:'Dog.sound="Woof"'},
   {cat:'辞書内包表記',diff:'hard',type:'choice',q:'辞書内包表記の結果は？',code:"data = [('a',1),('b',2),('c',3)]\nresult = {k:v**2 for k,v in data if v>1}\nprint(result)",choices:["{'a':1,'b':4,'c':9}","{'b':4,'c':9}","{'b':2,'c':3}","{'a':1}"],ans:1,expl:"v>1 → {'b':4,'c':9}"},
   {cat:'型',diff:'hard',type:'choice',q:'引数なしで呼んだ結果は？',code:"from typing import Optional\ndef greet(name: Optional[str] = None) -> str:\n    if name is None:\n        return 'Hello, World!'\n    return f'Hello, {name}!'\nprint(greet())",choices:['Hello, None!','TypeError','Hello, World!','Hello, !'],ans:2,expl:'name=None → Hello, World!'},
-  {cat:'*args/**kwargs',diff:'hard',type:'fill',q:'可変長キーワード引数の変数名は？（慣例的に使う名前）',code:'def func(**_____):\n    print(_____)',ans:'kwargs',expl:'**kwargsが慣例',hint:'keyword arguments の略'},
+  {cat:'*args/**kwargs',diff:'hard',type:'fill',q:'可変長キーワード引数の変数名は？（慣例的に使う名前）',code:'def func(**_____):\n    print(_____)',ans:'kwargs',expl:'**kwargsが慣例',hint:'関数定義で慣例的に使われる、k で始まる名前'},
 
   // ── 追加 EASY (15問) ──
   {cat:'Python基礎',diff:'easy',type:'choice',q:'変数 x に 5 を代入する正しい書き方は？',choices:['x == 5','x = 5','x := 5','let x = 5'],ans:1,expl:'= は代入演算子'},
@@ -37,9 +37,9 @@ const QUESTIONS=[
   {cat:'文字列',diff:'easy',type:'choice',q:'文字列の結合はどれ？',code:'a = "Hello"\nb = "World"',choices:['a + " " + b','a & b','a . b','concat(a, b)'],ans:0,expl:'+ で文字列結合'},
   {cat:'Python基礎',diff:'easy',type:'choice',q:'None の型は？',code:'print(type(None))',choices:["<class 'bool'>","<class 'NoneType'>","<class 'null'>","<class 'void'>"],ans:1,expl:'None は NoneType'},
   {cat:'比較',diff:'easy',type:'choice',q:'次の式の結果は？',code:'print(5 == 5.0)',choices:['True','False','Error','None'],ans:0,expl:'5 == 5.0 は True（値が同じ）'},
-  {cat:'リスト',diff:'easy',type:'fill',q:'リストに要素を追加するメソッドは？（メソッド名のみ）',code:'lst = [1, 2]\nlst._____(3)  # [1, 2, 3]',ans:'append',expl:'.append() で末尾に追加',hint:'a から始まる6文字'},
-  {cat:'Python基礎',diff:'easy',type:'fill',q:'画面に文字を表示する関数は？（関数名のみ）',code:'_____("Hello!")',ans:'print',expl:'print() で出力',hint:'p から始まる5文字'},
-  {cat:'型変換',diff:'easy',type:'fill',q:'整数を文字列に変換する関数は？（関数名のみ）',code:'x = 42\ns = _____(x)  # "42"',ans:'str',expl:'str() で文字列に',hint:'3文字の関数'},
+  {cat:'リスト',diff:'easy',type:'fill',q:'リストに要素を追加するメソッドは？（メソッド名のみ）',code:'lst = [1, 2]\nlst._____(3)  # [1, 2, 3]',ans:'append',expl:'.append() で末尾に追加',hint:'「末尾に追加する」を意味する英単語'},
+  {cat:'Python基礎',diff:'easy',type:'fill',q:'画面に文字を表示する関数は？（関数名のみ）',code:'_____("Hello!")',ans:'print',expl:'print() で出力',hint:'画面に出力する英単語（print）'},
+  {cat:'型変換',diff:'easy',type:'fill',q:'整数を文字列に変換する関数は？（関数名のみ）',code:'x = 42\ns = _____(x)  # "42"',ans:'str',expl:'str() で文字列に',hint:'string 型の略'},
   {cat:'演算',diff:'easy',type:'fill',q:'15 を 4 で割った商（整数除算）は？（数字のみ）',code:'print(15 // 4)',ans:'3',expl:'// は整数除算（切り捨て）'},
 
   // ── 追加 EASY その2 (15問) ──
@@ -55,9 +55,9 @@ const QUESTIONS=[
   {cat:'文字列',diff:'easy',type:'choice',q:'次のコードの出力は？',code:'print("hello world".replace("world", "Python"))',choices:['hello world','hello Python','Python world','Error'],ans:1,expl:'.replace() で置換'},
   {cat:'演算',diff:'easy',type:'fill',q:'3 + 4 * 2 の結果は？（数字のみ）',code:'print(3 + 4 * 2)',ans:'11',expl:'掛け算が先: 4*2=8, 3+8=11'},
   {cat:'リスト',diff:'easy',type:'fill',q:'[1,2,3] の合計は？（数字のみ）',code:'print(sum([1, 2, 3]))',ans:'6',expl:'sum() で合計 = 6'},
-  {cat:'文字列',diff:'easy',type:'fill',q:'文字列を小文字に変換するメソッドは？（メソッド名のみ）',code:'s = "HELLO"\nprint(s.___())  # hello',ans:'lower',expl:'.lower() で小文字に',hint:'5文字のメソッド'},
-  {cat:'Python基礎',diff:'easy',type:'fill',q:'整数の最大値を返す関数は？（関数名のみ）',code:'print(_____(3, 7, 1))  # 7',ans:'max',expl:'max() で最大値',hint:'3文字の関数'},
-  {cat:'Python基礎',diff:'easy',type:'fill',q:'入力を受け取る関数は？（関数名のみ）',code:'name = _____("名前: ")',ans:'input',expl:'input() でユーザー入力',hint:'5文字の関数'},
+  {cat:'文字列',diff:'easy',type:'fill',q:'文字列を小文字に変換するメソッドは？（メソッド名のみ）',code:'s = "HELLO"\nprint(s.___())  # hello',ans:'lower',expl:'.lower() で小文字に',hint:'upper の対義語'},
+  {cat:'Python基礎',diff:'easy',type:'fill',q:'整数の最大値を返す関数は？（関数名のみ）',code:'print(_____(3, 7, 1))  # 7',ans:'max',expl:'max() で最大値',hint:'min の対義語'},
+  {cat:'Python基礎',diff:'easy',type:'fill',q:'入力を受け取る関数は？（関数名のみ）',code:'name = _____("名前: ")',ans:'input',expl:'input() でユーザー入力',hint:'「入力」を意味する英単語'},
 
   // ── 追加 NORMAL (20問) ──
   {cat:'集合',diff:'normal',type:'choice',q:'次のコードの出力は？',code:'s = {1, 2, 3, 2, 1}\nprint(len(s))',choices:['5','3','2','Error'],ans:1,expl:'集合は重複なし → {1,2,3}'},
@@ -75,11 +75,11 @@ const QUESTIONS=[
   {cat:'三項演算子',diff:'normal',type:'choice',q:'次のコードの出力は？',code:'x = 7\nresult = "偶数" if x % 2 == 0 else "奇数"\nprint(result)',choices:['偶数','奇数','7','Error'],ans:1,expl:'7 % 2 != 0 → "奇数"'},
   {cat:'zip',diff:'normal',type:'choice',q:'次のコードの出力は？',code:'a = [1, 2, 3]\nb = ["a", "b", "c"]\nprint(list(zip(a, b)))',choices:['[(1,"a"),(2,"b"),(3,"c")]','[1,"a",2,"b",3,"c"]','{"1":"a","2":"b"}','Error'],ans:0,expl:'zip で対応する要素をタプルに'},
   {cat:'map',diff:'normal',type:'choice',q:'次のコードの出力は？',code:'nums = [1, 2, 3, 4]\nresult = list(map(lambda x: x * 2, nums))\nprint(result)',choices:['[1, 2, 3, 4]','[2, 4, 6, 8]','[1, 4, 9, 16]','Error'],ans:1,expl:'map で各要素を2倍'},
-  {cat:'文字列',diff:'normal',type:'fill',q:'文字列の前後の空白を除去するメソッドは？',code:'s = "  hello  "\nprint(s.___())  # "hello"',ans:'strip',expl:'.strip() で前後の空白を除去',hint:'5文字のメソッド'},
-  {cat:'リスト',diff:'normal',type:'fill',q:'リストの要素を昇順に並べ替えるメソッドは？',code:'a = [3, 1, 2]\na._____()\nprint(a)  # [1, 2, 3]',ans:'sort',expl:'.sort() で昇順ソート',hint:'4文字のメソッド'},
-  {cat:'数学',diff:'normal',type:'fill',q:'絶対値を返す組み込み関数は？（関数名のみ）',code:'print(_____(-7))  # 7',ans:'abs',expl:'abs() で絶対値',hint:'3文字の関数'},
+  {cat:'文字列',diff:'normal',type:'fill',q:'文字列の前後の空白を除去するメソッドは？',code:'s = "  hello  "\nprint(s.___())  # "hello"',ans:'strip',expl:'.strip() で前後の空白を除去',hint:'「剥ぎ取る」を意味する英単語'},
+  {cat:'リスト',diff:'normal',type:'fill',q:'リストの要素を昇順に並べ替えるメソッドは？',code:'a = [3, 1, 2]\na._____()\nprint(a)  # [1, 2, 3]',ans:'sort',expl:'.sort() で昇順ソート',hint:'「並べ替える」を意味する英単語'},
+  {cat:'数学',diff:'normal',type:'fill',q:'絶対値を返す組み込み関数は？（関数名のみ）',code:'print(_____(-7))  # 7',ans:'abs',expl:'abs() で絶対値',hint:'absolute の略'},
   {cat:'演算',diff:'normal',type:'fill',q:'2の10乗は？（数字のみ）',code:'print(2 ** 10)',ans:'1024',expl:'2^10 = 1024'},
-  {cat:'文字列',diff:'normal',type:'fill',q:'文字列中の特定文字の出現回数を数えるメソッドは？',code:'s = "banana"\nprint(s._____("a"))  # 3',ans:'count',expl:'.count() で出現回数',hint:'5文字のメソッド'},
+  {cat:'文字列',diff:'normal',type:'fill',q:'文字列中の特定文字の出現回数を数えるメソッドは？',code:'s = "banana"\nprint(s._____("a"))  # 3',ans:'count',expl:'.count() で出現回数',hint:'「数える」を意味する英単語'},
 
   // ── 追加 HARD (15問) ──
   {cat:'内包表記',diff:'hard',type:'choice',q:'ネストしたリスト内包表記の結果は？',code:'matrix = [[1,2],[3,4],[5,6]]\nflat = [x for row in matrix for x in row]\nprint(flat)',choices:['[[1,2],[3,4],[5,6]]','[1,2,3,4,5,6]','[1,3,5,2,4,6]','Error'],ans:1,expl:'ネスト内包でフラット化'},
@@ -115,6 +115,61 @@ const QUESTIONS=[
   {cat:'文字列',diff:'easy',type:'fill',q:'次のコードの出力は？',code:'print("abc"[2])',ans:'c',expl:'インデックス2は3番目の文字 = c'},
   {cat:'bool',diff:'easy',type:'fill',q:'次のコードの出力は？',code:'print(10 > 5)',ans:'True',expl:'10 > 5 は True'},
 ];
+
+// ═══════════════════════════════════
+//  DYNAMIC QUESTION GENERATORS
+//  各呼び出しで数字・文字をランダム化した question オブジェクトを返す。
+//  battle.js の pickQuestions が静的問題と混ぜて出題する → 同じ問題が連続しない。
+// ═══════════════════════════════════
+const _r=(min,max)=>min+Math.floor(Math.random()*(max-min+1));
+const _pick=arr=>arr[Math.floor(Math.random()*arr.length)];
+
+const DYNAMIC_EASY=[
+  // 余り
+  ()=>{var a=_r(11,30),b=_r(3,9);return{cat:'演算',diff:'easy',type:'fill',q:'次のコードの出力は？（数字のみ）',code:'print('+a+' % '+b+')',ans:String(a%b),expl:a+' を '+b+' で割った余り = '+(a%b)};},
+  // 整数除算
+  ()=>{var a=_r(15,40),b=_r(3,7);return{cat:'演算',diff:'easy',type:'fill',q:'次のコードの出力は？（数字のみ）',code:'print('+a+' // '+b+')',ans:String(Math.floor(a/b)),expl:'// は切り捨て除算 → '+Math.floor(a/b)};},
+  // べき乗
+  ()=>{var a=_r(2,5),b=_r(2,4);return{cat:'演算',diff:'easy',type:'fill',q:'次のコードの出力は？（数字のみ）',code:'print('+a+' ** '+b+')',ans:String(Math.pow(a,b)),expl:a+'**'+b+' は '+a+' の '+b+' 乗 = '+Math.pow(a,b)};},
+  // 演算優先度
+  ()=>{var a=_r(2,9),b=_r(2,6),c=_r(2,6);return{cat:'演算',diff:'easy',type:'fill',q:'次のコードの出力は？（数字のみ）',code:'print('+a+' + '+b+' * '+c+')',ans:String(a+b*c),expl:'掛け算が先: '+b+'*'+c+'='+(b*c)+', '+a+'+'+(b*c)+'='+(a+b*c)};},
+  // 文字列の繰り返し
+  ()=>{var s=_pick(['Ha','Ne','Yo','Wow','Ko']),n=_r(2,4);return{cat:'文字列',diff:'easy',type:'fill',q:'次のコードの出力は？',code:'print("'+s+'" * '+n+')',ans:s.repeat(n),expl:'"'+s+'" * '+n+' は '+s+' を '+n+' 回繰り返す'};},
+  // len 文字列
+  ()=>{var s=_pick(['Python','Hello','World','Coding','Escape','Cipher']);return{cat:'文字列',diff:'easy',type:'fill',q:'次のコードの出力は？（数字のみ）',code:'print(len("'+s+'"))',ans:String(s.length),expl:'"'+s+'" は '+s.length+' 文字'};},
+  // sum
+  ()=>{var n=_r(3,5),arr=[];for(var i=0;i<n;i++)arr.push(_r(1,9));return{cat:'リスト',diff:'easy',type:'fill',q:'次のコードの出力は？（数字のみ）',code:'print(sum(['+arr.join(', ')+']))',ans:String(arr.reduce((s,x)=>s+x,0)),expl:'合計 = '+arr.reduce((s,x)=>s+x,0)};},
+  // max
+  ()=>{var n=_r(4,6),arr=[];for(var i=0;i<n;i++)arr.push(_r(1,30));return{cat:'リスト',diff:'easy',type:'fill',q:'次のコードの出力は？（数字のみ）',code:'print(max(['+arr.join(', ')+']))',ans:String(Math.max.apply(null,arr)),expl:'最大値 = '+Math.max.apply(null,arr)};},
+  // min
+  ()=>{var n=_r(4,6),arr=[];for(var i=0;i<n;i++)arr.push(_r(1,30));return{cat:'リスト',diff:'easy',type:'fill',q:'次のコードの出力は？（数字のみ）',code:'print(min(['+arr.join(', ')+']))',ans:String(Math.min.apply(null,arr)),expl:'最小値 = '+Math.min.apply(null,arr)};},
+  // 文字列の indexing
+  ()=>{var s=_pick(['Python','Hello','World','Cipher','Escape']),i=_r(0,s.length-1);return{cat:'文字列',diff:'easy',type:'fill',q:'次のコードの出力は？',code:'print("'+s+'"['+i+'])',ans:s[i],expl:'インデックス '+i+' は '+(i+1)+' 番目の文字 = '+s[i]};},
+  // 比較
+  ()=>{var a=_r(1,20),b=_r(1,20),op=_pick(['>','<','>=','<=','==','!=']);var ans;switch(op){case'>':ans=a>b;break;case'<':ans=a<b;break;case'>=':ans=a>=b;break;case'<=':ans=a<=b;break;case'==':ans=a===b;break;case'!=':ans=a!==b;break;}return{cat:'比較',diff:'easy',type:'fill',q:'次のコードの出力は？',code:'print('+a+' '+op+' '+b+')',ans:ans?'True':'False',expl:a+' '+op+' '+b+' は '+(ans?'True':'False')};},
+  // and / or
+  ()=>{var a=_pick([true,false]),b=_pick([true,false]),op=_pick(['and','or']);var ans=op==='and'?(a&&b):(a||b);return{cat:'bool',diff:'easy',type:'fill',q:'次の式の結果は？',code:'print('+(a?'True':'False')+' '+op+' '+(b?'True':'False')+')',ans:ans?'True':'False',expl:(a?'True':'False')+' '+op+' '+(b?'True':'False')+' = '+(ans?'True':'False')};},
+  // 絶対値
+  ()=>{var a=-_r(1,99);return{cat:'数学',diff:'easy',type:'fill',q:'次のコードの出力は？（数字のみ）',code:'print(abs('+a+'))',ans:String(Math.abs(a)),expl:'abs('+a+') = '+Math.abs(a)};},
+  // リスト + リスト
+  ()=>{var a=[],b=[];for(var i=0;i<_r(2,3);i++)a.push(_r(1,5));for(i=0;i<_r(2,3);i++)b.push(_r(1,5));return{cat:'リスト',diff:'easy',type:'choice',q:'次のコードの出力は？',code:'print(['+a.join(', ')+'] + ['+b.join(', ')+'])',choices:['['+a.concat(b).join(', ')+']','['+a.map((x,i)=>x+(b[i]||0)).join(', ')+']','Error',String(a.length+b.length)],ans:0,expl:'+ でリストを連結'};},
+];
+const DYNAMIC_NORMAL=[
+  // スライス
+  ()=>{var s=_pick(['Python','HelloWorld','Programming','Algorithm']);var a=_r(0,s.length-3),b=a+_r(2,3);return{cat:'スライス',diff:'normal',type:'fill',q:'次のコードの出力は？',code:'print("'+s+'"['+a+':'+b+'])',ans:s.slice(a,b),expl:'['+a+':'+b+'] → "'+s.slice(a,b)+'"'};},
+  // range の長さ
+  ()=>{var a=_r(0,3),b=_r(8,15);return{cat:'ループ',diff:'normal',type:'fill',q:'次のコードの出力は？（数字のみ）',code:'print(len(list(range('+a+', '+b+'))))',ans:String(b-a),expl:'range('+a+', '+b+') は '+(b-a)+' 個の整数'};},
+  // sorted
+  ()=>{var n=_r(4,5),arr=[];for(var i=0;i<n;i++)arr.push(_r(1,20));var s=arr.slice().sort((p,q)=>p-q);return{cat:'リスト',diff:'normal',type:'fill',q:'sorted の結果の先頭は？（数字のみ）',code:'a = ['+arr.join(', ')+']\nprint(sorted(a)[0])',ans:String(s[0]),expl:'昇順ソートの先頭 = 最小値 = '+s[0]};},
+];
+
+// pickQuestions が呼び出すヘルパー: 静的問題プールに動的問題を混ぜる
+function expandDynamicQuestions(diff,count){
+  var gens=diff==='easy'?DYNAMIC_EASY:diff==='normal'?DYNAMIC_NORMAL:[];
+  if(!gens.length)return[];
+  var out=[];for(var i=0;i<count;i++)out.push(_pick(gens)());
+  return out;
+}
 
 // ═══════════════════════════════════
 //  CIPHER STAGES (from escape game)

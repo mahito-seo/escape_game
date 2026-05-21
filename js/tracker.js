@@ -64,6 +64,10 @@ function uploadProgress(force){
     bossActive:(typeof bossEntity!=='undefined'&&bossEntity&&!bossEntity.defeated),
     gameComplete:(typeof gameState!=='undefined'&&gameState==='complete'),
     elapsed:elapsedSec,
+    // Mode selected on the title screen (easy/normal/hard). 出現量だけが変わる
+    mobDensity:(typeof window!=='undefined'&&window.mobDensity)||'normal',
+    // Debug mode flag (hidden trigger — Ns clicked on title screen)
+    debugMode:!!(typeof window!=='undefined'&&window.__debugMode),
     clientTime:Date.now(),
     snapshot,
   };

@@ -1,8 +1,22 @@
 // Score Calculation, Game Completion, Extra Stage
 function calcScore(forceS){
   const elapsed=~~((Date.now()-startTime-totalPausedMs)/1000);
-  const timeScore=elapsed<1800?400:elapsed<2700?Math.max(0,400-((elapsed-1800)/900)*100):elapsed<3600?Math.max(0,300-((elapsed-2700)/900)*100):elapsed<5400?Math.max(0,200-((elapsed-3600)/1800)*100):50;
-  const xpScore=Math.min(350,(player.level-1)*35+player.kills*8);
+  // タイム配点 (基準を 120 分に緩和):
+  //   〜120 分: 400 (満点)
+  //   120〜150 分: 400 → 300 線形
+  //   150〜180 分: 300 → 200 線形
+  //   180〜240 分: 200 → 50 線形
+  //    240 分以上: 50
+  const timeScore=
+    elapsed<7200  ? 400 :
+    elapsed<9000  ? Math.max(0, 400 - ((elapsed-7200)/1800)*100) :
+    elapsed<10800 ? Math.max(0, 300 - ((elapsed-9000)/1800)*100) :
+    elapsed<14400 ? Math.max(0, 200 - ((elapsed-10800)/3600)*150) :
+    50;
+  // 戦闘 XP 配点 (上限なし — 倒した分だけ素直に加点される):
+  //   Lv の上がり方は (lvl-1)*35, モブ撃破は 1 体 8 pts。
+  //   モード Hard でモブを倒しまくった人がきちんと報われるよう、キャップは撤廃。
+  const xpScore=(player.level-1)*35+player.kills*8;
   const streakScore=Math.min(250,totalStreak*12);
   let total=~~(timeScore+xpScore+streakScore);
   let rank,rankColor;
@@ -23,8 +37,8 @@ function gameComplete(){
   const isExtra=currentCipherStage>=6;
   const sc=calcScore(isExtra); // Extra clear = forced S rank
   const min=~~(sc.elapsed/60),sec=sc.elapsed%60;
-  const statsLine=`<span style="font-size:14px;color:#888;">タイム: ${min}分${sec}秒 (${sc.timeScore}pts) | 戦闘XP (${sc.xpScore}pts) | 連続正解 (${sc.streakScore}pts)</span><br>`+
-    `<span style="font-size:14px;color:#888;">Lv.${player.level} | ${player.kills}体撃破 | 🔥${totalStreak}連続正解</span>`;
+  const statsLine=`<span style="font-size:18px;color:#aaa;">タイム: ${min}分${sec}秒 (${sc.timeScore}pts) | 戦闘XP (${sc.xpScore}pts) | 連続正解 (${sc.streakScore}pts)</span><br>`+
+    `<span style="font-size:18px;color:#aaa;">Lv.${player.level} | ${player.kills}体撃破 | 🔥${totalStreak}連続正解</span>`;
 
   if(isExtra){
     // TRUE ENDING
@@ -32,35 +46,36 @@ function gameComplete(){
     document.getElementById('overlay-title').innerHTML=`🔥 TRUE ESCAPE 🔥`;
     document.getElementById('overlay-title').style.color='#ff8800';
     document.getElementById('overlay-sub').innerHTML=
-      `<span style="font-size:80px;display:block;margin-bottom:12px;color:#ffdd00;text-shadow:0 0 40px #ffdd00;font-family:'Cinzel Decorative',serif;">RANK S</span>`+
-      `<span style="font-size:28px;color:#ffdd00;">PERFECT CLEAR</span><br><br>`+
+      `<span style="font-size:96px;display:block;margin-bottom:14px;color:#ffdd00;text-shadow:0 0 40px #ffdd00;font-family:'Cinzel Decorative',serif;">RANK S</span>`+
+      `<span style="font-size:34px;color:#ffdd00;">PERFECT CLEAR</span><br><br>`+
       statsLine+`<br><br>`+
-      `<span style="color:#ffcc88;font-size:15px;line-height:1.8;">全エージェントの帰還指令を復号した。<br>`+
+      `<span style="color:#ffcc88;font-size:20px;line-height:1.9;">全エージェントの帰還指令を復号した。<br>`+
       `SHADOW NETWORKの全データを奪還し、<br>`+
       `攻撃者の痕跡を突き止めた。<br><br>`+
-      `<span style="color:#ff8800;">君は真のエージェントだ。</span></span>`;
-    document.getElementById('overlay-btn').textContent='もう一度挑戦する';
-    document.getElementById('overlay-btn').style.display='inline-block';
-    document.getElementById('overlay-btn').onclick=restartGame;
+      `<span style="color:#ff8800;font-size:22px;">君は真のエージェントだ。</span></span>`;
+    // エクストラ全クリア時は再チャレンジ動線を切る (押すとスコア消えるため)。
+    // 代わりに右下の小さな RESET だけ出して、明示操作のときだけタイトルへ戻れるようにする。
+    document.getElementById('overlay-btn').style.display='none';
+    document.body.classList.add('all-cleared');
   }else{
     // NORMAL ENDING
     playSound('fanfare');
     document.getElementById('overlay-title').innerHTML=`🔓 MISSION COMPLETE 🔓`;
     document.getElementById('overlay-title').style.color='#00ff41';
     document.getElementById('overlay-sub').innerHTML=
-      `<span style="font-size:72px;display:block;margin-bottom:12px;color:${sc.rankColor};text-shadow:0 0 30px ${sc.rankColor};font-family:'Cinzel Decorative',serif;">RANK ${sc.rank}</span>`+
-      `<span style="font-size:28px;color:${sc.rankColor};">${sc.total}pts</span><br><br>`+
+      `<span style="font-size:88px;display:block;margin-bottom:14px;color:${sc.rankColor};text-shadow:0 0 30px ${sc.rankColor};font-family:'Cinzel Decorative',serif;">RANK ${sc.rank}</span>`+
+      `<span style="font-size:34px;color:${sc.rankColor};">${sc.total}pts</span><br><br>`+
       statsLine+`<br><br>`+
-      `<span style="font-size:15px;color:#88ffaa;line-height:1.8;">ミッション完了。<br>`+
+      `<span style="font-size:20px;color:#88ffaa;line-height:1.9;">ミッション完了。<br>`+
       `5つの暗号を解読し、脱出コードを手に入れた。<br>`+
       `エージェントの配置情報、作戦データ、優先度マップ、<br>`+
       `緊急連絡プロトコル… すべてのデータを繋ぎ、<br>`+
       `SHADOW NETWORKからの脱出に成功した。</span><br><br>`+
-      `<span style="font-size:13px;color:#668866;">習得スキル：リスト操作 / chr関数 / 辞書ソート / 文字列処理 / 関数パイプライン</span><br><br>`+
-      `<span style="font-size:11px;color:#555;cursor:pointer;text-decoration:underline;" onclick="document.getElementById('extra-reveal').style.display='block'">…しかし、施設の最深部にもう一つの階層があるという噂が…</span>`+
+      `<span style="font-size:16px;color:#88aa88;">習得スキル：リスト操作 / chr関数 / 辞書ソート / 文字列処理 / 関数パイプライン</span><br><br>`+
+      `<span style="font-size:14px;color:#888;cursor:pointer;text-decoration:underline;" onclick="document.getElementById('extra-reveal').style.display='block'">…しかし、施設の最深部にもう一つの階層があるという噂が…</span>`+
       `<div id="extra-reveal" style="display:none;margin-top:16px;">`+
-      `<p style="color:#ff8844;font-size:12px;margin-bottom:10px;">帰還指令がまだ復号されていない。全エージェントが危険な状態だ。</p>`+
-      `<button onclick="startExtraStage()" style="font-family:'Cinzel',serif;font-size:14px;letter-spacing:3px;color:#000;background:linear-gradient(135deg,#ff8844,#cc4400);border:none;padding:12px 36px;cursor:pointer;border-radius:3px;box-shadow:0 0 20px rgba(255,100,0,.5);">🔥 EXTRA STAGE — 帰還指令を復号する 🔥</button></div>`;
+      `<p style="color:#ff8844;font-size:14px;margin-bottom:10px;">帰還指令がまだ復号されていない。全エージェントが危険な状態だ。</p>`+
+      `<button onclick="startExtraStage()" style="font-family:'Cinzel',serif;font-size:16px;letter-spacing:3px;color:#000;background:linear-gradient(135deg,#ff8844,#cc4400);border:none;padding:14px 40px;cursor:pointer;border-radius:3px;box-shadow:0 0 20px rgba(255,100,0,.5);">🔥 EXTRA STAGE — 帰還指令を復号する 🔥</button></div>`;
     document.getElementById('overlay-btn').textContent='終了する';
     document.getElementById('overlay-btn').style.display='inline-block';
     // Confirm before exiting — players have asked us to make sure they really

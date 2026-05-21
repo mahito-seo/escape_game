@@ -1,5 +1,23 @@
 // Game Flow - Start, Mob Timer, Reset, Restart
 function startGame(){
+  // DEBUG MODE: 完全に新規データで開始（既存セーブは無視・破壊しない）
+  if(window.__debugMode){
+    startTime=Date.now();
+    // フィールド状態をリセット
+    floor=1; currentCipherStage=0; cipherSolved=false;
+    if(typeof cipherPhase1Solved!=='undefined') cipherPhase1Solved=false;
+    if(typeof escapeCount!=='undefined') escapeCount=0;
+    // プレイヤーをデバッグ用にレベル 6 にブースト
+    applyDebugPlayerStats();
+    document.getElementById('title-screen').style.opacity='0';
+    setTimeout(()=>{
+      document.getElementById('title-screen').style.display='none';
+      dungeon=genDungeon();buildScene();
+      actualStart(false);
+      showMessage('🐛 DEBUG MODE: Lv.6 でスタート / 全ターミナルを近接配置','#ff44ff');
+    },800);
+    return;
+  }
   const hasSave=loadProgress();
   if(!hasSave)startTime=Date.now();
   document.getElementById('title-screen').style.opacity='0';
@@ -14,6 +32,18 @@ function startGame(){
       document.getElementById('tutorial-screen').classList.add('show');
     }
   },1000);
+}
+
+// DEBUG: Lv.6 相当の初期ステータスを付与（通常レベルアップ式と同じ加算）
+function applyDebugPlayerStats(){
+  player.level=6;
+  player.xp=0; player.xpNext=Math.ceil(100*Math.pow(1.5,5));
+  // 5 回分のレベルアップ加算
+  player.maxHp = 100 + 5*20;  player.hp = player.maxHp;
+  player.maxMp = 50  + 5*10;  player.mp = player.maxMp;
+  player.attackPower = 22 + 5*8;
+  player.defense     = 5  + 5*2;
+  player.kills = 0;
 }
 
 function closeTutorial(){
@@ -31,6 +61,7 @@ function actualStart(hasSave){
     showMessage(`1\u968E\u300C${FLOOR_THEMES[0].name}\u300D\u2014 \u4FEE\u7406\u30BF\u30FC\u30DF\u30CA\u30EB\u3092\u63A2\u305D\u3046`,'#00ff41');
   }
   updateHUD();updateSkillsHUD();
+  if(typeof updateInventoryHUD==='function')updateInventoryHUD();
   startMobTimer();
   startBGM(floor);
 }
@@ -54,8 +85,8 @@ function stopMobTimer(){
   document.getElementById('mob-timer').classList.remove('active');
 }
 function tickMob(){
-  // Don't count down during pause, swap, death, battle, or cipher
-  if(gameState==='paused'||gameState==='swap'||gameState==='dead'||gameState==='battle'||gameState==='cipher')return;
+  // Don't count down during pause, swap, death, battle, cipher, or cinematic
+  if(gameState==='paused'||gameState==='swap'||gameState==='dead'||gameState==='battle'||gameState==='cipher'||gameState==='cinematic')return;
   mobTimeLeft--;
   if(mobTimeLeft<=0){
     mobCurrentIdx=(mobCurrentIdx+1)%MOB_PLAYERS.length;
@@ -162,11 +193,19 @@ function openTutorialFromPause(){
 }
 
 function resetToTitle(){
-  // Close any open modals
+  // Close any open modals — including newer ones for items / robot arena / briefing
   document.getElementById('battle-modal').classList.remove('open');
   document.getElementById('cipher-modal').classList.remove('open');
   document.getElementById('overlay-screen').classList.remove('show');
+  ['item-picker-modal','robot-arena-modal','prebattle-modal','ram-action-confirm','boss-victory-banner'].forEach(function(id){
+    var el=document.getElementById(id); if(!el) return;
+    el.classList.remove('open');
+    el.classList.remove('show');
+  });
   battleActive=false;cipherActive=false;
+  if(typeof itemActive!=='undefined') itemActive=false;
+  if(typeof robotBattleActive!=='undefined') robotBattleActive=false;
+  if(typeof robotBattleEnded!=='undefined') robotBattleEnded=true;
   clearInterval(battleTimerInt);clearInterval(cipherTimerInt);
   if(agentLockoutTimer)clearInterval(agentLockoutTimer);
   if(deathTimerInt){clearInterval(deathTimerInt);deathTimerInt=null;}
@@ -177,7 +216,12 @@ function resetToTitle(){
   floor=1;currentCipherStage=0;cipherSolved=false;totalStreak=0;battleCooldown=0;escapeCount=0;
   player=mkPlayer();agentWrongCount=0;agentLockoutEnd=0;cipherPhase1Solved=false;
   clearFeatures();
+  if(typeof clearInventory==='function') clearInventory();
+  if(typeof robotAssembledHUD!=='undefined') robotAssembledHUD=false;
+  if(typeof cinematicActive!=='undefined') cinematicActive=false;
+  document.body.classList.remove('all-cleared');
   dungeon=genDungeon();buildScene();updateHUD();updateSkillsHUD();
+  if(typeof updateInventoryHUD==='function') updateInventoryHUD();
   // Show title
   const ts=document.getElementById('title-screen');
   ts.style.display='flex';ts.style.opacity='1';
