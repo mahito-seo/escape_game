@@ -417,6 +417,13 @@ function startActualRobotBattle(){
   robotBattleActive=true; robotBattleEnded=false;
   if(typeof startBossBGM==='function') startBossBGM();
 
+  // 前回の戦闘で残った中央バナーの表示を初期化 (再戦時に「10ターン目」等が一瞬出るのを防ぐ)
+  var _tb=document.getElementById('ram-turn-banner');
+  if(_tb) _tb.classList.remove('show');
+  var _tbNum=document.getElementById('rtb-num');     if(_tbNum) _tbNum.textContent='';
+  var _tbYou=document.getElementById('rtb-you-act'); if(_tbYou) _tbYou.textContent='';
+  var _tbBos=document.getElementById('rtb-boss-act');if(_tbBos) _tbBos.textContent='';
+
   // ステータス計算
   robotBattleStats = computeRobotStats();
   // パーツが足りない場合の最低保証

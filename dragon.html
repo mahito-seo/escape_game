@@ -10,6 +10,33 @@
   body { background:#1a1410; overflow:hidden; font-family:'Cinzel',serif; color:#e8c87a; user-select:none; -webkit-user-select:none; }
   #canvas { display:block; }
 
+  /* ─── スクロールバー (画面の暗いテーマに馴染ませる) ───
+       Chrome/Safari/Edge: ::-webkit-scrollbar 系 / Firefox: scrollbar-color
+       デフォルトは黒寄りの暗色、ホバーで少し明るくなる */
+  * { scrollbar-width:thin; scrollbar-color:#3a2a1a #0a0608; }
+  ::-webkit-scrollbar { width:10px; height:10px; background:#0a0608; }
+  ::-webkit-scrollbar-track { background:#0a0608; border-radius:2px; }
+  ::-webkit-scrollbar-thumb { background:#3a2a1a; border-radius:6px; border:2px solid #0a0608; }
+  ::-webkit-scrollbar-thumb:hover { background:#5a4232; }
+  ::-webkit-scrollbar-corner { background:#0a0608; }
+  /* 暗号モーダル中はうっすら緑のアクセント */
+  #cipher-modal.cipher-fs ::-webkit-scrollbar-thumb { background:#1a3a22; border-color:#040a06; }
+  #cipher-modal.cipher-fs ::-webkit-scrollbar-thumb:hover { background:#2a5a32; }
+  #cipher-modal.cipher-fs ::-webkit-scrollbar-track,
+  #cipher-modal.cipher-fs ::-webkit-scrollbar { background:#040a06; }
+  /* 修理モーダル中はうっすらアンバー */
+  #cipher-modal.repair-mode ::-webkit-scrollbar-thumb { background:#3a2210; border-color:#080604; }
+  #cipher-modal.repair-mode ::-webkit-scrollbar-thumb:hover { background:#5a3a20; }
+  #cipher-modal.repair-mode ::-webkit-scrollbar-track,
+  #cipher-modal.repair-mode ::-webkit-scrollbar { background:#080604; }
+  /* Ace エディタの内部スクロールバーにも明示的に適用 (Ace は overflow:auto を使うので動く) */
+  .ace_editor ::-webkit-scrollbar { width:10px; height:10px; }
+  .ace_editor ::-webkit-scrollbar-track { background:#1a1410; }
+  .ace_editor ::-webkit-scrollbar-thumb { background:#3a2a1a; border:2px solid #1a1410; border-radius:6px; }
+  .ace_editor ::-webkit-scrollbar-thumb:hover { background:#5a4232; }
+  /* Ace 内で表示されるネイティブスクロールバーが大きすぎないよう、Ace のスクロールハンドルも調整 */
+  .ace_scrollbar { scrollbar-width:thin; scrollbar-color:#3a2a1a #1a1410; }
+
   /* ── HUD ── */
   #hud { position:fixed; inset:0; pointer-events:none; z-index:10; }
   #topbar {
@@ -642,7 +669,7 @@
   .ram-confirm-toggle input { cursor:pointer; }
 
   /* ── Action confirmation dialog (inside arena modal) ── */
-  #ram-action-confirm { position:absolute; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.65); z-index:5; }
+  #ram-action-confirm { position:absolute; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.65); z-index:1000; }
   #ram-action-confirm.show { display:flex; animation:racFade .15s ease; }
   @keyframes racFade { from{opacity:0;} to{opacity:1;} }
   .rac-card { background:linear-gradient(160deg,#1a0808,#100404 60%); border:2px solid #ff6633; border-radius:10px; padding:24px 32px; min-width:380px; max-width:560px; text-align:center; box-shadow:0 0 40px rgba(255,80,0,.5); }
